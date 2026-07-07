@@ -28,6 +28,14 @@ public class BoutController {
         return ApiResponse.success(boutService.getOfficialBouts(tournamentId), "OK");
     }
 
+    @GetMapping("/search")
+    public ApiResponse<List<BoutListResponse>> searchOfficialBouts(
+            @RequestParam Long tournamentId,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ApiResponse.success(boutService.searchOfficialBouts(tournamentId, keyword), "OK");
+    }
+
     @GetMapping("/{boutId}")
     public ApiResponse<BoutDetailResponse> getBoutDetail(@PathVariable Long boutId) {
         return ApiResponse.success(boutService.getBoutDetail(boutId), "OK");

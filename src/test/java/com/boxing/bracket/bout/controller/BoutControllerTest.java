@@ -48,6 +48,49 @@ class BoutControllerTest {
     }
 
     @Test
+    void searchOfficialBoutsReturnsBoutListByAthleteKeyword() throws Exception {
+        given(boutService.searchOfficialBouts(1L, "홍길동"))
+                .willReturn(List.of(BoutListResponse.of(
+                        createBout(1L, 1, 1, false),
+                        createAthlete(10L, "홍길동", "Incheon Boxing Club"),
+                        createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club")
+                )));
+
+        mockMvc.perform(get("/api/bouts/search")
+                        .param("tournamentId", "1")
+                        .param("keyword", "홍길동"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].redAthlete.name").value("홍길동"));
+    }
+
+    @Test
+    void searchOfficialBoutsReturnsBoutListByMatchTypeKeyword() throws Exception {
+        given(boutService.searchOfficialBouts(1L, "75"))
+                .willReturn(List.of(BoutListResponse.of(
+                        createBout(1L, 1, 1, false),
+                        createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club"),
+                        createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club")
+                )));
+
+        mockMvc.perform(get("/api/bouts/search")
+                        .param("tournamentId", "1")
+                        .param("keyword", "75"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].matchType").value("75 - middle school"));
+    }
+
+    @Test
+    void searchOfficialBoutsReturnsBadRequestWithoutTournamentId() throws Exception {
+        mockMvc.perform(get("/api/bouts/search")
+                        .param("keyword", "홍길동"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("tournamentId is required"));
+    }
+
+    @Test
     void getBoutDetailReturnsBoutDetail() throws Exception {
         given(boutService.getBoutDetail(1L))
                 .willReturn(BoutDetailResponse.of(

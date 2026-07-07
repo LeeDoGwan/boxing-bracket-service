@@ -69,6 +69,134 @@ class BoutServiceTest {
     }
 
     @Test
+    void searchOfficialBoutsFindsBoutByAthleteName() {
+        Bout matchedBout = createBout(1L, 1, 1, 10L, 11L, false);
+        Bout unmatchedBout = createBout(2L, 2, 2, 12L, 13L, false);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+
+        given(athleteRepository.findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase("Hong", "Hong"))
+                .willReturn(List.of(redAthlete));
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(matchedBout, unmatchedBout));
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
+
+        List<BoutListResponse> responses = boutService.searchOfficialBouts(1L, "Hong");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getBoutId()).isEqualTo(1L);
+        assertThat(responses.get(0).getRedAthlete().getName()).isEqualTo("Hong Gil Dong");
+    }
+
+    @Test
+    void searchOfficialBoutsFindsBoutByAthleteAffiliation() {
+        Bout matchedBout = createBout(1L, 1, 1, 10L, 11L, false);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+
+        given(athleteRepository.findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase("Seoul", "Seoul"))
+                .willReturn(List.of(blueAthlete));
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(matchedBout));
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
+
+        List<BoutListResponse> responses = boutService.searchOfficialBouts(1L, "Seoul");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getBlueAthlete().getAffiliation()).isEqualTo("Seoul Boxing Club");
+    }
+
+    @Test
+    void searchOfficialBoutsFindsBoutByMatchType() {
+        Bout matchedBout = createBout(1L, 1, 1, 10L, 11L, "75 - middle school", false);
+        Bout unmatchedBout = createBout(2L, 2, 2, 12L, 13L, "80 - high school", false);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+
+        given(athleteRepository.findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase("75", "75"))
+                .willReturn(List.of());
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(matchedBout, unmatchedBout));
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
+
+        List<BoutListResponse> responses = boutService.searchOfficialBouts(1L, "75");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getMatchType()).isEqualTo("75 - middle school");
+    }
+
+    @Test
+    void searchOfficialBoutsFindsBoutByBoutNumber() {
+        Bout firstBout = createBout(1L, 1, 1, 10L, 11L, "75 - middle school", false);
+        Bout secondBout = createBout(2L, 2, 2, 12L, 13L, "80 - high school", false);
+        Athlete redAthlete = createAthlete(12L, "Park Min Jae", "Busan Boxing Club");
+        Athlete blueAthlete = createAthlete(13L, "Lee Ji Hoon", "Daegu Boxing Club");
+
+        given(athleteRepository.findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase("2", "2"))
+                .willReturn(List.of());
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(firstBout, secondBout));
+        given(athleteRepository.findById(12L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(13L)).willReturn(Optional.of(blueAthlete));
+
+        List<BoutListResponse> responses = boutService.searchOfficialBouts(1L, "2");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getBoutNumber()).isEqualTo(2);
+    }
+
+    @Test
+    void searchOfficialBoutsExcludesEventBout() {
+        Bout officialBout = createBout(1L, 1, 1, 10L, 11L, "75 - middle school", false);
+        Bout eventBout = createBout(2L, 2, 2, 12L, 13L, "75 - middle school", true);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+
+        given(athleteRepository.findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase("75", "75"))
+                .willReturn(List.of());
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(officialBout, eventBout));
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
+
+        List<BoutListResponse> responses = boutService.searchOfficialBouts(1L, "75");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getBoutId()).isEqualTo(1L);
+        verify(athleteRepository, never()).findById(eq(12L));
+        verify(athleteRepository, never()).findById(eq(13L));
+    }
+
+    @Test
+    void searchOfficialBoutsReturnsOfficialBoutsWhenKeywordIsBlank() {
+        Bout officialBout = createBout(1L, 1, 1, 10L, 11L, false);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(officialBout));
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
+
+        List<BoutListResponse> responses = boutService.searchOfficialBouts(1L, "   ");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getBoutId()).isEqualTo(1L);
+        verify(athleteRepository, never())
+                .findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase("   ", "   ");
+    }
+
+    @Test
+    void searchOfficialBoutsRejectsNullTournamentId() {
+        assertThatThrownBy(() -> boutService.searchOfficialBouts(null, "Hong"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("tournamentId is required");
+    }
+
+    @Test
     void getBoutDetailReturnsBoutAndAthletes() {
         Bout bout = createBout(1L, 1, 1, 10L, 11L, false);
         Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
@@ -104,11 +232,23 @@ class BoutServiceTest {
             Long blueAthleteId,
             boolean eventBout
     ) {
+        return createBout(id, boutNumber, scheduledOrder, redAthleteId, blueAthleteId, "75 - middle school", eventBout);
+    }
+
+    private Bout createBout(
+            Long id,
+            int boutNumber,
+            int scheduledOrder,
+            Long redAthleteId,
+            Long blueAthleteId,
+            String matchType,
+            boolean eventBout
+    ) {
         Bout bout = Bout.builder()
                 .tournamentId(1L)
                 .ringId(1L)
                 .boutNumber(boutNumber)
-                .matchType("75 - middle school")
+                .matchType(matchType)
                 .redAthleteId(redAthleteId)
                 .blueAthleteId(blueAthleteId)
                 .status(BoutStatus.SCHEDULED)
