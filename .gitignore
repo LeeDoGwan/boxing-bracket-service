@@ -1,0 +1,26 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+
+# Python cache and virtual environments
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+
