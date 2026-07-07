@@ -14,9 +14,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -70,6 +73,31 @@ class JudgeScoreControllerTest {
         mockMvc.perform(post("/api/judge/bouts/{boutId}/rounds/{roundNo}/scores", 99L, 1)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Bout not found"));
+    }
+
+    @Test
+    void getBoutScoresReturnsScores() throws Exception {
+        given(judgeScoreService.getBoutScores(1L))
+                .willReturn(List.of(RoundScoreResponse.from(createSubmittedRoundScore())));
+
+        mockMvc.perform(get("/api/judge/bouts/{boutId}/scores", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].boutId").value(1))
+                .andExpect(jsonPath("$.data[0].roundNo").value(1))
+                .andExpect(jsonPath("$.data[0].judgeId").value(10))
+                .andExpect(jsonPath("$.data[0].status").value("SUBMITTED"));
+    }
+
+    @Test
+    void getBoutScoresReturnsNotFoundForMissingBout() throws Exception {
+        given(judgeScoreService.getBoutScores(99L))
+                .willThrow(new BoutNotFoundException());
+
+        mockMvc.perform(get("/api/judge/bouts/{boutId}/scores", 99L))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Bout not found"));

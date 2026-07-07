@@ -10,6 +10,8 @@ public interface RoundScoreRepository extends JpaRepository<RoundScore, Long> {
 
     List<RoundScore> findByBoutId(Long boutId);
 
+    List<RoundScore> findByBoutIdOrderByRoundNoAscJudgeIdAsc(Long boutId);
+
     List<RoundScore> findByBoutIdAndJudgeId(Long boutId, Long judgeId);
 
     Optional<RoundScore> findByBoutIdAndRoundNoAndJudgeId(Long boutId, Integer roundNo, Long judgeId);

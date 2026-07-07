@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Lazy
 @Transactional
@@ -44,15 +47,32 @@ public class JudgeScoreService {
         return RoundScoreResponse.from(roundScoreRepository.save(roundScore));
     }
 
-    private void validatePathVariables(Long boutId, Integer roundNo) {
-        if (boutId == null) {
-            throw new IllegalArgumentException("boutId is required");
+    @Transactional(readOnly = true)
+    public List<RoundScoreResponse> getBoutScores(Long boutId) {
+        validateBoutId(boutId);
+
+        if (!boutRepository.existsById(boutId)) {
+            throw new BoutNotFoundException();
         }
+
+        return roundScoreRepository.findByBoutIdOrderByRoundNoAscJudgeIdAsc(boutId).stream()
+                .map(RoundScoreResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    private void validatePathVariables(Long boutId, Integer roundNo) {
+        validateBoutId(boutId);
         if (roundNo == null) {
             throw new IllegalArgumentException("roundNo is required");
         }
         if (roundNo < 1) {
             throw new IllegalArgumentException("roundNo must be greater than or equal to 1");
+        }
+    }
+
+    private void validateBoutId(Long boutId) {
+        if (boutId == null) {
+            throw new IllegalArgumentException("boutId is required");
         }
     }
 
