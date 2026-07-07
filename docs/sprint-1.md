@@ -1,0 +1,136 @@
+# Sprint 1 Scope
+
+Source: ChatGPT project `복싱 대회 어드바이스 서비스`, `기능.txt`-based analysis on 2026-07-07.
+
+## Objective
+
+Validate the core tournament operation loop:
+
+`register bracket -> show current ring bout -> submit judge scores -> confirm supervisor result -> publish audience result`
+
+## Completion Criteria
+
+One ring can run one bout end to end:
+
+1. A bout exists with red and blue athletes.
+2. The bout is visible on the audience home and full bracket.
+3. Three judges can submit scores for the bout.
+4. A supervisor can review scores and confirm the result.
+5. The confirmed result appears on the audience home and full bracket.
+
+## Screens
+
+### Audience Home
+
+- Notice banner.
+- Current bout card by ring.
+- Current bout detail.
+- Next bout preview.
+- Confirmed result display.
+
+### Full Bracket
+
+- Official bout list.
+- Bout number.
+- Red and blue athlete information.
+- Match type.
+- Bout status.
+- Result.
+- Search by athlete name, affiliation, or bout number.
+
+### Judge
+
+- Assigned current bout.
+- Red and blue athlete information.
+- Round score input.
+- Score submission.
+- Submission status.
+
+### Supervisor
+
+- Current bout information.
+- Judge score overview.
+- Penalty input.
+- Winner selection.
+- Result confirmation.
+
+### Ring Manager
+
+- Assigned ring current bout.
+- Bout start.
+- Bout status change.
+- Next bout transition.
+
+For sprint 1, ring manager functionality can stay minimal and focus on status changes.
+
+### Game Manager
+
+- Manual bout registration.
+- Manual bout update.
+- Manual bout deletion.
+- Athlete input.
+
+CSV and Excel upload are deferred.
+
+## API Draft
+
+### Auth
+
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+
+### Audience Home
+
+- `GET /api/home`
+- `GET /api/notices`
+- `GET /api/rings/status`
+- `GET /api/rings/{ringId}/current-bout`
+
+### Bracket
+
+- `GET /api/bouts`
+- `GET /api/bouts/search`
+- `GET /api/bouts/{boutId}`
+- `POST /api/admin/bouts`
+- `PUT /api/admin/bouts/{boutId}`
+- `DELETE /api/admin/bouts/{boutId}`
+
+### Judge
+
+- `GET /api/judge/me/bouts/current`
+- `POST /api/judge/bouts/{boutId}/rounds/{roundNo}/scores`
+- `GET /api/judge/bouts/{boutId}/scores`
+
+### Supervisor
+
+- `GET /api/supervisor/bouts/{boutId}/scores`
+- `POST /api/supervisor/bouts/{boutId}/penalties`
+- `POST /api/supervisor/bouts/{boutId}/result`
+
+### Ring Manager
+
+- `GET /api/ring-manager/rings/{ringId}/bouts`
+- `POST /api/ring-manager/bouts/{boutId}/start`
+- `POST /api/ring-manager/bouts/{boutId}/status`
+- `POST /api/ring-manager/rings/{ringId}/next`
+
+### Game Manager
+
+- `POST /api/admin/athletes`
+- `PUT /api/admin/athletes/{athleteId}`
+- `DELETE /api/admin/athletes/{athleteId}`
+- `GET /api/admin/users`
+- `POST /api/admin/users`
+- `PUT /api/admin/users/{userId}`
+- `DELETE /api/admin/users/{userId}`
+
+## Deferred
+
+- WebSocket or SSE real-time push.
+- Service monitoring UI.
+- Server log viewer.
+- CSV and Excel bracket upload.
+- Advanced statistics.
+- Advanced user search.
+
