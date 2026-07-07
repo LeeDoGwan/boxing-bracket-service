@@ -1,0 +1,47 @@
+package com.boxing.bracket.ring.domain;
+
+import com.boxing.bracket.common.entity.BaseTimeEntity;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Getter
+@Entity
+@Table(name = "rings")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Ring extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long tournamentId;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RingStatus status = RingStatus.READY;
+
+    private Long currentBoutId;
+
+    @Builder
+    private Ring(Long tournamentId, String name, RingStatus status, Long currentBoutId) {
+        this.tournamentId = tournamentId;
+        this.name = name;
+        this.status = status == null ? RingStatus.READY : status;
+        this.currentBoutId = currentBoutId;
+    }
+}
