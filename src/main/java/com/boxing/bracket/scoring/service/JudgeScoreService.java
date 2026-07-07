@@ -10,9 +10,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @Lazy
 @Transactional
@@ -45,19 +42,6 @@ public class JudgeScoreService {
         roundScore.submit(request.getRedScore(), request.getBlueScore());
 
         return RoundScoreResponse.from(roundScoreRepository.save(roundScore));
-    }
-
-    @Transactional(readOnly = true)
-    public List<RoundScoreResponse> getBoutScores(Long boutId) {
-        validateBoutId(boutId);
-
-        if (!boutRepository.existsById(boutId)) {
-            throw new BoutNotFoundException();
-        }
-
-        return roundScoreRepository.findByBoutIdOrderByRoundNoAscJudgeIdAsc(boutId).stream()
-                .map(RoundScoreResponse::from)
-                .collect(Collectors.toList());
     }
 
     private void validatePathVariables(Long boutId, Integer roundNo) {

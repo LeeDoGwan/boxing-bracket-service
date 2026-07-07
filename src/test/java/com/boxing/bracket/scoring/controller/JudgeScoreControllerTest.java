@@ -5,6 +5,7 @@ import com.boxing.bracket.scoring.domain.RoundScore;
 import com.boxing.bracket.scoring.dto.RoundScoreResponse;
 import com.boxing.bracket.scoring.dto.RoundScoreSubmitRequest;
 import com.boxing.bracket.scoring.service.JudgeScoreService;
+import com.boxing.bracket.scoring.service.ScoreQueryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,9 @@ class JudgeScoreControllerTest {
 
     @MockBean
     private JudgeScoreService judgeScoreService;
+
+    @MockBean
+    private ScoreQueryService scoreQueryService;
 
     @Test
     void submitRoundScoreReturnsSubmittedScore() throws Exception {
@@ -80,7 +84,7 @@ class JudgeScoreControllerTest {
 
     @Test
     void getBoutScoresReturnsScores() throws Exception {
-        given(judgeScoreService.getBoutScores(1L))
+        given(scoreQueryService.getBoutScores(1L))
                 .willReturn(List.of(RoundScoreResponse.from(createSubmittedRoundScore())));
 
         mockMvc.perform(get("/api/judge/bouts/{boutId}/scores", 1L))
@@ -94,7 +98,7 @@ class JudgeScoreControllerTest {
 
     @Test
     void getBoutScoresReturnsNotFoundForMissingBout() throws Exception {
-        given(judgeScoreService.getBoutScores(99L))
+        given(scoreQueryService.getBoutScores(99L))
                 .willThrow(new BoutNotFoundException());
 
         mockMvc.perform(get("/api/judge/bouts/{boutId}/scores", 99L))
