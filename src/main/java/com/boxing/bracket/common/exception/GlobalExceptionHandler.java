@@ -2,6 +2,7 @@ package com.boxing.bracket.common.exception;
 
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.common.response.ApiResponse;
+import com.boxing.bracket.ring.exception.RingNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +17,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail("Bout not found"));
+    }
+
+    @ExceptionHandler(RingNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRingNotFound(RingNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail("Ring not found"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
