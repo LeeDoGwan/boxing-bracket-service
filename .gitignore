@@ -17,10 +17,10 @@ Thumbs.db
 node_modules/
 dist/
 build/
+target/
 
 # Python cache and virtual environments
 __pycache__/
 .pytest_cache/
 .venv/
 venv/
-
