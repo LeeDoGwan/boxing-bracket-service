@@ -1,10 +1,12 @@
 package com.boxing.bracket.ring.controller;
 
+import com.boxing.bracket.bout.dto.BoutDetailResponse;
 import com.boxing.bracket.common.response.ApiResponse;
 import com.boxing.bracket.ring.dto.RingStatusResponse;
 import com.boxing.bracket.ring.service.RingService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,5 +26,10 @@ public class RingController {
     @GetMapping("/status")
     public ApiResponse<List<RingStatusResponse>> getRingStatuses(@RequestParam Long tournamentId) {
         return ApiResponse.success(ringService.getRingStatuses(tournamentId), "OK");
+    }
+
+    @GetMapping("/{ringId}/current-bout")
+    public ApiResponse<BoutDetailResponse> getCurrentBout(@PathVariable Long ringId) {
+        return ApiResponse.success(ringService.getCurrentBout(ringId), "OK");
     }
 }

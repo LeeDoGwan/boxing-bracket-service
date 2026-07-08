@@ -2,7 +2,9 @@ package com.boxing.bracket.ring.controller;
 
 import com.boxing.bracket.athlete.domain.Athlete;
 import com.boxing.bracket.bout.domain.Bout;
+import com.boxing.bracket.bout.dto.BoutDetailResponse;
 import com.boxing.bracket.bout.domain.BoutStatus;
+import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.dto.RingBoutSummaryResponse;
@@ -65,6 +67,32 @@ class RingControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("tournamentId is required"));
+    }
+
+    @Test
+    void getCurrentBoutReturnsBoutDetail() throws Exception {
+        given(ringService.getCurrentBout(1L))
+                .willReturn(BoutDetailResponse.of(
+                        createBout(10L, 3, 3, BoutStatus.IN_PROGRESS),
+                        createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club"),
+                        createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club")
+                ));
+
+        mockMvc.perform(get("/api/rings/{ringId}/current-bout", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.boutId").value(10))
+                .andExpect(jsonPath("$.data.redAthlete.name").value("Hong Gil Dong"));
+    }
+
+    @Test
+    void getCurrentBoutReturnsNotFoundForMissingRing() throws Exception {
+        given(ringService.getCurrentBout(99L)).willThrow(new RingNotFoundException());
+
+        mockMvc.perform(get("/api/rings/{ringId}/current-bout", 99L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Ring not found"));
     }
 
     private Ring createRing(Long id) {

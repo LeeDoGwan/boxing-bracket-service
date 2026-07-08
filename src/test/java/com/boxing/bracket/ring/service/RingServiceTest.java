@@ -3,12 +3,18 @@ package com.boxing.bracket.ring.service;
 import com.boxing.bracket.athlete.domain.Athlete;
 import com.boxing.bracket.athlete.repository.AthleteRepository;
 import com.boxing.bracket.bout.domain.Bout;
+import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
+import com.boxing.bracket.bout.dto.BoutDetailResponse;
 import com.boxing.bracket.bout.repository.BoutRepository;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.dto.RingStatusResponse;
+import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.scoring.domain.BoutResult;
+import com.boxing.bracket.scoring.domain.DecisionType;
+import com.boxing.bracket.scoring.repository.BoutResultRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +43,9 @@ class RingServiceTest {
 
     @Mock
     private AthleteRepository athleteRepository;
+
+    @Mock
+    private BoutResultRepository boutResultRepository;
 
     @InjectMocks
     private RingService ringService;
@@ -147,6 +156,53 @@ class RingServiceTest {
                 .hasMessage("Athlete not found");
     }
 
+    @Test
+    void getCurrentBoutReturnsCurrentBoutDetail() {
+        Ring ring = createRing(1L, RingStatus.IN_PROGRESS, 10L);
+        Bout currentBout = createBout(10L, 3, 3, 10L, 11L, BoutStatus.IN_PROGRESS, false);
+        BoutResult boutResult = createBoutResult(100L, 10L, BoutSide.RED);
+
+        given(ringRepository.findById(1L)).willReturn(Optional.of(ring));
+        given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L)).willReturn(List.of(currentBout));
+        given(boutResultRepository.findByBoutId(10L)).willReturn(Optional.of(boutResult));
+        givenAthletes(10L, 11L);
+
+        BoutDetailResponse response = ringService.getCurrentBout(1L);
+
+        assertThat(response.getBoutId()).isEqualTo(10L);
+        assertThat(response.getBoutNumber()).isEqualTo(3);
+        assertThat(response.getRedAthlete().getName()).isEqualTo("Athlete 10");
+        assertThat(response.getResult().getResultId()).isEqualTo(100L);
+        assertThat(response.getResult().getWinnerSide()).isEqualTo(BoutSide.RED);
+    }
+
+    @Test
+    void getCurrentBoutReturnsNullWhenCurrentBoutDoesNotExist() {
+        Ring ring = createRing(1L, RingStatus.READY, null);
+        Bout nextBout = createBout(11L, 4, 4, 12L, 13L, BoutStatus.SCHEDULED, false);
+
+        given(ringRepository.findById(1L)).willReturn(Optional.of(ring));
+        given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L)).willReturn(List.of(nextBout));
+
+        assertThat(ringService.getCurrentBout(1L)).isNull();
+    }
+
+    @Test
+    void getCurrentBoutRejectsMissingRing() {
+        given(ringRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> ringService.getCurrentBout(99L))
+                .isInstanceOf(RingNotFoundException.class)
+                .hasMessage("Ring not found");
+    }
+
+    @Test
+    void getCurrentBoutRejectsNullRingId() {
+        assertThatThrownBy(() -> ringService.getCurrentBout(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ringId is required");
+    }
+
     private void givenAthletes(Long... athleteIds) {
         for (Long athleteId : athleteIds) {
             given(athleteRepository.findById(athleteId))
@@ -198,5 +254,20 @@ class RingServiceTest {
                 .build();
         ReflectionTestUtils.setField(athlete, "id", id);
         return athlete;
+    }
+
+    private BoutResult createBoutResult(Long id, Long boutId, BoutSide winnerSide) {
+        BoutResult boutResult = BoutResult.builder()
+                .boutId(boutId)
+                .redTotalScore(19)
+                .blueTotalScore(18)
+                .redPenaltyTotal(1)
+                .bluePenaltyTotal(0)
+                .winnerSide(winnerSide)
+                .decisionType(DecisionType.POINTS)
+                .confirmedBy(20L)
+                .build();
+        ReflectionTestUtils.setField(boutResult, "id", id);
+        return boutResult;
     }
 }
