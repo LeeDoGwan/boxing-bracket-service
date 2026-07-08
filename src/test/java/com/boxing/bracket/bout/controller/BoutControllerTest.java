@@ -2,11 +2,14 @@ package com.boxing.bracket.bout.controller;
 
 import com.boxing.bracket.athlete.domain.Athlete;
 import com.boxing.bracket.bout.domain.Bout;
+import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.dto.BoutDetailResponse;
 import com.boxing.bracket.bout.dto.BoutListResponse;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.service.BoutService;
+import com.boxing.bracket.scoring.domain.BoutResult;
+import com.boxing.bracket.scoring.domain.DecisionType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -106,6 +109,25 @@ class BoutControllerTest {
     }
 
     @Test
+    void getBoutDetailReturnsConfirmedResult() throws Exception {
+        given(boutService.getBoutDetail(1L))
+                .willReturn(BoutDetailResponse.of(
+                        createConfirmedBout(1L, 1, 1, false),
+                        createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club"),
+                        createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club"),
+                        createBoutResult(100L, 1L)
+                ));
+
+        mockMvc.perform(get("/api/bouts/{boutId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.resultConfirmed").value(true))
+                .andExpect(jsonPath("$.data.result.resultId").value(100))
+                .andExpect(jsonPath("$.data.result.redTotalScore").value(19))
+                .andExpect(jsonPath("$.data.result.winnerSide").value("RED"));
+    }
+
+    @Test
     void getBoutDetailReturnsNotFoundForMissingBout() throws Exception {
         given(boutService.getBoutDetail(99L)).willThrow(new BoutNotFoundException());
 
@@ -133,6 +155,13 @@ class BoutControllerTest {
         return bout;
     }
 
+    private Bout createConfirmedBout(Long id, int boutNumber, int scheduledOrder, boolean eventBout) {
+        Bout bout = createBout(id, boutNumber, scheduledOrder, eventBout);
+        bout.finish(BoutSide.RED);
+        bout.confirmResult(BoutSide.RED);
+        return bout;
+    }
+
     private Athlete createAthlete(Long id, String name, String affiliation) {
         Athlete athlete = Athlete.builder()
                 .name(name)
@@ -140,5 +169,20 @@ class BoutControllerTest {
                 .build();
         ReflectionTestUtils.setField(athlete, "id", id);
         return athlete;
+    }
+
+    private BoutResult createBoutResult(Long id, Long boutId) {
+        BoutResult boutResult = BoutResult.builder()
+                .boutId(boutId)
+                .redTotalScore(19)
+                .blueTotalScore(18)
+                .redPenaltyTotal(1)
+                .bluePenaltyTotal(0)
+                .winnerSide(BoutSide.RED)
+                .decisionType(DecisionType.POINTS)
+                .confirmedBy(20L)
+                .build();
+        ReflectionTestUtils.setField(boutResult, "id", id);
+        return boutResult;
     }
 }
