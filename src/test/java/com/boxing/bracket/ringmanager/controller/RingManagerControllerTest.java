@@ -15,9 +15,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,6 +61,18 @@ class RingManagerControllerTest {
     }
 
     @Test
+    void getRingBoutsReturnsBoutList() throws Exception {
+        given(ringManagerService.getRingBouts(1L))
+                .willReturn(List.of(RingManagerBoutResponse.from(createBout(10L))));
+
+        mockMvc.perform(get("/api/ring-manager/rings/{ringId}/bouts", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].boutId").value(10))
+                .andExpect(jsonPath("$.data[0].scheduledOrder").value(1));
+    }
+
+    @Test
     void updateBoutStatusReturnsUpdatedBout() throws Exception {
         Bout bout = createBout(10L);
         bout.changeStatus(BoutStatus.SCORING);
@@ -91,9 +106,11 @@ class RingManagerControllerTest {
                 .tournamentId(1L)
                 .ringId(1L)
                 .boutNumber(1)
+                .matchType("75 - middle school")
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
                 .status(BoutStatus.READY)
+                .scheduledOrder(1)
                 .build();
         ReflectionTestUtils.setField(bout, "id", id);
         return bout;

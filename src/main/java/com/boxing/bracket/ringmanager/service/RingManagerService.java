@@ -12,6 +12,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Lazy
 @Transactional
@@ -40,6 +43,21 @@ public class RingManagerService {
 
         ringRepository.save(ring);
         return RingManagerBoutResponse.from(boutRepository.save(bout));
+    }
+
+    @Transactional(readOnly = true)
+    public List<RingManagerBoutResponse> getRingBouts(Long ringId) {
+        if (ringId == null) {
+            throw new IllegalArgumentException("ringId is required");
+        }
+        if (!ringRepository.existsById(ringId)) {
+            throw new RingNotFoundException();
+        }
+
+        return boutRepository.findByRingIdOrderByScheduledOrderAsc(ringId).stream()
+                .filter(bout -> !bout.isEventBout())
+                .map(RingManagerBoutResponse::from)
+                .collect(Collectors.toList());
     }
 
     public RingManagerBoutResponse updateBoutStatus(Long boutId, BoutStatusUpdateRequest request) {

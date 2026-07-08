@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,6 +83,38 @@ class RingManagerServiceTest {
     }
 
     @Test
+    void getRingBoutsReturnsOfficialBouts() {
+        Bout officialBout = createBout(10L);
+        Bout eventBout = createBout(11L);
+        ReflectionTestUtils.setField(eventBout, "eventBout", true);
+        given(ringRepository.existsById(1L)).willReturn(true);
+        given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(officialBout, eventBout));
+
+        List<RingManagerBoutResponse> responses = ringManagerService.getRingBouts(1L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getBoutId()).isEqualTo(10L);
+        assertThat(responses.get(0).getScheduledOrder()).isEqualTo(1);
+    }
+
+    @Test
+    void getRingBoutsRejectsMissingRing() {
+        given(ringRepository.existsById(99L)).willReturn(false);
+
+        assertThatThrownBy(() -> ringManagerService.getRingBouts(99L))
+                .isInstanceOf(RingNotFoundException.class)
+                .hasMessage("Ring not found");
+    }
+
+    @Test
+    void getRingBoutsRejectsNullRingId() {
+        assertThatThrownBy(() -> ringManagerService.getRingBouts(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ringId is required");
+    }
+
+    @Test
     void updateBoutStatusChangesBoutStatus() {
         Bout bout = createBout(10L);
         BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(BoutStatus.SCORING);
@@ -119,9 +152,11 @@ class RingManagerServiceTest {
                 .tournamentId(1L)
                 .ringId(1L)
                 .boutNumber(1)
+                .matchType("75 - middle school")
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
                 .status(BoutStatus.READY)
+                .scheduledOrder(1)
                 .build();
         ReflectionTestUtils.setField(bout, "id", id);
         return bout;
