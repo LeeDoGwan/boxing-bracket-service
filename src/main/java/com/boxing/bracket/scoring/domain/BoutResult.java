@@ -71,4 +71,33 @@ public class BoutResult extends BaseTimeEntity {
         this.confirmedBy = confirmedBy;
         this.confirmedAt = confirmedAt;
     }
+
+    public void confirm(
+            Integer redTotalScore,
+            Integer blueTotalScore,
+            Integer redPenaltyTotal,
+            Integer bluePenaltyTotal,
+            BoutSide winnerSide,
+            DecisionType decisionType,
+            Long confirmedBy
+    ) {
+        validateTotal(redTotalScore, "redTotalScore");
+        validateTotal(blueTotalScore, "blueTotalScore");
+        validateTotal(redPenaltyTotal, "redPenaltyTotal");
+        validateTotal(bluePenaltyTotal, "bluePenaltyTotal");
+        this.redTotalScore = redTotalScore;
+        this.blueTotalScore = blueTotalScore;
+        this.redPenaltyTotal = redPenaltyTotal;
+        this.bluePenaltyTotal = bluePenaltyTotal;
+        this.winnerSide = winnerSide;
+        this.decisionType = decisionType == null ? DecisionType.UNKNOWN : decisionType;
+        this.confirmedBy = confirmedBy;
+        this.confirmedAt = LocalDateTime.now();
+    }
+
+    private void validateTotal(Integer total, String fieldName) {
+        if (total != null && total < 0) {
+            throw new IllegalArgumentException(fieldName + " must be greater than or equal to 0");
+        }
+    }
 }
