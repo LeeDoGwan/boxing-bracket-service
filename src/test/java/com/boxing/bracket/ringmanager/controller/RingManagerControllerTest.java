@@ -101,16 +101,32 @@ class RingManagerControllerTest {
                 .andExpect(jsonPath("$.message").value("status is required"));
     }
 
+    @Test
+    void moveToNextBoutReturnsNextBout() throws Exception {
+        given(ringManagerService.moveToNextBout(1L))
+                .willReturn(RingManagerBoutResponse.from(createBout(11L, 2)));
+
+        mockMvc.perform(post("/api/ring-manager/rings/{ringId}/next", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.boutId").value(11))
+                .andExpect(jsonPath("$.data.scheduledOrder").value(2));
+    }
+
     private Bout createBout(Long id) {
+        return createBout(id, 1);
+    }
+
+    private Bout createBout(Long id, int scheduledOrder) {
         Bout bout = Bout.builder()
                 .tournamentId(1L)
                 .ringId(1L)
-                .boutNumber(1)
+                .boutNumber(scheduledOrder)
                 .matchType("75 - middle school")
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
                 .status(BoutStatus.READY)
-                .scheduledOrder(1)
+                .scheduledOrder(scheduledOrder)
                 .build();
         ReflectionTestUtils.setField(bout, "id", id);
         return bout;

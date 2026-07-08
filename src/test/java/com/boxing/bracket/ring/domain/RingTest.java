@@ -32,4 +32,19 @@ class RingTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("boutId is required");
     }
+
+    @Test
+    void prepareCurrentBoutSetsBoutAndReadyStatus() {
+        Ring ring = Ring.builder()
+                .tournamentId(1L)
+                .name("Ring 1")
+                .status(RingStatus.IN_PROGRESS)
+                .currentBoutId(10L)
+                .build();
+
+        ring.prepareCurrentBout(11L);
+
+        assertThat(ring.getCurrentBoutId()).isEqualTo(11L);
+        assertThat(ring.getStatus()).isEqualTo(RingStatus.READY);
+    }
 }

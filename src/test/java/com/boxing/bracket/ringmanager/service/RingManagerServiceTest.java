@@ -115,6 +115,49 @@ class RingManagerServiceTest {
     }
 
     @Test
+    void moveToNextBoutAssignsNextBoutToRing() {
+        Ring ring = createRing(1L);
+        ring.assignCurrentBout(10L);
+        Bout currentBout = createBout(10L);
+        currentBout.changeStatus(BoutStatus.FINISHED);
+        Bout nextBout = createBout(11L, 2);
+        given(ringRepository.findById(1L)).willReturn(Optional.of(ring));
+        given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(currentBout, nextBout));
+        given(ringRepository.save(any(Ring.class))).willAnswer(invocation -> invocation.getArgument(0));
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        RingManagerBoutResponse response = ringManagerService.moveToNextBout(1L);
+
+        assertThat(response.getBoutId()).isEqualTo(11L);
+        assertThat(response.getStatus()).isEqualTo(BoutStatus.READY);
+        assertThat(ring.getCurrentBoutId()).isEqualTo(11L);
+        assertThat(ring.getStatus()).isEqualTo(RingStatus.READY);
+    }
+
+    @Test
+    void moveToNextBoutRejectsMissingNextBout() {
+        Ring ring = createRing(1L);
+        ring.assignCurrentBout(10L);
+        Bout currentBout = createBout(10L);
+        given(ringRepository.findById(1L)).willReturn(Optional.of(ring));
+        given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L)).willReturn(List.of(currentBout));
+
+        assertThatThrownBy(() -> ringManagerService.moveToNextBout(1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("next bout does not exist");
+    }
+
+    @Test
+    void moveToNextBoutRejectsMissingRing() {
+        given(ringRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> ringManagerService.moveToNextBout(99L))
+                .isInstanceOf(RingNotFoundException.class)
+                .hasMessage("Ring not found");
+    }
+
+    @Test
     void updateBoutStatusChangesBoutStatus() {
         Bout bout = createBout(10L);
         BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(BoutStatus.SCORING);
@@ -148,15 +191,19 @@ class RingManagerServiceTest {
     }
 
     private Bout createBout(Long id) {
+        return createBout(id, 1);
+    }
+
+    private Bout createBout(Long id, int scheduledOrder) {
         Bout bout = Bout.builder()
                 .tournamentId(1L)
                 .ringId(1L)
-                .boutNumber(1)
+                .boutNumber(scheduledOrder)
                 .matchType("75 - middle school")
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
                 .status(BoutStatus.READY)
-                .scheduledOrder(1)
+                .scheduledOrder(scheduledOrder)
                 .build();
         ReflectionTestUtils.setField(bout, "id", id);
         return bout;
