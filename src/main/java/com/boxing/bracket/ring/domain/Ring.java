@@ -44,4 +44,12 @@ public class Ring extends BaseTimeEntity {
         this.status = status == null ? RingStatus.READY : status;
         this.currentBoutId = currentBoutId;
     }
+
+    public void assignCurrentBout(Long boutId) {
+        if (boutId == null) {
+            throw new IllegalArgumentException("boutId is required");
+        }
+        this.currentBoutId = boutId;
+        this.status = RingStatus.IN_PROGRESS;
+    }
 }
