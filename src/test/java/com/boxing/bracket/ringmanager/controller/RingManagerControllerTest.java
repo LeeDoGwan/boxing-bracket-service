@@ -3,15 +3,20 @@ package com.boxing.bracket.ringmanager.controller;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
+import com.boxing.bracket.ringmanager.dto.BoutStatusUpdateRequest;
 import com.boxing.bracket.ringmanager.dto.RingManagerBoutResponse;
 import com.boxing.bracket.ringmanager.service.RingManagerService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,6 +27,9 @@ class RingManagerControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private RingManagerService ringManagerService;
@@ -47,6 +55,35 @@ class RingManagerControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Bout not found"));
+    }
+
+    @Test
+    void updateBoutStatusReturnsUpdatedBout() throws Exception {
+        Bout bout = createBout(10L);
+        bout.changeStatus(BoutStatus.SCORING);
+        BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(BoutStatus.SCORING);
+        given(ringManagerService.updateBoutStatus(eq(10L), any(BoutStatusUpdateRequest.class)))
+                .willReturn(RingManagerBoutResponse.from(bout));
+
+        mockMvc.perform(post("/api/ring-manager/bouts/{boutId}/status", 10L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.boutId").value(10))
+                .andExpect(jsonPath("$.data.status").value("SCORING"));
+    }
+
+    @Test
+    void updateBoutStatusReturnsBadRequestForMissingStatus() throws Exception {
+        BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(null);
+
+        mockMvc.perform(post("/api/ring-manager/bouts/{boutId}/status", 10L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("status is required"));
     }
 
     private Bout createBout(Long id) {

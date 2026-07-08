@@ -6,6 +6,7 @@ import com.boxing.bracket.bout.repository.BoutRepository;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.ringmanager.dto.BoutStatusUpdateRequest;
 import com.boxing.bracket.ringmanager.dto.RingManagerBoutResponse;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -39,5 +40,27 @@ public class RingManagerService {
 
         ringRepository.save(ring);
         return RingManagerBoutResponse.from(boutRepository.save(bout));
+    }
+
+    public RingManagerBoutResponse updateBoutStatus(Long boutId, BoutStatusUpdateRequest request) {
+        if (boutId == null) {
+            throw new IllegalArgumentException("boutId is required");
+        }
+        validateStatusUpdateRequest(request);
+
+        Bout bout = boutRepository.findById(boutId)
+                .orElseThrow(BoutNotFoundException::new);
+        bout.changeStatus(request.getStatus());
+
+        return RingManagerBoutResponse.from(boutRepository.save(bout));
+    }
+
+    private void validateStatusUpdateRequest(BoutStatusUpdateRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("status request is required");
+        }
+        if (request.getStatus() == null) {
+            throw new IllegalArgumentException("status is required");
+        }
     }
 }

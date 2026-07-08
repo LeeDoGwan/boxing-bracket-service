@@ -117,4 +117,17 @@ public class Bout extends BaseTimeEntity {
         this.winnerSide = winnerSide;
         this.resultConfirmed = true;
     }
+
+    public void changeStatus(BoutStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("status is required");
+        }
+        this.status = status;
+        if (status == BoutStatus.IN_PROGRESS && this.startedAt == null) {
+            this.startedAt = LocalDateTime.now();
+        }
+        if (status == BoutStatus.FINISHED && this.endedAt == null) {
+            this.endedAt = LocalDateTime.now();
+        }
+    }
 }

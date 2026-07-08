@@ -8,6 +8,7 @@ import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.ringmanager.dto.BoutStatusUpdateRequest;
 import com.boxing.bracket.ringmanager.dto.RingManagerBoutResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,6 +79,39 @@ class RingManagerServiceTest {
         assertThatThrownBy(() -> ringManagerService.startBout(null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("boutId is required");
+    }
+
+    @Test
+    void updateBoutStatusChangesBoutStatus() {
+        Bout bout = createBout(10L);
+        BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(BoutStatus.SCORING);
+        given(boutRepository.findById(10L)).willReturn(Optional.of(bout));
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        RingManagerBoutResponse response = ringManagerService.updateBoutStatus(10L, request);
+
+        assertThat(response.getBoutId()).isEqualTo(10L);
+        assertThat(response.getStatus()).isEqualTo(BoutStatus.SCORING);
+        assertThat(bout.getStatus()).isEqualTo(BoutStatus.SCORING);
+    }
+
+    @Test
+    void updateBoutStatusRejectsMissingBout() {
+        BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(BoutStatus.SCORING);
+        given(boutRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> ringManagerService.updateBoutStatus(99L, request))
+                .isInstanceOf(BoutNotFoundException.class)
+                .hasMessage("Bout not found");
+    }
+
+    @Test
+    void updateBoutStatusRejectsNullStatus() {
+        BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(null);
+
+        assertThatThrownBy(() -> ringManagerService.updateBoutStatus(10L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("status is required");
     }
 
     private Bout createBout(Long id) {
