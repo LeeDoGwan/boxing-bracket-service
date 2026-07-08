@@ -1,5 +1,6 @@
 package com.boxing.bracket.common.exception;
 
+import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.common.response.ApiResponse;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
@@ -13,6 +14,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AthleteNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAthleteNotFound(AthleteNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail("Athlete not found"));
+    }
 
     @ExceptionHandler(BoutNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleBoutNotFound(BoutNotFoundException exception) {
