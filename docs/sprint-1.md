@@ -18,6 +18,12 @@ One ring can run one bout end to end:
 4. A supervisor can review scores and confirm the result.
 5. The confirmed result appears on the audience home and full bracket.
 
+## Verification Status
+
+- Test documentation: [Testing](testing.md)
+- Latest `mvn test` result: 234 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
+
 ## Screens
 
 ### Audience Home

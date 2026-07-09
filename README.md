@@ -18,6 +18,7 @@ Implemented core areas:
 
 - [Product requirements](docs/requirements.md)
 - [Sprint 1 scope](docs/sprint-1.md)
+- [Test inventory and verification](docs/testing.md)
 
 ## Local Development
 
@@ -31,6 +32,8 @@ Implemented core areas:
 ```bash
 mvn test
 ```
+
+Current documented suite: 39 test classes, 234 test cases.
 
 ### Run application
 
