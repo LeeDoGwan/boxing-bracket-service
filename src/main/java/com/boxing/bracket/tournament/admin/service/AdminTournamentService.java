@@ -6,8 +6,12 @@ import com.boxing.bracket.tournament.domain.Tournament;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Lazy
@@ -18,6 +22,21 @@ public class AdminTournamentService {
 
     public AdminTournamentService(TournamentRepository tournamentRepository) {
         this.tournamentRepository = tournamentRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminTournamentResponse> getTournaments() {
+        return tournamentRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).stream()
+                .map(AdminTournamentResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public AdminTournamentResponse getTournament(Long tournamentId) {
+        validateTournamentId(tournamentId);
+        return tournamentRepository.findById(tournamentId)
+                .map(AdminTournamentResponse::from)
+                .orElseThrow(TournamentNotFoundException::new);
     }
 
     public AdminTournamentResponse createTournament(AdminTournamentRequest request) {

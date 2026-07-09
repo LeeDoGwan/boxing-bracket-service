@@ -11,9 +11,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +32,37 @@ class AdminTournamentServiceTest {
 
     @InjectMocks
     private AdminTournamentService adminTournamentService;
+
+    @Test
+    void getTournamentsReturnsTournamentList() {
+        given(tournamentRepository.findAll(Sort.by(Sort.Direction.DESC, "id")))
+                .willReturn(List.of(createTournament(2L), createTournament(1L)));
+
+        List<AdminTournamentResponse> responses = adminTournamentService.getTournaments();
+
+        assertThat(responses).hasSize(2);
+        assertThat(responses.get(0).getTournamentId()).isEqualTo(2L);
+        assertThat(responses.get(1).getTournamentId()).isEqualTo(1L);
+    }
+
+    @Test
+    void getTournamentReturnsTournament() {
+        given(tournamentRepository.findById(1L)).willReturn(Optional.of(createTournament(1L)));
+
+        AdminTournamentResponse response = adminTournamentService.getTournament(1L);
+
+        assertThat(response.getTournamentId()).isEqualTo(1L);
+        assertThat(response.getName()).isEqualTo("Seoul Cup");
+    }
+
+    @Test
+    void getTournamentRejectsMissingTournament() {
+        given(tournamentRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminTournamentService.getTournament(99L))
+                .isInstanceOf(TournamentNotFoundException.class)
+                .hasMessage("Tournament not found");
+    }
 
     @Test
     void createTournamentSavesTournament() {

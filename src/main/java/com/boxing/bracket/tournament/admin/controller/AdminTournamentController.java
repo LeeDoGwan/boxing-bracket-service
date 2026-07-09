@@ -6,6 +6,7 @@ import com.boxing.bracket.tournament.admin.dto.AdminTournamentResponse;
 import com.boxing.bracket.tournament.admin.service.AdminTournamentService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/tournaments")
@@ -23,6 +25,16 @@ public class AdminTournamentController {
 
     public AdminTournamentController(@Lazy AdminTournamentService adminTournamentService) {
         this.adminTournamentService = adminTournamentService;
+    }
+
+    @GetMapping
+    public ApiResponse<List<AdminTournamentResponse>> getTournaments() {
+        return ApiResponse.success(adminTournamentService.getTournaments(), "OK");
+    }
+
+    @GetMapping("/{tournamentId}")
+    public ApiResponse<AdminTournamentResponse> getTournament(@PathVariable Long tournamentId) {
+        return ApiResponse.success(adminTournamentService.getTournament(tournamentId), "OK");
     }
 
     @PostMapping

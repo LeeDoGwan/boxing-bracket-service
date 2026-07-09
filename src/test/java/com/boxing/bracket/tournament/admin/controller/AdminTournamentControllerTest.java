@@ -16,12 +16,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -38,6 +40,37 @@ class AdminTournamentControllerTest {
 
     @MockBean
     private AdminTournamentService adminTournamentService;
+
+    @Test
+    void getTournamentsReturnsTournamentList() throws Exception {
+        given(adminTournamentService.getTournaments()).willReturn(List.of(response(1L)));
+
+        mockMvc.perform(get("/api/admin/tournaments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].tournamentId").value(1))
+                .andExpect(jsonPath("$.data[0].name").value("Seoul Cup"));
+    }
+
+    @Test
+    void getTournamentReturnsTournament() throws Exception {
+        given(adminTournamentService.getTournament(1L)).willReturn(response(1L));
+
+        mockMvc.perform(get("/api/admin/tournaments/{tournamentId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.tournamentId").value(1));
+    }
+
+    @Test
+    void getTournamentReturnsNotFoundForMissingTournament() throws Exception {
+        given(adminTournamentService.getTournament(99L)).willThrow(new TournamentNotFoundException());
+
+        mockMvc.perform(get("/api/admin/tournaments/{tournamentId}", 99L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Tournament not found"));
+    }
 
     @Test
     void createTournamentReturnsCreatedTournament() throws Exception {
