@@ -6,6 +6,7 @@ import com.boxing.bracket.auth.exception.InvalidCredentialsException;
 import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.common.response.ApiResponse;
+import com.boxing.bracket.notice.exception.NoticeNotFoundException;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.user.exception.AccountNotFoundException;
@@ -62,6 +63,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail("Bout not found"));
+    }
+
+    @ExceptionHandler(NoticeNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoticeNotFound(NoticeNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail("Notice not found"));
     }
 
     @ExceptionHandler(RingNotFoundException.class)

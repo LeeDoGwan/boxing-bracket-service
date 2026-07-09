@@ -3,6 +3,7 @@ package com.boxing.bracket.home.service;
 import com.boxing.bracket.bout.dto.BoutListResponse;
 import com.boxing.bracket.bout.service.BoutService;
 import com.boxing.bracket.home.dto.HomeResponse;
+import com.boxing.bracket.notice.service.NoticeService;
 import com.boxing.bracket.ring.service.RingService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -18,10 +19,16 @@ public class HomeService {
 
     private final RingService ringService;
     private final BoutService boutService;
+    private final NoticeService noticeService;
 
-    public HomeService(@Lazy RingService ringService, @Lazy BoutService boutService) {
+    public HomeService(
+            @Lazy RingService ringService,
+            @Lazy BoutService boutService,
+            @Lazy NoticeService noticeService
+    ) {
         this.ringService = ringService;
         this.boutService = boutService;
+        this.noticeService = noticeService;
     }
 
     public HomeResponse getHome(Long tournamentId) {
@@ -35,6 +42,7 @@ public class HomeService {
 
         return HomeResponse.of(
                 tournamentId,
+                noticeService.getActiveNotices(tournamentId),
                 ringService.getRingStatuses(tournamentId),
                 confirmedResults
         );

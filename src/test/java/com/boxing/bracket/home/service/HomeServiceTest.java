@@ -7,6 +7,9 @@ import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.dto.BoutListResponse;
 import com.boxing.bracket.bout.service.BoutService;
 import com.boxing.bracket.home.dto.HomeResponse;
+import com.boxing.bracket.notice.domain.Notice;
+import com.boxing.bracket.notice.dto.NoticeResponse;
+import com.boxing.bracket.notice.service.NoticeService;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.dto.RingStatusResponse;
@@ -33,6 +36,9 @@ class HomeServiceTest {
     @Mock
     private BoutService boutService;
 
+    @Mock
+    private NoticeService noticeService;
+
     @InjectMocks
     private HomeService homeService;
 
@@ -49,12 +55,16 @@ class HomeServiceTest {
                 createAthlete(12L, "Park Min Soo"),
                 createAthlete(13L, "Lee Jun Ho")
         );
+        NoticeResponse notice = NoticeResponse.from(createNotice(1L));
         given(ringService.getRingStatuses(1L)).willReturn(List.of(ringStatus));
         given(boutService.getOfficialBouts(1L)).willReturn(List.of(confirmedBout, scheduledBout));
+        given(noticeService.getActiveNotices(1L)).willReturn(List.of(notice));
 
         HomeResponse response = homeService.getHome(1L);
 
         assertThat(response.getTournamentId()).isEqualTo(1L);
+        assertThat(response.getNotices()).hasSize(1);
+        assertThat(response.getNotices().get(0).getNoticeId()).isEqualTo(1L);
         assertThat(response.getRingStatuses()).hasSize(1);
         assertThat(response.getConfirmedResults()).hasSize(1);
         assertThat(response.getConfirmedResults().get(0).getBoutId()).isEqualTo(10L);
@@ -109,5 +119,17 @@ class HomeServiceTest {
                 .build();
         ReflectionTestUtils.setField(athlete, "id", id);
         return athlete;
+    }
+
+    private Notice createNotice(Long id) {
+        Notice notice = Notice.builder()
+                .tournamentId(1L)
+                .title("Notice " + id)
+                .content("Content " + id)
+                .active(true)
+                .displayOrder(1)
+                .build();
+        ReflectionTestUtils.setField(notice, "id", id);
+        return notice;
     }
 }

@@ -7,6 +7,8 @@ import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.dto.BoutListResponse;
 import com.boxing.bracket.home.dto.HomeResponse;
 import com.boxing.bracket.home.service.HomeService;
+import com.boxing.bracket.notice.domain.Notice;
+import com.boxing.bracket.notice.dto.NoticeResponse;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.dto.RingStatusResponse;
@@ -38,6 +40,7 @@ class HomeControllerTest {
         given(homeService.getHome(1L))
                 .willReturn(HomeResponse.of(
                         1L,
+                        List.of(NoticeResponse.from(createNotice(1L))),
                         List.of(RingStatusResponse.of(createRing(1L), null, null)),
                         List.of(BoutListResponse.of(
                                 createConfirmedBout(10L),
@@ -51,6 +54,7 @@ class HomeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.tournamentId").value(1))
+                .andExpect(jsonPath("$.data.notices[0].noticeId").value(1))
                 .andExpect(jsonPath("$.data.ringStatuses[0].ringId").value(1))
                 .andExpect(jsonPath("$.data.confirmedResults[0].boutId").value(10));
     }
@@ -96,5 +100,17 @@ class HomeControllerTest {
                 .build();
         ReflectionTestUtils.setField(athlete, "id", id);
         return athlete;
+    }
+
+    private Notice createNotice(Long id) {
+        Notice notice = Notice.builder()
+                .tournamentId(1L)
+                .title("Notice " + id)
+                .content("Content " + id)
+                .active(true)
+                .displayOrder(1)
+                .build();
+        ReflectionTestUtils.setField(notice, "id", id);
+        return notice;
     }
 }

@@ -5,19 +5,19 @@ Last updated: 2026-07-10
 ## Latest Verification
 
 - Command: `mvn test`
-- Verified at: 2026-07-10T06:49:50+09:00
-- Result: 256 passed, 0 failed, 0 errors, 0 skipped
-- Test classes: 43
+- Verified at: 2026-07-10T07:36:39+09:00
+- Result: 286 passed, 0 failed, 0 errors, 0 skipped
+- Test classes: 49
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `src/test/resources/application-test.yml`
 
 ## Test Scope
 
 - Auth API and role access policy tests for login, logout, current account lookup, protected route mapping, and interceptor behavior.
-- Domain behavior tests for account, tournament, ring, athlete, bout, and scoring models.
-- Repository slice tests for tournament, ring, athlete, bout, account, and round score persistence.
-- Service tests for audience home, public bout/ring queries, judge scoring, supervisor scoring, ring manager workflow, and admin management flows.
-- Controller tests for health, audience home, public bout/ring APIs, judge APIs, supervisor APIs, ring manager APIs, and admin APIs.
+- Domain behavior tests for account, tournament, ring, athlete, bout, notice, and scoring models.
+- Repository slice tests for tournament, ring, athlete, bout, notice, account, and round score persistence.
+- Service tests for audience home, public bout/ring/notice queries, judge scoring, supervisor scoring, ring manager workflow, and admin management flows.
+- Controller tests for health, audience home, public bout/ring/notice APIs, judge APIs, supervisor APIs, ring manager APIs, and admin APIs.
 
 ## Verification Inventory
 
@@ -40,6 +40,12 @@ Last updated: 2026-07-10
 | Health | `HealthControllerTest` | 1 |
 | Home | `HomeControllerTest` | 2 |
 | Home | `HomeServiceTest` | 2 |
+| Notice | `AdminNoticeControllerTest` | 10 |
+| Notice | `AdminNoticeServiceTest` | 10 |
+| Notice | `NoticeControllerTest` | 3 |
+| Notice | `NoticeTest` | 3 |
+| Notice | `NoticeRepositoryTest` | 1 |
+| Notice | `NoticeServiceTest` | 3 |
 | Ring | `AdminRingControllerTest` | 11 |
 | Ring | `AdminRingServiceTest` | 12 |
 | Ring | `RingControllerTest` | 4 |
@@ -70,8 +76,9 @@ Last updated: 2026-07-10
 ## Verified User Flows
 
 - Active accounts can log in, read the current account, log out, and be checked against role-specific protected API groups.
+- Audience can read active notice banners, and admin users can manage notice lifecycle per tournament.
 - Audience can read tournament home data, current bout information, ring status, and official bout lists/search/detail.
 - Judges can submit round scores and retrieve judge-specific scores.
 - Supervisors can review scores, add penalties, and confirm bout results.
 - Ring managers can list bouts, start bouts, start rounds, update bout status, and advance to the next bout.
-- Admin users can manage tournaments, rings, athletes, bouts, and service accounts.
+- Admin users can manage tournaments, rings, athletes, bouts, notices, and service accounts.

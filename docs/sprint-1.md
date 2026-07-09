@@ -21,8 +21,8 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 256 passed, 0 failed, 0 errors, 0 skipped.
-- Covered areas: auth, role access policy, audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
+- Latest `mvn test` result: 286 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, role access policy, notices, audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
 
 ## Screens
 
@@ -89,7 +89,7 @@ CSV and Excel upload are deferred.
 ### Audience Home
 
 - `GET /api/home`
-- `GET /api/notices`
+- `GET /api/notices?tournamentId=`
 - `GET /api/rings/status`
 - `GET /api/rings/{ringId}/current-bout`
 
@@ -144,6 +144,11 @@ CSV and Excel upload are deferred.
 - `POST /api/admin/bouts`
 - `PUT /api/admin/bouts/{boutId}`
 - `DELETE /api/admin/bouts/{boutId}`
+- `GET /api/admin/notices?tournamentId=`
+- `GET /api/admin/notices/{noticeId}`
+- `POST /api/admin/notices`
+- `PUT /api/admin/notices/{noticeId}`
+- `DELETE /api/admin/notices/{noticeId}`
 - `GET /api/admin/accounts`
 - `GET /api/admin/accounts/{accountId}`
 - `POST /api/admin/accounts`
