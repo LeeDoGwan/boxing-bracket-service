@@ -16,6 +16,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Lazy
 @Transactional
@@ -36,6 +39,26 @@ public class AdminBoutService {
         this.tournamentRepository = tournamentRepository;
         this.ringRepository = ringRepository;
         this.athleteRepository = athleteRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminBoutResponse> getBouts(Long tournamentId) {
+        validateTournamentId(tournamentId);
+        if (!tournamentRepository.existsById(tournamentId)) {
+            throw new TournamentNotFoundException();
+        }
+
+        return boutRepository.findByTournamentIdOrderByScheduledOrderAsc(tournamentId).stream()
+                .map(AdminBoutResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public AdminBoutResponse getBout(Long boutId) {
+        validateBoutId(boutId);
+        return boutRepository.findById(boutId)
+                .map(AdminBoutResponse::from)
+                .orElseThrow(BoutNotFoundException::new);
     }
 
     public AdminBoutResponse createBout(AdminBoutRequest request) {
@@ -111,9 +134,7 @@ public class AdminBoutService {
     }
 
     private void validateRequiredFields(AdminBoutRequest request) {
-        if (request.getTournamentId() == null) {
-            throw new IllegalArgumentException("tournamentId is required");
-        }
+        validateTournamentId(request.getTournamentId());
         if (request.getRingId() == null) {
             throw new IllegalArgumentException("ringId is required");
         }
@@ -134,6 +155,12 @@ public class AdminBoutService {
         }
         if (request.getScheduledOrder() != null && request.getScheduledOrder() <= 0) {
             throw new IllegalArgumentException("scheduledOrder must be positive");
+        }
+    }
+
+    private void validateTournamentId(Long tournamentId) {
+        if (tournamentId == null) {
+            throw new IllegalArgumentException("tournamentId is required");
         }
     }
 

@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,6 +46,47 @@ class AdminBoutServiceTest {
 
     @InjectMocks
     private AdminBoutService adminBoutService;
+
+    @Test
+    void getBoutsReturnsTournamentBouts() {
+        given(tournamentRepository.existsById(1L)).willReturn(true);
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(createBout(20L), createBout(21L)));
+
+        List<AdminBoutResponse> responses = adminBoutService.getBouts(1L);
+
+        assertThat(responses).hasSize(2);
+        assertThat(responses.get(0).getBoutId()).isEqualTo(20L);
+        assertThat(responses.get(1).getBoutId()).isEqualTo(21L);
+    }
+
+    @Test
+    void getBoutsRejectsMissingTournament() {
+        given(tournamentRepository.existsById(99L)).willReturn(false);
+
+        assertThatThrownBy(() -> adminBoutService.getBouts(99L))
+                .isInstanceOf(TournamentNotFoundException.class)
+                .hasMessage("Tournament not found");
+    }
+
+    @Test
+    void getBoutReturnsBout() {
+        given(boutRepository.findById(20L)).willReturn(Optional.of(createBout(20L)));
+
+        AdminBoutResponse response = adminBoutService.getBout(20L);
+
+        assertThat(response.getBoutId()).isEqualTo(20L);
+        assertThat(response.getBoutNumber()).isEqualTo(1);
+    }
+
+    @Test
+    void getBoutRejectsMissingBout() {
+        given(boutRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminBoutService.getBout(99L))
+                .isInstanceOf(BoutNotFoundException.class)
+                .hasMessage("Bout not found");
+    }
 
     @Test
     void createBoutSavesBout() {

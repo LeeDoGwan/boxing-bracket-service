@@ -15,11 +15,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -36,6 +39,46 @@ class AdminBoutControllerTest {
 
     @MockBean
     private AdminBoutService adminBoutService;
+
+    @Test
+    void getBoutsReturnsBoutList() throws Exception {
+        given(adminBoutService.getBouts(1L)).willReturn(List.of(response(20L)));
+
+        mockMvc.perform(get("/api/admin/bouts")
+                        .param("tournamentId", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].boutId").value(20))
+                .andExpect(jsonPath("$.data[0].boutNumber").value(1));
+    }
+
+    @Test
+    void getBoutsReturnsBadRequestForMissingTournamentId() throws Exception {
+        mockMvc.perform(get("/api/admin/bouts"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("tournamentId is required"));
+    }
+
+    @Test
+    void getBoutReturnsBout() throws Exception {
+        given(adminBoutService.getBout(20L)).willReturn(response(20L));
+
+        mockMvc.perform(get("/api/admin/bouts/{boutId}", 20L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.boutId").value(20));
+    }
+
+    @Test
+    void getBoutReturnsNotFoundForMissingBout() throws Exception {
+        given(adminBoutService.getBout(99L)).willThrow(new BoutNotFoundException());
+
+        mockMvc.perform(get("/api/admin/bouts/{boutId}", 99L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Bout not found"));
+    }
 
     @Test
     void createBoutReturnsCreatedBout() throws Exception {
