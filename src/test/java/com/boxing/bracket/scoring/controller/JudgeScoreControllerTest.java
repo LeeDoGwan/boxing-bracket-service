@@ -84,7 +84,7 @@ class JudgeScoreControllerTest {
 
     @Test
     void getBoutScoresReturnsScores() throws Exception {
-        given(scoreQueryService.getBoutScores(1L))
+        given(scoreQueryService.getBoutScores(1L, null))
                 .willReturn(List.of(RoundScoreResponse.from(createSubmittedRoundScore())));
 
         mockMvc.perform(get("/api/judge/bouts/{boutId}/scores", 1L))
@@ -97,8 +97,20 @@ class JudgeScoreControllerTest {
     }
 
     @Test
+    void getBoutScoresPassesJudgeIdFilter() throws Exception {
+        given(scoreQueryService.getBoutScores(1L, 10L))
+                .willReturn(List.of(RoundScoreResponse.from(createSubmittedRoundScore())));
+
+        mockMvc.perform(get("/api/judge/bouts/{boutId}/scores", 1L)
+                        .param("judgeId", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].judgeId").value(10));
+    }
+
+    @Test
     void getBoutScoresReturnsNotFoundForMissingBout() throws Exception {
-        given(scoreQueryService.getBoutScores(99L))
+        given(scoreQueryService.getBoutScores(99L, null))
                 .willThrow(new BoutNotFoundException());
 
         mockMvc.perform(get("/api/judge/bouts/{boutId}/scores", 99L))
