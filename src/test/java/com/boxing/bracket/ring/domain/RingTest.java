@@ -47,4 +47,31 @@ class RingTest {
         assertThat(ring.getCurrentBoutId()).isEqualTo(11L);
         assertThat(ring.getStatus()).isEqualTo(RingStatus.READY);
     }
+
+    @Test
+    void updateInfoChangesTournamentNameAndStatus() {
+        Ring ring = Ring.builder()
+                .tournamentId(1L)
+                .name("Ring 1")
+                .status(RingStatus.READY)
+                .build();
+
+        ring.updateInfo(2L, " Ring A ", RingStatus.CLOSED);
+
+        assertThat(ring.getTournamentId()).isEqualTo(2L);
+        assertThat(ring.getName()).isEqualTo("Ring A");
+        assertThat(ring.getStatus()).isEqualTo(RingStatus.CLOSED);
+    }
+
+    @Test
+    void updateInfoRejectsBlankName() {
+        Ring ring = Ring.builder()
+                .tournamentId(1L)
+                .name("Ring 1")
+                .build();
+
+        assertThatThrownBy(() -> ring.updateInfo(1L, " ", RingStatus.READY))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("name is required");
+    }
 }
