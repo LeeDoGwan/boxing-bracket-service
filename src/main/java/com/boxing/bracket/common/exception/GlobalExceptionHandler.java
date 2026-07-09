@@ -4,6 +4,7 @@ import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.common.response.ApiResponse;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
+import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail("Ring not found"));
+    }
+
+    @ExceptionHandler(TournamentNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTournamentNotFound(TournamentNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail("Tournament not found"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
