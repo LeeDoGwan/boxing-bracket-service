@@ -4,7 +4,15 @@ Boxing bracket and tournament advice service.
 
 ## Status
 
-Initial repository setup and requirements sync from the ChatGPT project.
+Sprint 1 core backend flow is in progress.
+
+Implemented core areas:
+
+- Audience home, ring status, current bout, official bout list/search/detail
+- Judge score submission and judge-specific score query filter
+- Supervisor score overview, penalties, and result confirmation
+- Ring manager bout list/start/status/round start/next
+- Admin tournament, ring, athlete, bout, and account management APIs
 
 ## Documentation
 
@@ -35,3 +43,25 @@ mvn spring-boot:run
 ```http
 GET http://localhost:8080/api/health
 ```
+
+## Main API Groups
+
+- `GET /api/home?tournamentId=`
+- `GET /api/bouts?tournamentId=`
+- `GET /api/bouts/search?tournamentId=&keyword=`
+- `GET /api/rings/status?tournamentId=`
+- `POST /api/judge/bouts/{boutId}/rounds/{roundNo}/scores`
+- `GET /api/judge/bouts/{boutId}/scores?judgeId=`
+- `GET /api/supervisor/bouts/{boutId}/scores`
+- `POST /api/supervisor/bouts/{boutId}/penalties`
+- `POST /api/supervisor/bouts/{boutId}/result`
+- `GET /api/ring-manager/rings/{ringId}/bouts`
+- `POST /api/ring-manager/bouts/{boutId}/start`
+- `POST /api/ring-manager/bouts/{boutId}/rounds/{roundNo}/start`
+- `POST /api/ring-manager/bouts/{boutId}/status`
+- `POST /api/ring-manager/rings/{ringId}/next`
+- `/api/admin/tournaments`
+- `/api/admin/rings`
+- `/api/admin/athletes`
+- `/api/admin/bouts`
+- `/api/admin/accounts`
