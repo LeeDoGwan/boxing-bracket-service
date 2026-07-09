@@ -10,8 +10,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +30,48 @@ class AdminAthleteServiceTest {
 
     @InjectMocks
     private AdminAthleteService adminAthleteService;
+
+    @Test
+    void getAthletesReturnsAllAthletesWithoutKeyword() {
+        given(athleteRepository.findAll(Sort.by(Sort.Direction.ASC, "id")))
+                .willReturn(List.of(createAthlete(10L), createAthlete(11L)));
+
+        List<AthleteResponse> responses = adminAthleteService.getAthletes(null);
+
+        assertThat(responses).hasSize(2);
+        assertThat(responses.get(0).getAthleteId()).isEqualTo(10L);
+        assertThat(responses.get(1).getAthleteId()).isEqualTo(11L);
+    }
+
+    @Test
+    void getAthletesSearchesByKeyword() {
+        given(athleteRepository.findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase("kim", "kim"))
+                .willReturn(List.of(createAthlete(10L)));
+
+        List<AthleteResponse> responses = adminAthleteService.getAthletes(" kim ");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getAthleteId()).isEqualTo(10L);
+    }
+
+    @Test
+    void getAthleteReturnsAthlete() {
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(createAthlete(10L)));
+
+        AthleteResponse response = adminAthleteService.getAthlete(10L);
+
+        assertThat(response.getAthleteId()).isEqualTo(10L);
+        assertThat(response.getName()).isEqualTo("Kim Min");
+    }
+
+    @Test
+    void getAthleteRejectsMissingAthlete() {
+        given(athleteRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminAthleteService.getAthlete(99L))
+                .isInstanceOf(AthleteNotFoundException.class)
+                .hasMessage("Athlete not found");
+    }
 
     @Test
     void createAthleteSavesAthlete() {

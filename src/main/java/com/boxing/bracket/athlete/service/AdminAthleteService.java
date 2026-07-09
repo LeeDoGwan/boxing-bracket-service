@@ -6,8 +6,12 @@ import com.boxing.bracket.athlete.dto.AthleteResponse;
 import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.athlete.repository.AthleteRepository;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Lazy
@@ -18,6 +22,32 @@ public class AdminAthleteService {
 
     public AdminAthleteService(AthleteRepository athleteRepository) {
         this.athleteRepository = athleteRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AthleteResponse> getAthletes(String keyword) {
+        List<Athlete> athletes;
+        if (keyword == null || keyword.isBlank()) {
+            athletes = athleteRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        } else {
+            String normalizedKeyword = keyword.trim();
+            athletes = athleteRepository.findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase(
+                    normalizedKeyword,
+                    normalizedKeyword
+            );
+        }
+
+        return athletes.stream()
+                .map(AthleteResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public AthleteResponse getAthlete(Long athleteId) {
+        validateAthleteId(athleteId);
+        return athleteRepository.findById(athleteId)
+                .map(AthleteResponse::from)
+                .orElseThrow(AthleteNotFoundException::new);
     }
 
     public AthleteResponse createAthlete(AthleteRequest request) {

@@ -14,11 +14,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -35,6 +38,51 @@ class AdminAthleteControllerTest {
 
     @MockBean
     private AdminAthleteService adminAthleteService;
+
+    @Test
+    void getAthletesReturnsAthleteList() throws Exception {
+        given(adminAthleteService.getAthletes(null))
+                .willReturn(List.of(createResponse(10L, "Kim Min", "Blue Gym")));
+
+        mockMvc.perform(get("/api/admin/athletes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].athleteId").value(10))
+                .andExpect(jsonPath("$.data[0].name").value("Kim Min"));
+    }
+
+    @Test
+    void getAthletesPassesKeyword() throws Exception {
+        given(adminAthleteService.getAthletes("kim"))
+                .willReturn(List.of(createResponse(10L, "Kim Min", "Blue Gym")));
+
+        mockMvc.perform(get("/api/admin/athletes")
+                        .param("keyword", "kim"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].athleteId").value(10));
+    }
+
+    @Test
+    void getAthleteReturnsAthlete() throws Exception {
+        given(adminAthleteService.getAthlete(10L))
+                .willReturn(createResponse(10L, "Kim Min", "Blue Gym"));
+
+        mockMvc.perform(get("/api/admin/athletes/{athleteId}", 10L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.athleteId").value(10));
+    }
+
+    @Test
+    void getAthleteReturnsNotFoundForMissingAthlete() throws Exception {
+        given(adminAthleteService.getAthlete(99L)).willThrow(new AthleteNotFoundException());
+
+        mockMvc.perform(get("/api/admin/athletes/{athleteId}", 99L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Athlete not found"));
+    }
 
     @Test
     void createAthleteReturnsCreatedAthlete() throws Exception {
