@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +35,47 @@ class AdminRingServiceTest {
 
     @InjectMocks
     private AdminRingService adminRingService;
+
+    @Test
+    void getRingsReturnsTournamentRings() {
+        given(tournamentRepository.existsById(1L)).willReturn(true);
+        given(ringRepository.findByTournamentIdOrderByIdAsc(1L))
+                .willReturn(List.of(createRing(10L), createRing(11L)));
+
+        List<AdminRingResponse> responses = adminRingService.getRings(1L);
+
+        assertThat(responses).hasSize(2);
+        assertThat(responses.get(0).getRingId()).isEqualTo(10L);
+        assertThat(responses.get(1).getRingId()).isEqualTo(11L);
+    }
+
+    @Test
+    void getRingsRejectsMissingTournament() {
+        given(tournamentRepository.existsById(99L)).willReturn(false);
+
+        assertThatThrownBy(() -> adminRingService.getRings(99L))
+                .isInstanceOf(TournamentNotFoundException.class)
+                .hasMessage("Tournament not found");
+    }
+
+    @Test
+    void getRingReturnsRing() {
+        given(ringRepository.findById(10L)).willReturn(Optional.of(createRing(10L)));
+
+        AdminRingResponse response = adminRingService.getRing(10L);
+
+        assertThat(response.getRingId()).isEqualTo(10L);
+        assertThat(response.getName()).isEqualTo("Ring 1");
+    }
+
+    @Test
+    void getRingRejectsMissingRing() {
+        given(ringRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminRingService.getRing(99L))
+                .isInstanceOf(RingNotFoundException.class)
+                .hasMessage("Ring not found");
+    }
 
     @Test
     void createRingSavesRing() {

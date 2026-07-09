@@ -16,11 +16,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -37,6 +40,46 @@ class AdminRingControllerTest {
 
     @MockBean
     private AdminRingService adminRingService;
+
+    @Test
+    void getRingsReturnsRingList() throws Exception {
+        given(adminRingService.getRings(1L)).willReturn(List.of(response(10L)));
+
+        mockMvc.perform(get("/api/admin/rings")
+                        .param("tournamentId", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].ringId").value(10))
+                .andExpect(jsonPath("$.data[0].name").value("Ring 1"));
+    }
+
+    @Test
+    void getRingsReturnsBadRequestForMissingTournamentId() throws Exception {
+        mockMvc.perform(get("/api/admin/rings"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("tournamentId is required"));
+    }
+
+    @Test
+    void getRingReturnsRing() throws Exception {
+        given(adminRingService.getRing(10L)).willReturn(response(10L));
+
+        mockMvc.perform(get("/api/admin/rings/{ringId}", 10L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.ringId").value(10));
+    }
+
+    @Test
+    void getRingReturnsNotFoundForMissingRing() throws Exception {
+        given(adminRingService.getRing(99L)).willThrow(new RingNotFoundException());
+
+        mockMvc.perform(get("/api/admin/rings/{ringId}", 99L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Ring not found"));
+    }
 
     @Test
     void createRingReturnsCreatedRing() throws Exception {
