@@ -113,6 +113,30 @@ class RingManagerControllerTest {
                 .andExpect(jsonPath("$.data.scheduledOrder").value(2));
     }
 
+    @Test
+    void startRoundReturnsUpdatedBout() throws Exception {
+        Bout bout = createBout(10L);
+        bout.startRound(2);
+        given(ringManagerService.startRound(10L, 2)).willReturn(RingManagerBoutResponse.from(bout));
+
+        mockMvc.perform(post("/api/ring-manager/bouts/{boutId}/rounds/{roundNo}/start", 10L, 2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.boutId").value(10))
+                .andExpect(jsonPath("$.data.currentRound").value(2));
+    }
+
+    @Test
+    void startRoundReturnsBadRequestForInvalidRoundNo() throws Exception {
+        given(ringManagerService.startRound(10L, 0))
+                .willThrow(new IllegalArgumentException("roundNo must be greater than or equal to 1"));
+
+        mockMvc.perform(post("/api/ring-manager/bouts/{boutId}/rounds/{roundNo}/start", 10L, 0))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("roundNo must be greater than or equal to 1"));
+    }
+
     private Bout createBout(Long id) {
         return createBout(id, 1);
     }

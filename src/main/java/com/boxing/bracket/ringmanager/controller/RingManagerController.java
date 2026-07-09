@@ -43,6 +43,14 @@ public class RingManagerController {
         return ApiResponse.success(ringManagerService.updateBoutStatus(boutId, request), "OK");
     }
 
+    @PostMapping("/bouts/{boutId}/rounds/{roundNo}/start")
+    public ApiResponse<RingManagerBoutResponse> startRound(
+            @PathVariable Long boutId,
+            @PathVariable Integer roundNo
+    ) {
+        return ApiResponse.success(ringManagerService.startRound(boutId, roundNo), "OK");
+    }
+
     @PostMapping("/rings/{ringId}/next")
     public ApiResponse<RingManagerBoutResponse> moveToNextBout(@PathVariable Long ringId) {
         return ApiResponse.success(ringManagerService.moveToNextBout(ringId), "OK");

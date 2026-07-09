@@ -140,6 +140,22 @@ public class Bout extends BaseTimeEntity {
         }
     }
 
+    public void startRound(Integer roundNo) {
+        if (roundNo == null) {
+            throw new IllegalArgumentException("roundNo is required");
+        }
+        if (roundNo < 1) {
+            throw new IllegalArgumentException("roundNo must be greater than or equal to 1");
+        }
+        if (totalRounds != null && roundNo > totalRounds) {
+            throw new IllegalArgumentException("roundNo must not exceed totalRounds");
+        }
+        this.currentRound = roundNo;
+        if (this.status != BoutStatus.IN_PROGRESS) {
+            changeStatus(BoutStatus.IN_PROGRESS);
+        }
+    }
+
     public void updateSchedule(
             Long tournamentId,
             Long ringId,

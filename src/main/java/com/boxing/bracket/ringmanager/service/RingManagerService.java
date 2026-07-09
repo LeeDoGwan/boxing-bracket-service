@@ -96,6 +96,18 @@ public class RingManagerService {
         return RingManagerBoutResponse.from(boutRepository.save(bout));
     }
 
+    public RingManagerBoutResponse startRound(Long boutId, Integer roundNo) {
+        if (boutId == null) {
+            throw new IllegalArgumentException("boutId is required");
+        }
+
+        Bout bout = boutRepository.findById(boutId)
+                .orElseThrow(BoutNotFoundException::new);
+        bout.startRound(roundNo);
+
+        return RingManagerBoutResponse.from(boutRepository.save(bout));
+    }
+
     private void validateStatusUpdateRequest(BoutStatusUpdateRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("status request is required");

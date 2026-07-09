@@ -190,6 +190,38 @@ class RingManagerServiceTest {
                 .hasMessage("status is required");
     }
 
+    @Test
+    void startRoundUpdatesBoutCurrentRound() {
+        Bout bout = createBout(10L);
+        given(boutRepository.findById(10L)).willReturn(Optional.of(bout));
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        RingManagerBoutResponse response = ringManagerService.startRound(10L, 2);
+
+        assertThat(response.getBoutId()).isEqualTo(10L);
+        assertThat(response.getCurrentRound()).isEqualTo(2);
+        assertThat(response.getStatus()).isEqualTo(BoutStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void startRoundRejectsMissingBout() {
+        given(boutRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> ringManagerService.startRound(99L, 1))
+                .isInstanceOf(BoutNotFoundException.class)
+                .hasMessage("Bout not found");
+    }
+
+    @Test
+    void startRoundRejectsInvalidRoundNo() {
+        Bout bout = createBout(10L);
+        given(boutRepository.findById(10L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> ringManagerService.startRound(10L, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("roundNo must be greater than or equal to 1");
+    }
+
     private Bout createBout(Long id) {
         return createBout(id, 1);
     }

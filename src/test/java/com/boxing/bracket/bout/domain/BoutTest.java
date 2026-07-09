@@ -42,6 +42,26 @@ class BoutTest {
     }
 
     @Test
+    void startRoundUpdatesCurrentRoundAndStartsBout() {
+        Bout bout = createBout();
+
+        bout.startRound(2);
+
+        assertThat(bout.getCurrentRound()).isEqualTo(2);
+        assertThat(bout.getStatus()).isEqualTo(BoutStatus.IN_PROGRESS);
+        assertThat(bout.getStartedAt()).isNotNull();
+    }
+
+    @Test
+    void startRoundRejectsRoundAfterTotalRounds() {
+        Bout bout = createBout();
+
+        assertThatThrownBy(() -> bout.startRound(4))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("roundNo must not exceed totalRounds");
+    }
+
+    @Test
     void updateScheduleChangesScheduleFields() {
         Bout bout = createBout();
 
