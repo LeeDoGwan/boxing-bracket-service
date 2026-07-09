@@ -8,6 +8,7 @@ Sprint 1 core backend flow is in progress.
 
 Implemented core areas:
 
+- Auth login/logout/me APIs and role access policy
 - Audience home, ring status, current bout, official bout list/search/detail
 - Judge score submission and judge-specific score query filter
 - Supervisor score overview, penalties, and result confirmation
@@ -33,7 +34,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 39 test classes, 234 test cases.
+Current documented suite: 43 test classes, 256 test cases.
 
 ### Run application
 
@@ -49,6 +50,9 @@ GET http://localhost:8080/api/health
 
 ## Main API Groups
 
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
 - `GET /api/home?tournamentId=`
 - `GET /api/bouts?tournamentId=`
 - `GET /api/bouts/search?tournamentId=&keyword=`
