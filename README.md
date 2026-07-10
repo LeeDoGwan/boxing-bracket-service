@@ -15,6 +15,7 @@ Implemented core areas:
 - Supervisor score overview, penalties, and result confirmation
 - Ring manager bout list/start/status/round start/next
 - Admin tournament, ring, athlete, bout, notice, and account management APIs
+- Admin bout CSV import API
 
 ## Documentation
 
@@ -35,7 +36,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 54 test classes, 298 test cases.
+Current documented suite: 54 test classes, 301 test cases.
 
 ### Run application
 
@@ -74,5 +75,6 @@ GET http://localhost:8080/api/health
 - `/api/admin/rings`
 - `/api/admin/athletes`
 - `/api/admin/bouts`
+- `POST /api/admin/bouts/import`
 - `/api/admin/notices`
 - `/api/admin/accounts`

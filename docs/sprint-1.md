@@ -21,8 +21,8 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 298 passed, 0 failed, 0 errors, 0 skipped.
-- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
+- Latest `mvn test` result: 301 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
 
 ## Screens
 
@@ -76,7 +76,7 @@ For sprint 1, ring manager functionality can stay minimal and focus on status ch
 - Manual bout deletion.
 - Athlete input.
 
-CSV and Excel upload are deferred.
+CSV upload is available for admin bout import. Excel upload is deferred.
 
 ## API Draft
 
@@ -100,6 +100,7 @@ CSV and Excel upload are deferred.
 - `GET /api/bouts/search`
 - `GET /api/bouts/{boutId}`
 - `POST /api/admin/bouts`
+- `POST /api/admin/bouts/import`
 - `PUT /api/admin/bouts/{boutId}`
 - `DELETE /api/admin/bouts/{boutId}`
 
@@ -143,6 +144,7 @@ CSV and Excel upload are deferred.
 - `GET /api/admin/bouts?tournamentId=`
 - `GET /api/admin/bouts/{boutId}`
 - `POST /api/admin/bouts`
+- `POST /api/admin/bouts/import`
 - `PUT /api/admin/bouts/{boutId}`
 - `DELETE /api/admin/bouts/{boutId}`
 - `GET /api/admin/notices?tournamentId=`
@@ -160,6 +162,6 @@ CSV and Excel upload are deferred.
 
 - Service monitoring UI.
 - Server log viewer.
-- CSV and Excel bracket upload.
+- Excel bracket upload.
 - Advanced statistics.
 - Advanced user search.

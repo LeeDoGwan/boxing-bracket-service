@@ -1,10 +1,12 @@
 package com.boxing.bracket.bout.admin.controller;
 
+import com.boxing.bracket.bout.admin.dto.AdminBoutImportResponse;
 import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
 import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
 import com.boxing.bracket.bout.admin.service.AdminBoutService;
 import com.boxing.bracket.common.response.ApiResponse;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -41,6 +44,11 @@ public class AdminBoutController {
     @PostMapping
     public ApiResponse<AdminBoutResponse> createBout(@Valid @RequestBody AdminBoutRequest request) {
         return ApiResponse.success(adminBoutService.createBout(request), "OK");
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<AdminBoutImportResponse> importBouts(@RequestParam("file") MultipartFile file) {
+        return ApiResponse.success(adminBoutService.importBouts(file), "OK");
     }
 
     @PutMapping("/{boutId}")

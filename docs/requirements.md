@@ -51,7 +51,7 @@ The service must keep the on-site UX simple because tournament staff may not be 
 - Register, update, and delete bouts.
 - Register and update athlete information.
 - Manage basic user data.
-- Manually create bracket data in MVP. CSV or Excel upload is deferred.
+- Manually create bracket data in MVP. CSV bout import is available; Excel upload is deferred.
 
 ### Service Manager
 

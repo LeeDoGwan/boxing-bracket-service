@@ -2,6 +2,7 @@ package com.boxing.bracket.bout.admin.service;
 
 import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.athlete.repository.AthleteRepository;
+import com.boxing.bracket.bout.admin.dto.AdminBoutImportResponse;
 import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
 import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
 import com.boxing.bracket.bout.domain.Bout;
@@ -18,10 +19,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -158,6 +162,41 @@ class AdminBoutServiceTest {
     }
 
     @Test
+    void importBoutsCreatesBoutsFromCsv() {
+        given(tournamentRepository.existsById(1L)).willReturn(true);
+        given(ringRepository.findById(1L)).willReturn(Optional.of(createRing(1L, 1L)));
+        given(athleteRepository.existsById(10L)).willReturn(true);
+        given(athleteRepository.existsById(11L)).willReturn(true);
+        given(athleteRepository.existsById(12L)).willReturn(true);
+        given(athleteRepository.existsById(13L)).willReturn(true);
+        AtomicLong id = new AtomicLong(20L);
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> {
+            Bout bout = invocation.getArgument(0);
+            ReflectionTestUtils.setField(bout, "id", id.getAndIncrement());
+            return bout;
+        });
+
+        AdminBoutImportResponse response = adminBoutService.importBouts(csvFile(
+                "tournamentId,ringId,boutNumber,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
+                        + "1,1,1,75 - middle school,10,11,3,1,false\n"
+                        + "1,1,2,80 - high school,12,13,3,2,true\n"
+        ));
+
+        assertThat(response.getImportedCount()).isEqualTo(2);
+        assertThat(response.getBoutIds()).containsExactly(20L, 21L);
+    }
+
+    @Test
+    void importBoutsRejectsMissingRequiredCsvValue() {
+        assertThatThrownBy(() -> adminBoutService.importBouts(csvFile(
+                "tournamentId,ringId,boutNumber,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
+                        + "1,1,,75 - middle school,10,11,3,1,false\n"
+        )))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("row 1: boutNumber is required");
+    }
+
+    @Test
     void updateBoutChangesBout() {
         Bout bout = createBout(20L);
         AdminBoutRequest request = new AdminBoutRequest(1L, 1L, 2, "80 - high school", 12L, 13L, 4, 2, true);
@@ -223,6 +262,15 @@ class AdminBoutServiceTest {
 
     private AdminBoutRequest request() {
         return new AdminBoutRequest(1L, 1L, 1, "75 - middle school", 10L, 11L, 3, 1, false);
+    }
+
+    private MockMultipartFile csvFile(String content) {
+        return new MockMultipartFile(
+                "file",
+                "bouts.csv",
+                "text/csv",
+                content.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private Bout createBout(Long id) {
