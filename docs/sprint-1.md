@@ -21,8 +21,8 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 286 passed, 0 failed, 0 errors, 0 skipped.
-- Covered areas: auth, role access policy, notices, audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
+- Latest `mvn test` result: 296 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, role access policy, SSE events, notices, audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
 
 ## Screens
 
@@ -88,6 +88,7 @@ CSV and Excel upload are deferred.
 
 ### Audience Home
 
+- `GET /api/events/stream?tournamentId=&ringId=`
 - `GET /api/home`
 - `GET /api/notices?tournamentId=`
 - `GET /api/rings/status`
@@ -157,7 +158,6 @@ CSV and Excel upload are deferred.
 
 ## Deferred
 
-- WebSocket or SSE real-time push.
 - Service monitoring UI.
 - Server log viewer.
 - CSV and Excel bracket upload.

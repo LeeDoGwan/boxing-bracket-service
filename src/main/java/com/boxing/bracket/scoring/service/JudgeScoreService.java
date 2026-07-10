@@ -1,7 +1,11 @@
 package com.boxing.bracket.scoring.service;
 
+import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.event.domain.BoutEventType;
+import com.boxing.bracket.event.dto.BoutEventResponse;
+import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.scoring.domain.RoundScore;
 import com.boxing.bracket.scoring.dto.RoundScoreResponse;
 import com.boxing.bracket.scoring.dto.RoundScoreSubmitRequest;
@@ -17,19 +21,24 @@ public class JudgeScoreService {
 
     private final BoutRepository boutRepository;
     private final RoundScoreRepository roundScoreRepository;
+    private final BoutEventPublisher boutEventPublisher;
 
-    public JudgeScoreService(BoutRepository boutRepository, RoundScoreRepository roundScoreRepository) {
+    public JudgeScoreService(
+            BoutRepository boutRepository,
+            RoundScoreRepository roundScoreRepository,
+            @Lazy BoutEventPublisher boutEventPublisher
+    ) {
         this.boutRepository = boutRepository;
         this.roundScoreRepository = roundScoreRepository;
+        this.boutEventPublisher = boutEventPublisher;
     }
 
     public RoundScoreResponse submitRoundScore(Long boutId, Integer roundNo, RoundScoreSubmitRequest request) {
         validatePathVariables(boutId, roundNo);
         validateRequest(request);
 
-        if (!boutRepository.existsById(boutId)) {
-            throw new BoutNotFoundException();
-        }
+        Bout bout = boutRepository.findById(boutId)
+                .orElseThrow(BoutNotFoundException::new);
 
         RoundScore roundScore = roundScoreRepository
                 .findByBoutIdAndRoundNoAndJudgeId(boutId, roundNo, request.getJudgeId())
@@ -41,7 +50,9 @@ public class JudgeScoreService {
 
         roundScore.submit(request.getRedScore(), request.getBlueScore());
 
-        return RoundScoreResponse.from(roundScoreRepository.save(roundScore));
+        RoundScore savedRoundScore = roundScoreRepository.save(roundScore);
+        boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.SCORE_SUBMITTED, bout, roundNo));
+        return RoundScoreResponse.from(savedRoundScore);
     }
 
     private void validatePathVariables(Long boutId, Integer roundNo) {

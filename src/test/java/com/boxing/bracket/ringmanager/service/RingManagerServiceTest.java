@@ -4,6 +4,8 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.event.dto.BoutEventResponse;
+import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
@@ -24,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class RingManagerServiceTest {
@@ -33,6 +36,9 @@ class RingManagerServiceTest {
 
     @Mock
     private RingRepository ringRepository;
+
+    @Mock
+    private BoutEventPublisher boutEventPublisher;
 
     @InjectMocks
     private RingManagerService ringManagerService;
@@ -53,6 +59,7 @@ class RingManagerServiceTest {
         assertThat(response.getStartedAt()).isNotNull();
         assertThat(ring.getCurrentBoutId()).isEqualTo(10L);
         assertThat(ring.getStatus()).isEqualTo(RingStatus.IN_PROGRESS);
+        then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
     @Test
@@ -133,6 +140,7 @@ class RingManagerServiceTest {
         assertThat(response.getStatus()).isEqualTo(BoutStatus.READY);
         assertThat(ring.getCurrentBoutId()).isEqualTo(11L);
         assertThat(ring.getStatus()).isEqualTo(RingStatus.READY);
+        then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
     @Test
@@ -169,6 +177,7 @@ class RingManagerServiceTest {
         assertThat(response.getBoutId()).isEqualTo(10L);
         assertThat(response.getStatus()).isEqualTo(BoutStatus.SCORING);
         assertThat(bout.getStatus()).isEqualTo(BoutStatus.SCORING);
+        then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
     @Test
@@ -201,6 +210,7 @@ class RingManagerServiceTest {
         assertThat(response.getBoutId()).isEqualTo(10L);
         assertThat(response.getCurrentRound()).isEqualTo(2);
         assertThat(response.getStatus()).isEqualTo(BoutStatus.IN_PROGRESS);
+        then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
     @Test
