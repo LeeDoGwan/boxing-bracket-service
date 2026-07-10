@@ -30,7 +30,27 @@ public class Athlete extends BaseTimeEntity {
 
     @Builder
     private Athlete(String name, String affiliation) {
-        this.name = name;
-        this.affiliation = affiliation;
+        validateName(name);
+        this.name = name.trim();
+        this.affiliation = normalizeAffiliation(affiliation);
+    }
+
+    public void update(String name, String affiliation) {
+        validateName(name);
+        this.name = name.trim();
+        this.affiliation = normalizeAffiliation(affiliation);
+    }
+
+    private static void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("name is required");
+        }
+    }
+
+    private static String normalizeAffiliation(String affiliation) {
+        if (affiliation == null) {
+            return null;
+        }
+        return affiliation.trim();
     }
 }

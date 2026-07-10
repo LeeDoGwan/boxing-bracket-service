@@ -48,6 +48,19 @@ class ScoreQueryServiceTest {
     }
 
     @Test
+    void getBoutScoresFiltersByJudgeId() {
+        RoundScore score = createSubmittedRoundScore(100L, 1L, 1, 10L, 10, 9);
+        given(boutRepository.existsById(1L)).willReturn(true);
+        given(roundScoreRepository.findByBoutIdAndJudgeId(1L, 10L))
+                .willReturn(List.of(score));
+
+        List<RoundScoreResponse> responses = scoreQueryService.getBoutScores(1L, 10L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getJudgeId()).isEqualTo(10L);
+    }
+
+    @Test
     void getBoutScoresRejectsMissingBout() {
         given(boutRepository.existsById(99L)).willReturn(false);
 

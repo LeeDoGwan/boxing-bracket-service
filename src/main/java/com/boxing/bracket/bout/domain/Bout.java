@@ -85,10 +85,19 @@ public class Bout extends BaseTimeEntity {
             LocalDateTime startedAt,
             LocalDateTime endedAt
     ) {
+        validateSchedule(
+                tournamentId,
+                ringId,
+                boutNumber,
+                redAthleteId,
+                blueAthleteId,
+                totalRounds,
+                scheduledOrder
+        );
         this.tournamentId = tournamentId;
         this.ringId = ringId;
         this.boutNumber = boutNumber;
-        this.matchType = matchType;
+        this.matchType = normalizeText(matchType);
         this.redAthleteId = redAthleteId;
         this.blueAthleteId = blueAthleteId;
         this.status = status == null ? BoutStatus.SCHEDULED : status;
@@ -116,5 +125,110 @@ public class Bout extends BaseTimeEntity {
     public void confirmResult(BoutSide winnerSide) {
         this.winnerSide = winnerSide;
         this.resultConfirmed = true;
+    }
+
+    public void changeStatus(BoutStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("status is required");
+        }
+        this.status = status;
+        if (status == BoutStatus.IN_PROGRESS && this.startedAt == null) {
+            this.startedAt = LocalDateTime.now();
+        }
+        if (status == BoutStatus.FINISHED && this.endedAt == null) {
+            this.endedAt = LocalDateTime.now();
+        }
+    }
+
+    public void startRound(Integer roundNo) {
+        if (roundNo == null) {
+            throw new IllegalArgumentException("roundNo is required");
+        }
+        if (roundNo < 1) {
+            throw new IllegalArgumentException("roundNo must be greater than or equal to 1");
+        }
+        if (totalRounds != null && roundNo > totalRounds) {
+            throw new IllegalArgumentException("roundNo must not exceed totalRounds");
+        }
+        this.currentRound = roundNo;
+        if (this.status != BoutStatus.IN_PROGRESS) {
+            changeStatus(BoutStatus.IN_PROGRESS);
+        }
+    }
+
+    public void updateSchedule(
+            Long tournamentId,
+            Long ringId,
+            Integer boutNumber,
+            String matchType,
+            Long redAthleteId,
+            Long blueAthleteId,
+            Integer totalRounds,
+            Integer scheduledOrder,
+            boolean eventBout
+    ) {
+        validateSchedule(
+                tournamentId,
+                ringId,
+                boutNumber,
+                redAthleteId,
+                blueAthleteId,
+                totalRounds,
+                scheduledOrder
+        );
+        this.tournamentId = tournamentId;
+        this.ringId = ringId;
+        this.boutNumber = boutNumber;
+        this.matchType = normalizeText(matchType);
+        this.redAthleteId = redAthleteId;
+        this.blueAthleteId = blueAthleteId;
+        this.totalRounds = totalRounds;
+        this.scheduledOrder = scheduledOrder;
+        this.eventBout = eventBout;
+    }
+
+    private static void validateSchedule(
+            Long tournamentId,
+            Long ringId,
+            Integer boutNumber,
+            Long redAthleteId,
+            Long blueAthleteId,
+            Integer totalRounds,
+            Integer scheduledOrder
+    ) {
+        if (tournamentId == null) {
+            throw new IllegalArgumentException("tournamentId is required");
+        }
+        if (ringId == null) {
+            throw new IllegalArgumentException("ringId is required");
+        }
+        if (boutNumber == null) {
+            throw new IllegalArgumentException("boutNumber is required");
+        }
+        if (boutNumber <= 0) {
+            throw new IllegalArgumentException("boutNumber must be positive");
+        }
+        if (redAthleteId == null) {
+            throw new IllegalArgumentException("redAthleteId is required");
+        }
+        if (blueAthleteId == null) {
+            throw new IllegalArgumentException("blueAthleteId is required");
+        }
+        if (redAthleteId.equals(blueAthleteId)) {
+            throw new IllegalArgumentException("redAthleteId and blueAthleteId must be different");
+        }
+        if (totalRounds != null && totalRounds <= 0) {
+            throw new IllegalArgumentException("totalRounds must be positive");
+        }
+        if (scheduledOrder != null && scheduledOrder <= 0) {
+            throw new IllegalArgumentException("scheduledOrder must be positive");
+        }
+    }
+
+    private static String normalizeText(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.trim();
     }
 }

@@ -44,10 +44,43 @@ public class Account extends BaseTimeEntity {
 
     @Builder
     private Account(String loginId, String passwordHash, String name, UserRole role, AccountStatus status) {
-        this.loginId = loginId;
-        this.passwordHash = passwordHash;
-        this.name = name;
+        validate(loginId, passwordHash, name, role);
+        this.loginId = loginId.trim();
+        this.passwordHash = passwordHash.trim();
+        this.name = name.trim();
         this.role = role;
         this.status = status == null ? AccountStatus.ACTIVE : status;
+    }
+
+    public void updateInfo(
+            String loginId,
+            String passwordHash,
+            String name,
+            UserRole role,
+            AccountStatus status
+    ) {
+        validate(loginId, passwordHash, name, role);
+        this.loginId = loginId.trim();
+        this.passwordHash = passwordHash.trim();
+        this.name = name.trim();
+        this.role = role;
+        if (status != null) {
+            this.status = status;
+        }
+    }
+
+    private void validate(String loginId, String passwordHash, String name, UserRole role) {
+        if (loginId == null || loginId.trim().isEmpty()) {
+            throw new IllegalArgumentException("loginId is required");
+        }
+        if (passwordHash == null || passwordHash.trim().isEmpty()) {
+            throw new IllegalArgumentException("passwordHash is required");
+        }
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("name is required");
+        }
+        if (role == null) {
+            throw new IllegalArgumentException("role is required");
+        }
     }
 }

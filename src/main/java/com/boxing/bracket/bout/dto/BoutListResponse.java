@@ -4,6 +4,7 @@ import com.boxing.bracket.athlete.domain.Athlete;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
+import com.boxing.bracket.scoring.domain.BoutResult;
 
 public class BoutListResponse {
 
@@ -16,6 +17,7 @@ public class BoutListResponse {
     private final BoutStatus status;
     private final BoutSide winnerSide;
     private final boolean resultConfirmed;
+    private final BoutResultSummaryResponse result;
     private final Integer scheduledOrder;
 
     private BoutListResponse(
@@ -28,6 +30,7 @@ public class BoutListResponse {
             BoutStatus status,
             BoutSide winnerSide,
             boolean resultConfirmed,
+            BoutResultSummaryResponse result,
             Integer scheduledOrder
     ) {
         this.boutId = boutId;
@@ -39,10 +42,15 @@ public class BoutListResponse {
         this.status = status;
         this.winnerSide = winnerSide == null ? BoutSide.NONE : winnerSide;
         this.resultConfirmed = resultConfirmed;
+        this.result = result;
         this.scheduledOrder = scheduledOrder;
     }
 
     public static BoutListResponse of(Bout bout, Athlete redAthlete, Athlete blueAthlete) {
+        return of(bout, redAthlete, blueAthlete, null);
+    }
+
+    public static BoutListResponse of(Bout bout, Athlete redAthlete, Athlete blueAthlete, BoutResult boutResult) {
         return new BoutListResponse(
                 bout.getId(),
                 bout.getBoutNumber(),
@@ -53,6 +61,7 @@ public class BoutListResponse {
                 bout.getStatus(),
                 bout.getWinnerSide(),
                 bout.isResultConfirmed(),
+                BoutResultSummaryResponse.from(boutResult),
                 bout.getScheduledOrder()
         );
     }
@@ -91,6 +100,10 @@ public class BoutListResponse {
 
     public boolean isResultConfirmed() {
         return resultConfirmed;
+    }
+
+    public BoutResultSummaryResponse getResult() {
+        return result;
     }
 
     public Integer getScheduledOrder() {

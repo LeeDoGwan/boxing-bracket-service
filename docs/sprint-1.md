@@ -18,6 +18,12 @@ One ring can run one bout end to end:
 4. A supervisor can review scores and confirm the result.
 5. The confirmed result appears on the audience home and full bracket.
 
+## Verification Status
+
+- Test documentation: [Testing](testing.md)
+- Latest `mvn test` result: 286 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, role access policy, notices, audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
+
 ## Screens
 
 ### Audience Home
@@ -83,7 +89,7 @@ CSV and Excel upload are deferred.
 ### Audience Home
 
 - `GET /api/home`
-- `GET /api/notices`
+- `GET /api/notices?tournamentId=`
 - `GET /api/rings/status`
 - `GET /api/rings/{ringId}/current-bout`
 
@@ -113,17 +119,41 @@ CSV and Excel upload are deferred.
 - `GET /api/ring-manager/rings/{ringId}/bouts`
 - `POST /api/ring-manager/bouts/{boutId}/start`
 - `POST /api/ring-manager/bouts/{boutId}/status`
+- `POST /api/ring-manager/bouts/{boutId}/rounds/{roundNo}/start`
 - `POST /api/ring-manager/rings/{ringId}/next`
 
 ### Game Manager
 
+- `GET /api/admin/tournaments`
+- `GET /api/admin/tournaments/{tournamentId}`
+- `POST /api/admin/tournaments`
+- `PUT /api/admin/tournaments/{tournamentId}`
+- `DELETE /api/admin/tournaments/{tournamentId}`
+- `GET /api/admin/rings?tournamentId=`
+- `GET /api/admin/rings/{ringId}`
+- `POST /api/admin/rings`
+- `PUT /api/admin/rings/{ringId}`
+- `DELETE /api/admin/rings/{ringId}`
+- `GET /api/admin/athletes?keyword=`
+- `GET /api/admin/athletes/{athleteId}`
 - `POST /api/admin/athletes`
 - `PUT /api/admin/athletes/{athleteId}`
 - `DELETE /api/admin/athletes/{athleteId}`
-- `GET /api/admin/users`
-- `POST /api/admin/users`
-- `PUT /api/admin/users/{userId}`
-- `DELETE /api/admin/users/{userId}`
+- `GET /api/admin/bouts?tournamentId=`
+- `GET /api/admin/bouts/{boutId}`
+- `POST /api/admin/bouts`
+- `PUT /api/admin/bouts/{boutId}`
+- `DELETE /api/admin/bouts/{boutId}`
+- `GET /api/admin/notices?tournamentId=`
+- `GET /api/admin/notices/{noticeId}`
+- `POST /api/admin/notices`
+- `PUT /api/admin/notices/{noticeId}`
+- `DELETE /api/admin/notices/{noticeId}`
+- `GET /api/admin/accounts`
+- `GET /api/admin/accounts/{accountId}`
+- `POST /api/admin/accounts`
+- `PUT /api/admin/accounts/{accountId}`
+- `DELETE /api/admin/accounts/{accountId}`
 
 ## Deferred
 
@@ -133,4 +163,3 @@ CSV and Excel upload are deferred.
 - CSV and Excel bracket upload.
 - Advanced statistics.
 - Advanced user search.
-

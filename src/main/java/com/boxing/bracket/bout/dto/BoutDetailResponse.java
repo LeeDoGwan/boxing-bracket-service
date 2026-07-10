@@ -4,6 +4,7 @@ import com.boxing.bracket.athlete.domain.Athlete;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
+import com.boxing.bracket.scoring.domain.BoutResult;
 
 public class BoutDetailResponse {
 
@@ -20,6 +21,7 @@ public class BoutDetailResponse {
     private final Integer scheduledOrder;
     private final BoutSide winnerSide;
     private final boolean resultConfirmed;
+    private final BoutResultSummaryResponse result;
     private final boolean eventBout;
 
     private BoutDetailResponse(
@@ -36,6 +38,7 @@ public class BoutDetailResponse {
             Integer scheduledOrder,
             BoutSide winnerSide,
             boolean resultConfirmed,
+            BoutResultSummaryResponse result,
             boolean eventBout
     ) {
         this.boutId = boutId;
@@ -51,10 +54,15 @@ public class BoutDetailResponse {
         this.scheduledOrder = scheduledOrder;
         this.winnerSide = winnerSide == null ? BoutSide.NONE : winnerSide;
         this.resultConfirmed = resultConfirmed;
+        this.result = result;
         this.eventBout = eventBout;
     }
 
     public static BoutDetailResponse of(Bout bout, Athlete redAthlete, Athlete blueAthlete) {
+        return of(bout, redAthlete, blueAthlete, null);
+    }
+
+    public static BoutDetailResponse of(Bout bout, Athlete redAthlete, Athlete blueAthlete, BoutResult boutResult) {
         return new BoutDetailResponse(
                 bout.getId(),
                 bout.getTournamentId(),
@@ -69,6 +77,7 @@ public class BoutDetailResponse {
                 bout.getScheduledOrder(),
                 bout.getWinnerSide(),
                 bout.isResultConfirmed(),
+                BoutResultSummaryResponse.from(boutResult),
                 bout.isEventBout()
         );
     }
@@ -123,6 +132,10 @@ public class BoutDetailResponse {
 
     public boolean isResultConfirmed() {
         return resultConfirmed;
+    }
+
+    public BoutResultSummaryResponse getResult() {
+        return result;
     }
 
     public boolean isEventBout() {

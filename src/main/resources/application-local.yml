@@ -18,3 +18,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+boxing:
+  auth:
+    enabled: false

@@ -1,0 +1,77 @@
+package com.boxing.bracket.ring.domain;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class RingTest {
+
+    @Test
+    void assignCurrentBoutSetsBoutAndInProgressStatus() {
+        Ring ring = Ring.builder()
+                .tournamentId(1L)
+                .name("Ring 1")
+                .status(RingStatus.READY)
+                .build();
+
+        ring.assignCurrentBout(10L);
+
+        assertThat(ring.getCurrentBoutId()).isEqualTo(10L);
+        assertThat(ring.getStatus()).isEqualTo(RingStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void assignCurrentBoutRejectsNullBoutId() {
+        Ring ring = Ring.builder()
+                .tournamentId(1L)
+                .name("Ring 1")
+                .build();
+
+        assertThatThrownBy(() -> ring.assignCurrentBout(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("boutId is required");
+    }
+
+    @Test
+    void prepareCurrentBoutSetsBoutAndReadyStatus() {
+        Ring ring = Ring.builder()
+                .tournamentId(1L)
+                .name("Ring 1")
+                .status(RingStatus.IN_PROGRESS)
+                .currentBoutId(10L)
+                .build();
+
+        ring.prepareCurrentBout(11L);
+
+        assertThat(ring.getCurrentBoutId()).isEqualTo(11L);
+        assertThat(ring.getStatus()).isEqualTo(RingStatus.READY);
+    }
+
+    @Test
+    void updateInfoChangesTournamentNameAndStatus() {
+        Ring ring = Ring.builder()
+                .tournamentId(1L)
+                .name("Ring 1")
+                .status(RingStatus.READY)
+                .build();
+
+        ring.updateInfo(2L, " Ring A ", RingStatus.CLOSED);
+
+        assertThat(ring.getTournamentId()).isEqualTo(2L);
+        assertThat(ring.getName()).isEqualTo("Ring A");
+        assertThat(ring.getStatus()).isEqualTo(RingStatus.CLOSED);
+    }
+
+    @Test
+    void updateInfoRejectsBlankName() {
+        Ring ring = Ring.builder()
+                .tournamentId(1L)
+                .name("Ring 1")
+                .build();
+
+        assertThatThrownBy(() -> ring.updateInfo(1L, " ", RingStatus.READY))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("name is required");
+    }
+}

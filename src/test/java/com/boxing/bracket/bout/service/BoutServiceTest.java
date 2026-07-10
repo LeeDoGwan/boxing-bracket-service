@@ -3,11 +3,15 @@ package com.boxing.bracket.bout.service;
 import com.boxing.bracket.athlete.domain.Athlete;
 import com.boxing.bracket.athlete.repository.AthleteRepository;
 import com.boxing.bracket.bout.domain.Bout;
+import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.dto.BoutDetailResponse;
 import com.boxing.bracket.bout.dto.BoutListResponse;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.scoring.domain.BoutResult;
+import com.boxing.bracket.scoring.domain.DecisionType;
+import com.boxing.bracket.scoring.repository.BoutResultRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +24,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -33,6 +38,9 @@ class BoutServiceTest {
 
     @Mock
     private AthleteRepository athleteRepository;
+
+    @Mock
+    private BoutResultRepository boutResultRepository;
 
     @InjectMocks
     private BoutService boutService;
@@ -66,6 +74,32 @@ class BoutServiceTest {
         assertThatThrownBy(() -> boutService.getOfficialBouts(null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("tournamentId is required");
+    }
+
+    @Test
+    void getOfficialBoutsIncludesConfirmedResult() {
+        Bout bout = createBout(1L, 1, 1, 10L, 11L, false);
+        bout.finish(BoutSide.RED);
+        bout.confirmResult(BoutSide.RED);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+        BoutResult boutResult = createBoutResult(100L, 1L, BoutSide.RED);
+
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(bout));
+        given(boutResultRepository.findByBoutIdIn(anyCollection()))
+                .willReturn(List.of(boutResult));
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
+
+        List<BoutListResponse> responses = boutService.getOfficialBouts(1L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).isResultConfirmed()).isTrue();
+        assertThat(responses.get(0).getWinnerSide()).isEqualTo(BoutSide.RED);
+        assertThat(responses.get(0).getResult().getResultId()).isEqualTo(100L);
+        assertThat(responses.get(0).getResult().getRedTotalScore()).isEqualTo(19);
+        assertThat(responses.get(0).getResult().getDecisionType()).isEqualTo(DecisionType.POINTS);
     }
 
     @Test
@@ -203,6 +237,7 @@ class BoutServiceTest {
         Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
 
         given(boutRepository.findById(1L)).willReturn(Optional.of(bout));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.empty());
         given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
         given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
 
@@ -213,6 +248,29 @@ class BoutServiceTest {
         assertThat(response.getBoutNumber()).isEqualTo(1);
         assertThat(response.getRedAthlete().getName()).isEqualTo("Hong Gil Dong");
         assertThat(response.getBlueAthlete().getAffiliation()).isEqualTo("Seoul Boxing Club");
+    }
+
+    @Test
+    void getBoutDetailIncludesConfirmedResult() {
+        Bout bout = createBout(1L, 1, 1, 10L, 11L, false);
+        bout.finish(BoutSide.BLUE);
+        bout.confirmResult(BoutSide.BLUE);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+        BoutResult boutResult = createBoutResult(100L, 1L, BoutSide.BLUE);
+
+        given(boutRepository.findById(1L)).willReturn(Optional.of(bout));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.of(boutResult));
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
+
+        BoutDetailResponse response = boutService.getBoutDetail(1L);
+
+        assertThat(response.isResultConfirmed()).isTrue();
+        assertThat(response.getWinnerSide()).isEqualTo(BoutSide.BLUE);
+        assertThat(response.getResult().getResultId()).isEqualTo(100L);
+        assertThat(response.getResult().getWinnerSide()).isEqualTo(BoutSide.BLUE);
+        assertThat(response.getResult().getBlueTotalScore()).isEqualTo(18);
     }
 
     @Test
@@ -268,5 +326,20 @@ class BoutServiceTest {
                 .build();
         ReflectionTestUtils.setField(athlete, "id", id);
         return athlete;
+    }
+
+    private BoutResult createBoutResult(Long id, Long boutId, BoutSide winnerSide) {
+        BoutResult boutResult = BoutResult.builder()
+                .boutId(boutId)
+                .redTotalScore(19)
+                .blueTotalScore(18)
+                .redPenaltyTotal(1)
+                .bluePenaltyTotal(0)
+                .winnerSide(winnerSide)
+                .decisionType(DecisionType.POINTS)
+                .confirmedBy(20L)
+                .build();
+        ReflectionTestUtils.setField(boutResult, "id", id);
+        return boutResult;
     }
 }

@@ -39,9 +39,49 @@ public class Ring extends BaseTimeEntity {
 
     @Builder
     private Ring(Long tournamentId, String name, RingStatus status, Long currentBoutId) {
+        validateTournamentId(tournamentId);
+        validateName(name);
         this.tournamentId = tournamentId;
-        this.name = name;
+        this.name = name.trim();
         this.status = status == null ? RingStatus.READY : status;
         this.currentBoutId = currentBoutId;
+    }
+
+    public void assignCurrentBout(Long boutId) {
+        if (boutId == null) {
+            throw new IllegalArgumentException("boutId is required");
+        }
+        this.currentBoutId = boutId;
+        this.status = RingStatus.IN_PROGRESS;
+    }
+
+    public void prepareCurrentBout(Long boutId) {
+        if (boutId == null) {
+            throw new IllegalArgumentException("boutId is required");
+        }
+        this.currentBoutId = boutId;
+        this.status = RingStatus.READY;
+    }
+
+    public void updateInfo(Long tournamentId, String name, RingStatus status) {
+        validateTournamentId(tournamentId);
+        validateName(name);
+        this.tournamentId = tournamentId;
+        this.name = name.trim();
+        if (status != null) {
+            this.status = status;
+        }
+    }
+
+    private void validateTournamentId(Long tournamentId) {
+        if (tournamentId == null) {
+            throw new IllegalArgumentException("tournamentId is required");
+        }
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("name is required");
+        }
     }
 }

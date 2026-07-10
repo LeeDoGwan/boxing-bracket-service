@@ -7,13 +7,18 @@ import com.boxing.bracket.bout.dto.BoutDetailResponse;
 import com.boxing.bracket.bout.dto.BoutListResponse;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.scoring.domain.BoutResult;
+import com.boxing.bracket.scoring.repository.BoutResultRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,10 +28,16 @@ public class BoutService {
 
     private final BoutRepository boutRepository;
     private final AthleteRepository athleteRepository;
+    private final BoutResultRepository boutResultRepository;
 
-    public BoutService(BoutRepository boutRepository, AthleteRepository athleteRepository) {
+    public BoutService(
+            BoutRepository boutRepository,
+            AthleteRepository athleteRepository,
+            BoutResultRepository boutResultRepository
+    ) {
         this.boutRepository = boutRepository;
         this.athleteRepository = athleteRepository;
+        this.boutResultRepository = boutResultRepository;
     }
 
     public List<BoutListResponse> getOfficialBouts(Long tournamentId) {
@@ -34,9 +45,13 @@ public class BoutService {
             throw new IllegalArgumentException("tournamentId is required");
         }
 
-        return boutRepository.findByTournamentIdOrderByScheduledOrderAsc(tournamentId).stream()
+        List<Bout> officialBouts = boutRepository.findByTournamentIdOrderByScheduledOrderAsc(tournamentId).stream()
                 .filter(bout -> !bout.isEventBout())
-                .map(this::toListResponse)
+                .collect(Collectors.toList());
+        Map<Long, BoutResult> resultByBoutId = getResultByBoutId(officialBouts);
+
+        return officialBouts.stream()
+                .map(bout -> toListResponse(bout, resultByBoutId.get(bout.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -61,10 +76,14 @@ public class BoutService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        return boutRepository.findByTournamentIdOrderByScheduledOrderAsc(tournamentId).stream()
+        List<Bout> matchedBouts = boutRepository.findByTournamentIdOrderByScheduledOrderAsc(tournamentId).stream()
                 .filter(bout -> !bout.isEventBout())
                 .filter(bout -> matchesKeyword(bout, normalizedKeyword, boutNumber, athleteIds))
-                .map(this::toListResponse)
+                .collect(Collectors.toList());
+        Map<Long, BoutResult> resultByBoutId = getResultByBoutId(matchedBouts);
+
+        return matchedBouts.stream()
+                .map(bout -> toListResponse(bout, resultByBoutId.get(bout.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -79,16 +98,37 @@ public class BoutService {
         return BoutDetailResponse.of(
                 bout,
                 getAthlete(bout.getRedAthleteId()),
-                getAthlete(bout.getBlueAthleteId())
+                getAthlete(bout.getBlueAthleteId()),
+                boutResultRepository.findByBoutId(boutId).orElse(null)
         );
     }
 
-    private BoutListResponse toListResponse(Bout bout) {
+    private BoutListResponse toListResponse(Bout bout, BoutResult boutResult) {
         return BoutListResponse.of(
                 bout,
                 getAthlete(bout.getRedAthleteId()),
-                getAthlete(bout.getBlueAthleteId())
+                getAthlete(bout.getBlueAthleteId()),
+                boutResult
         );
+    }
+
+    private Map<Long, BoutResult> getResultByBoutId(List<Bout> bouts) {
+        Set<Long> boutIds = bouts.stream()
+                .map(Bout::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (boutIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<BoutResult> boutResults = boutResultRepository.findByBoutIdIn(boutIds);
+        if (boutResults == null) {
+            return Collections.emptyMap();
+        }
+
+        return boutResults.stream()
+                .filter(boutResult -> boutResult.getBoutId() != null)
+                .collect(Collectors.toMap(BoutResult::getBoutId, Function.identity(), (first, second) -> first));
     }
 
     private boolean matchesKeyword(Bout bout, String keyword, Integer boutNumber, Set<Long> athleteIds) {

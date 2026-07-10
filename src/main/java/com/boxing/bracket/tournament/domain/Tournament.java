@@ -41,10 +41,49 @@ public class Tournament extends BaseTimeEntity {
 
     @Builder
     private Tournament(String name, String location, LocalDate startDate, LocalDate endDate, TournamentStatus status) {
-        this.name = name;
-        this.location = location;
+        validateName(name);
+        validateDateRange(startDate, endDate);
+        this.name = name.trim();
+        this.location = normalizeText(location);
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status == null ? TournamentStatus.READY : status;
+    }
+
+    public void updateInfo(
+            String name,
+            String location,
+            LocalDate startDate,
+            LocalDate endDate,
+            TournamentStatus status
+    ) {
+        validateName(name);
+        validateDateRange(startDate, endDate);
+        this.name = name.trim();
+        this.location = normalizeText(location);
+        this.startDate = startDate;
+        this.endDate = endDate;
+        if (status != null) {
+            this.status = status;
+        }
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("name is required");
+        }
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("endDate must not be before startDate");
+        }
+    }
+
+    private String normalizeText(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.trim();
     }
 }
