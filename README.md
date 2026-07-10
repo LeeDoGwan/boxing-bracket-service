@@ -8,7 +8,7 @@ Sprint 1 core backend flow is in progress.
 
 Implemented core areas:
 
-- Auth login/logout/me APIs and role access policy
+- Auth login/logout/me APIs, role access policy, and BCrypt password hashing
 - Audience home, notice banners, ring status, current bout, official bout list/search/detail
 - SSE event stream for bout updates
 - Judge score submission and judge-specific score query filter
@@ -35,7 +35,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 53 test classes, 296 test cases.
+Current documented suite: 54 test classes, 298 test cases.
 
 ### Run application
 

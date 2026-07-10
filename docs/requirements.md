@@ -164,7 +164,7 @@ The first working loop is:
 
 - `id`
 - `loginId`
-- `passwordHash`
+- `passwordHash` (stored as a one-way BCrypt hash)
 - `name`
 - `role`: `JUDGE`, `SUPERVISOR`, `GAME_MANAGER`, `RING_MANAGER`, `SERVICE_MANAGER`
 - `status`: `ACTIVE`, `INACTIVE`
@@ -224,4 +224,3 @@ The first working loop is:
 - Should athletes be managed per tournament or as reusable master data?
 - Should bout numbers be generated automatically or entered manually?
 - Can confirmed results be modified, and who can approve changes?
-

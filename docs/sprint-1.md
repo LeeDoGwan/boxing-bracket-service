@@ -21,8 +21,8 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 296 passed, 0 failed, 0 errors, 0 skipped.
-- Covered areas: auth, role access policy, SSE events, notices, audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
+- Latest `mvn test` result: 298 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
 
 ## Screens
 

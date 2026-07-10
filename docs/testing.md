@@ -5,15 +5,15 @@ Last updated: 2026-07-10
 ## Latest Verification
 
 - Command: `mvn test`
-- Verified at: 2026-07-11T01:06:07+09:00
-- Result: 296 passed, 0 failed, 0 errors, 0 skipped
-- Test classes: 53
+- Verified at: 2026-07-11T01:28:14+09:00
+- Result: 298 passed, 0 failed, 0 errors, 0 skipped
+- Test classes: 54
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `src/test/resources/application-test.yml`
 
 ## Test Scope
 
-- Auth API and role access policy tests for login, logout, current account lookup, protected route mapping, and interceptor behavior.
+- Auth API and role access policy tests for login, logout, current account lookup, BCrypt password matching, protected route mapping, and interceptor behavior.
 - SSE event stream tests for stream subscription, event payloads, subscriber filtering, and broken subscriber cleanup.
 - Domain behavior tests for account, tournament, ring, athlete, bout, notice, and scoring models.
 - Repository slice tests for tournament, ring, athlete, bout, notice, account, and round score persistence.
@@ -25,6 +25,7 @@ Last updated: 2026-07-10
 | Area | Test class | Cases |
 | --- | --- | ---: |
 | Auth | `AuthControllerTest` | 6 |
+| Auth | `AuthProtectedApiControllerTest` | 2 |
 | Auth | `AuthServiceTest` | 7 |
 | Auth | `AuthInterceptorTest` | 4 |
 | Auth | `RoleAccessPolicyTest` | 5 |
@@ -80,11 +81,11 @@ Last updated: 2026-07-10
 
 ## Verified User Flows
 
-- Active accounts can log in, read the current account, log out, and be checked against role-specific protected API groups.
+- Active accounts can log in with BCrypt-hashed credentials, read the current account, log out, and be checked against role-specific protected API groups.
 - Audience clients can subscribe to bout update events by tournament and optional ring.
 - Audience can read active notice banners, and admin users can manage notice lifecycle per tournament.
 - Audience can read tournament home data, current bout information, ring status, and official bout lists/search/detail.
 - Judges can submit round scores and retrieve judge-specific scores.
 - Supervisors can review scores, add penalties, and confirm bout results.
 - Ring managers can list bouts, start bouts, start rounds, update bout status, and advance to the next bout.
-- Admin users can manage tournaments, rings, athletes, bouts, notices, and service accounts.
+- Admin users can manage tournaments, rings, athletes, bouts, notices, and service accounts; account passwords are hashed before storage.

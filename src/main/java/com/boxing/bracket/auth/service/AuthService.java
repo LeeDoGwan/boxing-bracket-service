@@ -12,6 +12,7 @@ import com.boxing.bracket.user.domain.AccountStatus;
 import com.boxing.bracket.user.domain.UserRole;
 import com.boxing.bracket.user.repository.AccountRepository;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +31,17 @@ public class AuthService {
     private static final long SESSION_HOURS = 12L;
 
     private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
     private final Clock clock;
     private final Map<String, AuthSession> sessions = new ConcurrentHashMap<>();
 
-    public AuthService(AccountRepository accountRepository) {
-        this(accountRepository, Clock.systemDefaultZone());
+    public AuthService(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
+        this(accountRepository, passwordEncoder, Clock.systemDefaultZone());
     }
 
-    AuthService(AccountRepository accountRepository, Clock clock) {
+    AuthService(AccountRepository accountRepository, PasswordEncoder passwordEncoder, Clock clock) {
         this.accountRepository = accountRepository;
+        this.passwordEncoder = passwordEncoder;
         this.clock = clock;
     }
 
@@ -115,7 +118,7 @@ public class AuthService {
     private boolean matches(String password, String passwordHash) {
         return password != null
                 && passwordHash != null
-                && password.trim().equals(passwordHash.trim());
+                && passwordEncoder.matches(password.trim(), passwordHash.trim());
     }
 
     private void validateLoginRequest(LoginRequest request) {

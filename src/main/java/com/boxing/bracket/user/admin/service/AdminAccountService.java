@@ -7,6 +7,7 @@ import com.boxing.bracket.user.exception.AccountNotFoundException;
 import com.boxing.bracket.user.repository.AccountRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +20,11 @@ import java.util.stream.Collectors;
 public class AdminAccountService {
 
     private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AdminAccountService(AccountRepository accountRepository) {
+    public AdminAccountService(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
         this.accountRepository = accountRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -45,7 +48,7 @@ public class AdminAccountService {
 
         Account account = Account.builder()
                 .loginId(request.getLoginId())
-                .passwordHash(request.getPasswordHash())
+                .passwordHash(encodePassword(request.getPasswordHash()))
                 .name(request.getName())
                 .role(request.getRole())
                 .status(request.getStatus())
@@ -63,7 +66,7 @@ public class AdminAccountService {
                 .orElseThrow(AccountNotFoundException::new);
         account.updateInfo(
                 request.getLoginId(),
-                request.getPasswordHash(),
+                encodePassword(request.getPasswordHash()),
                 request.getName(),
                 request.getRole(),
                 request.getStatus()
@@ -112,5 +115,9 @@ public class AdminAccountService {
         if (accountId == null) {
             throw new IllegalArgumentException("accountId is required");
         }
+    }
+
+    private String encodePassword(String password) {
+        return passwordEncoder.encode(password.trim());
     }
 }
