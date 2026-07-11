@@ -18,6 +18,7 @@ Implemented core areas:
 - Admin bout CSV import API
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
+- Immutable administrator audit logs for operational, admin, and authentication mutations
 
 ## Documentation
 
@@ -25,6 +26,8 @@ Implemented core areas:
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
 - [Concurrency database migration](docs/database-migration-concurrency.sql)
+- [Administrator audit log](docs/audit-log.md)
+- [Audit log database migration](docs/database-migration-audit-log.sql)
 
 ## Local Development
 
@@ -39,7 +42,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 59 test classes, 320 test cases.
+Current documented suite: 64 test classes, 329 test cases.
 
 ### Run application
 
@@ -82,3 +85,4 @@ GET http://localhost:8080/api/health
 - `/api/admin/notices`
 - `/api/admin/accounts`
 - `GET /api/admin/operations/status?tournamentId=`
+- `GET /api/admin/audit-logs?tournamentId=&actorAccountId=&actionType=&page=&size=`

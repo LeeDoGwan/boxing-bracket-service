@@ -1,13 +1,13 @@
 # Testing
 
-Last updated: 2026-07-11
+Last updated: 2026-07-12
 
 ## Latest Verification
 
 - Command: `mvn test`
-- Verified at: 2026-07-11T20:40:12+09:00
-- Result: 320 passed, 0 failed, 0 errors, 0 skipped
-- Test classes: 59
+- Verified at: 2026-07-12T03:37:50+09:00
+- Result: 329 passed, 0 failed, 0 errors, 0 skipped
+- Test classes: 64
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `src/test/resources/application-test.yml`
 
@@ -20,6 +20,7 @@ Last updated: 2026-07-11
 - Service tests for audience home, public bout/ring/notice queries, judge scoring, supervisor scoring, ring manager workflow, admin management flows, bout CSV import, and tournament operation status aggregation.
 - Controller tests for health, audience home, public bout/ring/notice APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
+- Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.
 
 ## Verification Inventory
 
@@ -30,6 +31,11 @@ Last updated: 2026-07-11
 | Auth | `AuthServiceTest` | 7 |
 | Auth | `AuthInterceptorTest` | 4 |
 | Auth | `RoleAccessPolicyTest` | 6 |
+| Audit | `AuditActionResolverTest` | 1 |
+| Audit | `AuditLogControllerTest` | 1 |
+| Audit | `AuditDataSerializerTest` | 2 |
+| Audit | `AuditLogAspectTest` | 2 |
+| Audit | `AuditLogServiceTest` | 3 |
 | Athlete | `AdminAthleteControllerTest` | 10 |
 | Athlete | `AthleteTest` | 2 |
 | Athlete | `AthleteRepositoryTest` | 1 |
@@ -99,3 +105,4 @@ Last updated: 2026-07-11
 - Admin users can manage tournaments, rings, athletes, bouts, notices, and service accounts; account passwords are hashed before storage.
 - Game managers can import bout schedules from CSV files using the admin bout import endpoint.
 - Game managers and service managers can read a tournament's read-only operation summary, including status counts, ring progress, registered judge score submissions, pending results, and bouts in progress for more than 15 minutes.
+- Authorized administrators can filter immutable audit logs for operational, admin, and authentication mutations; sensitive credentials and session material are masked, and idempotent workflow retries retain one audit record.

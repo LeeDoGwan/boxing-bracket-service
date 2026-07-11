@@ -21,8 +21,8 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 320 passed, 0 failed, 0 errors, 0 skipped.
-- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, admin management, workflow concurrency, domain rules, repositories, and health check.
+- Latest `mvn test` result: 329 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -162,6 +162,7 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 - `PUT /api/admin/accounts/{accountId}`
 - `DELETE /api/admin/accounts/{accountId}`
 - `GET /api/admin/operations/status?tournamentId=`
+- `GET /api/admin/audit-logs?tournamentId=&actorAccountId=&actionType=&page=&size=`
 
 ## Deferred
 

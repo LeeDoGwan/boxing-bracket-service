@@ -53,11 +53,13 @@ The service must keep the on-site UX simple because tournament staff may not be 
 - Manage basic user data.
 - Manually create bracket data in MVP. CSV bout import is available; Excel upload is deferred.
 - Read tournament operation status, including ring progress, pending results, and registered judge score submission state.
+- Read filtered administrator audit logs for tournament operations and administrative changes.
 
 ### Service Manager
 
 - Manage operational accounts.
 - Read tournament operation status across rings and stalled bouts. Server log viewing remains deferred.
+- Read administrator audit logs across the service.
 - This role is lower priority for MVP implementation.
 
 ## Core User Flow
@@ -179,6 +181,18 @@ The first working loop is:
 - `createdAt`
 - `updatedAt`
 
+### AuditLog
+
+- `id`
+- `tournamentId`
+- `actorAccountId`, `actorUsername`, `actorRole`
+- `actionType`, `targetType`, `targetId`
+- `ringId`, `boutId`
+- `beforeData`, `afterData` (JSON with sensitive fields masked)
+- `ipAddress`, `userAgent`
+- `success`, `failureReason`
+- `createdAt`
+
 ### Assignment
 
 - `id`
@@ -232,3 +246,4 @@ The first working loop is:
 - Should athletes be managed per tournament or as reusable master data?
 - Should bout numbers be generated automatically or entered manually?
 - Can confirmed results be modified, and who can approve changes?
+- Which account-to-tournament assignment rule should restrict game-manager audit access?
