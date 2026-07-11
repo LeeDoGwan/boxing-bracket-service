@@ -2,6 +2,7 @@ package com.boxing.bracket.bout.admin.service;
 
 import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.athlete.repository.AthleteRepository;
+import com.boxing.bracket.bout.admin.dto.AdminBoutImportResponse;
 import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
 import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
 import com.boxing.bracket.bout.domain.Bout;
@@ -12,10 +13,20 @@ import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,6 +88,33 @@ public class AdminBoutService {
                 .build();
 
         return AdminBoutResponse.from(boutRepository.save(bout));
+    }
+
+    public AdminBoutImportResponse importBouts(MultipartFile file) {
+        validateImportFile(file);
+
+        List<AdminBoutResponse> importedBouts = new ArrayList<>();
+        try (
+                Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+                CSVParser parser = CSVFormat.DEFAULT.builder()
+                        .setHeader()
+                        .setSkipHeaderRecord(true)
+                        .setTrim(true)
+                        .build()
+                        .parse(reader)
+        ) {
+            validateImportHeaders(parser);
+            for (CSVRecord record : parser) {
+                importedBouts.add(createBout(toImportRequest(record)));
+            }
+        } catch (IOException exception) {
+            throw new IllegalArgumentException("bout import file cannot be read");
+        }
+
+        if (importedBouts.isEmpty()) {
+            throw new IllegalArgumentException("bout import file has no rows");
+        }
+        return AdminBoutImportResponse.from(importedBouts);
     }
 
     public AdminBoutResponse updateBout(Long boutId, AdminBoutRequest request) {
@@ -168,5 +206,94 @@ public class AdminBoutService {
         if (boutId == null) {
             throw new IllegalArgumentException("boutId is required");
         }
+    }
+
+    private void validateImportFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("bout import file is required");
+        }
+        String filename = file.getOriginalFilename();
+        if (filename != null && (filename.endsWith(".xls") || filename.endsWith(".xlsx"))) {
+            throw new IllegalArgumentException("Only CSV bout import is supported");
+        }
+    }
+
+    private void validateImportHeaders(CSVParser parser) {
+        List<String> headers = List.of(
+                "tournamentId",
+                "ringId",
+                "boutNumber",
+                "matchType",
+                "redAthleteId",
+                "blueAthleteId",
+                "totalRounds",
+                "scheduledOrder",
+                "eventBout"
+        );
+        for (String header : headers) {
+            if (!parser.getHeaderMap().containsKey(header)) {
+                throw new IllegalArgumentException(header + " column is required");
+            }
+        }
+    }
+
+    private AdminBoutRequest toImportRequest(CSVRecord record) {
+        try {
+            return new AdminBoutRequest(
+                    parseLong(record, "tournamentId", true),
+                    parseLong(record, "ringId", true),
+                    parseInteger(record, "boutNumber", true),
+                    normalize(record.get("matchType")),
+                    parseLong(record, "redAthleteId", true),
+                    parseLong(record, "blueAthleteId", true),
+                    parseInteger(record, "totalRounds", false),
+                    parseInteger(record, "scheduledOrder", false),
+                    parseBoolean(record.get("eventBout"))
+            );
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("row " + record.getRecordNumber() + ": " + exception.getMessage());
+        }
+    }
+
+    private Long parseLong(CSVRecord record, String header, boolean required) {
+        String value = normalize(record.get(header));
+        if (value == null) {
+            if (required) {
+                throw new IllegalArgumentException(header + " is required");
+            }
+            return null;
+        }
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(header + " must be a number");
+        }
+    }
+
+    private Integer parseInteger(CSVRecord record, String header, boolean required) {
+        String value = normalize(record.get(header));
+        if (value == null) {
+            if (required) {
+                throw new IllegalArgumentException(header + " is required");
+            }
+            return null;
+        }
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(header + " must be a number");
+        }
+    }
+
+    private boolean parseBoolean(String value) {
+        String normalized = normalize(value);
+        return normalized != null && Boolean.parseBoolean(normalized);
+    }
+
+    private String normalize(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
     }
 }

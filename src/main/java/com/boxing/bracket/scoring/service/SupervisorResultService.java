@@ -4,6 +4,9 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.event.domain.BoutEventType;
+import com.boxing.bracket.event.dto.BoutEventResponse;
+import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.scoring.domain.BoutResult;
 import com.boxing.bracket.scoring.domain.Penalty;
 import com.boxing.bracket.scoring.domain.RoundScore;
@@ -28,17 +31,20 @@ public class SupervisorResultService {
     private final RoundScoreRepository roundScoreRepository;
     private final PenaltyRepository penaltyRepository;
     private final BoutResultRepository boutResultRepository;
+    private final BoutEventPublisher boutEventPublisher;
 
     public SupervisorResultService(
             BoutRepository boutRepository,
             RoundScoreRepository roundScoreRepository,
             PenaltyRepository penaltyRepository,
-            BoutResultRepository boutResultRepository
+            BoutResultRepository boutResultRepository,
+            @Lazy BoutEventPublisher boutEventPublisher
     ) {
         this.boutRepository = boutRepository;
         this.roundScoreRepository = roundScoreRepository;
         this.penaltyRepository = penaltyRepository;
         this.boutResultRepository = boutResultRepository;
+        this.boutEventPublisher = boutEventPublisher;
     }
 
     public BoutResultResponse confirmResult(Long boutId, BoutResultConfirmRequest request) {
@@ -69,9 +75,11 @@ public class SupervisorResultService {
 
         bout.finish(request.getWinnerSide());
         bout.confirmResult(request.getWinnerSide());
-        boutRepository.save(bout);
+        Bout savedBout = boutRepository.save(bout);
 
-        return BoutResultResponse.from(boutResultRepository.save(boutResult));
+        BoutResult savedResult = boutResultRepository.save(boutResult);
+        boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.RESULT_CONFIRMED, savedBout));
+        return BoutResultResponse.from(savedResult);
     }
 
     private int sumRedScores(List<RoundScore> roundScores) {

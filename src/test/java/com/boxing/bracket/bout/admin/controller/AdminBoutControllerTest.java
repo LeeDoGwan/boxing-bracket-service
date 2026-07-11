@@ -1,5 +1,6 @@
 package com.boxing.bracket.bout.admin.controller;
 
+import com.boxing.bracket.bout.admin.dto.AdminBoutImportResponse;
 import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
 import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
 import com.boxing.bracket.bout.admin.service.AdminBoutService;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +25,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -119,6 +122,24 @@ class AdminBoutControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Tournament not found"));
+    }
+
+    @Test
+    void importBoutsReturnsImportedCount() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "bouts.csv",
+                "text/csv",
+                "tournamentId,ringId,boutNumber,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
+                        .getBytes()
+        );
+        given(adminBoutService.importBouts(any())).willReturn(AdminBoutImportResponse.from(List.of(response(20L))));
+
+        mockMvc.perform(multipart("/api/admin/bouts/import").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.importedCount").value(1))
+                .andExpect(jsonPath("$.data.boutIds[0]").value(20));
     }
 
     @Test

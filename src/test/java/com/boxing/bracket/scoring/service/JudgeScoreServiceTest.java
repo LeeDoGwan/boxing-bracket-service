@@ -1,7 +1,11 @@
 package com.boxing.bracket.scoring.service;
 
+import com.boxing.bracket.bout.domain.Bout;
+import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.event.dto.BoutEventResponse;
+import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.scoring.domain.RoundScore;
 import com.boxing.bracket.scoring.domain.RoundScoreStatus;
 import com.boxing.bracket.scoring.dto.RoundScoreResponse;
@@ -20,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class JudgeScoreServiceTest {
@@ -30,13 +35,16 @@ class JudgeScoreServiceTest {
     @Mock
     private RoundScoreRepository roundScoreRepository;
 
+    @Mock
+    private BoutEventPublisher boutEventPublisher;
+
     @InjectMocks
     private JudgeScoreService judgeScoreService;
 
     @Test
     void submitRoundScoreCreatesNewSubmittedScore() {
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
-        given(boutRepository.existsById(1L)).willReturn(true);
+        given(boutRepository.findById(1L)).willReturn(Optional.of(createBout(1L)));
         given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
                 .willReturn(Optional.empty());
         given(roundScoreRepository.save(any(RoundScore.class)))
@@ -51,6 +59,7 @@ class JudgeScoreServiceTest {
         assertThat(response.getBlueScore()).isEqualTo(9);
         assertThat(response.getStatus()).isEqualTo(RoundScoreStatus.SUBMITTED);
         assertThat(response.getSubmittedAt()).isNotNull();
+        then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
     @Test
@@ -63,7 +72,7 @@ class JudgeScoreServiceTest {
         ReflectionTestUtils.setField(existingScore, "id", 99L);
 
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 9, 10);
-        given(boutRepository.existsById(1L)).willReturn(true);
+        given(boutRepository.findById(1L)).willReturn(Optional.of(createBout(1L)));
         given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
                 .willReturn(Optional.of(existingScore));
         given(roundScoreRepository.save(any(RoundScore.class)))
@@ -75,12 +84,13 @@ class JudgeScoreServiceTest {
         assertThat(response.getRedScore()).isEqualTo(9);
         assertThat(response.getBlueScore()).isEqualTo(10);
         assertThat(response.getStatus()).isEqualTo(RoundScoreStatus.SUBMITTED);
+        then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
     @Test
     void submitRoundScoreRejectsMissingBout() {
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
-        given(boutRepository.existsById(99L)).willReturn(false);
+        given(boutRepository.findById(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> judgeScoreService.submitRoundScore(99L, 1, request))
                 .isInstanceOf(BoutNotFoundException.class)
@@ -108,13 +118,26 @@ class JudgeScoreServiceTest {
     @Test
     void submitRoundScoreRejectsNegativeScore() {
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, -1, 9);
-        given(boutRepository.existsById(1L)).willReturn(true);
+        given(boutRepository.findById(1L)).willReturn(Optional.of(createBout(1L)));
         given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 1, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Score must be greater than or equal to 0");
+    }
+
+    private Bout createBout(Long id) {
+        Bout bout = Bout.builder()
+                .tournamentId(1L)
+                .ringId(1L)
+                .boutNumber(1)
+                .redAthleteId(10L)
+                .blueAthleteId(11L)
+                .status(BoutStatus.IN_PROGRESS)
+                .build();
+        ReflectionTestUtils.setField(bout, "id", id);
+        return bout;
     }
 
 }

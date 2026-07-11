@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Clock;
@@ -27,6 +29,8 @@ import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Mock
     private AccountRepository accountRepository;
@@ -58,7 +62,13 @@ class AuthServiceTest {
     void loginRejectsInactiveAccount() {
         AuthService authService = authService();
         Account account = account(UserRole.JUDGE);
-        account.updateInfo("judge01", "password1", "Judge One", UserRole.JUDGE, AccountStatus.INACTIVE);
+        account.updateInfo(
+                "judge01",
+                passwordEncoder.encode("password1"),
+                "Judge One",
+                UserRole.JUDGE,
+                AccountStatus.INACTIVE
+        );
         given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account));
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("judge01", "password1")))
@@ -116,13 +126,13 @@ class AuthServiceTest {
 
     private AuthService authService() {
         Clock clock = Clock.fixed(Instant.parse("2026-07-10T00:00:00Z"), ZoneId.of("UTC"));
-        return new AuthService(accountRepository, clock);
+        return new AuthService(accountRepository, passwordEncoder, clock);
     }
 
     private Account account(UserRole role) {
         Account account = Account.builder()
                 .loginId("judge01")
-                .passwordHash("password1")
+                .passwordHash(passwordEncoder.encode("password1"))
                 .name("Judge One")
                 .role(role)
                 .status(AccountStatus.ACTIVE)

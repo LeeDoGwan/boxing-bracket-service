@@ -7,12 +7,14 @@ import com.boxing.bracket.user.domain.AccountStatus;
 import com.boxing.bracket.user.domain.UserRole;
 import com.boxing.bracket.user.exception.AccountNotFoundException;
 import com.boxing.bracket.user.repository.AccountRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -21,17 +23,24 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class AdminAccountServiceTest {
 
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     @Mock
     private AccountRepository accountRepository;
 
-    @InjectMocks
     private AdminAccountService adminAccountService;
+
+    @BeforeEach
+    void setUp() {
+        adminAccountService = new AdminAccountService(accountRepository, passwordEncoder);
+    }
 
     @Test
     void getAccountsReturnsAccountList() {
@@ -78,6 +87,10 @@ class AdminAccountServiceTest {
         assertThat(response.getAccountId()).isEqualTo(1L);
         assertThat(response.getLoginId()).isEqualTo("judge01");
         assertThat(response.getRole()).isEqualTo(UserRole.JUDGE);
+        then(accountRepository).should().save(argThat(account ->
+                !account.getPasswordHash().equals("hash1")
+                        && passwordEncoder.matches("hash1", account.getPasswordHash())
+        ));
     }
 
     @Test
@@ -118,6 +131,8 @@ class AdminAccountServiceTest {
         assertThat(response.getLoginId()).isEqualTo("judge02");
         assertThat(response.getRole()).isEqualTo(UserRole.SUPERVISOR);
         assertThat(response.getStatus()).isEqualTo(AccountStatus.INACTIVE);
+        assertThat(account.getPasswordHash()).isNotEqualTo("hash2");
+        assertThat(passwordEncoder.matches("hash2", account.getPasswordHash())).isTrue();
     }
 
     @Test

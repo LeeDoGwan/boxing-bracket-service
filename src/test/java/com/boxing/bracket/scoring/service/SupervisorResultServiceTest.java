@@ -5,6 +5,8 @@ import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.event.dto.BoutEventResponse;
+import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.scoring.domain.BoutResult;
 import com.boxing.bracket.scoring.domain.DecisionType;
 import com.boxing.bracket.scoring.domain.Penalty;
@@ -28,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class SupervisorResultServiceTest {
@@ -43,6 +46,9 @@ class SupervisorResultServiceTest {
 
     @Mock
     private BoutResultRepository boutResultRepository;
+
+    @Mock
+    private BoutEventPublisher boutEventPublisher;
 
     @InjectMocks
     private SupervisorResultService supervisorResultService;
@@ -63,6 +69,7 @@ class SupervisorResultServiceTest {
                         createPenalty(BoutSide.BLUE, 2)
                 ));
         given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.empty());
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
         given(boutResultRepository.save(any(BoutResult.class))).willAnswer(invocation -> {
             BoutResult boutResult = invocation.getArgument(0);
             ReflectionTestUtils.setField(boutResult, "id", 100L);
@@ -83,6 +90,7 @@ class SupervisorResultServiceTest {
         assertThat(response.getConfirmedAt()).isNotNull();
         assertThat(bout.getStatus()).isEqualTo(BoutStatus.FINISHED);
         assertThat(bout.isResultConfirmed()).isTrue();
+        then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
     @Test
@@ -95,6 +103,7 @@ class SupervisorResultServiceTest {
         given(roundScoreRepository.findByBoutId(1L)).willReturn(List.of(createSubmittedRoundScore(1L, 1, 10L, 8, 10)));
         given(penaltyRepository.findByBoutId(1L)).willReturn(List.of());
         given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.of(existingResult));
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
         given(boutResultRepository.save(any(BoutResult.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         BoutResultResponse response = supervisorResultService.confirmResult(1L, request);

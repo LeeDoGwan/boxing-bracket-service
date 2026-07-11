@@ -4,6 +4,9 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.event.domain.BoutEventType;
+import com.boxing.bracket.event.dto.BoutEventResponse;
+import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
@@ -25,10 +28,16 @@ public class RingManagerService {
 
     private final BoutRepository boutRepository;
     private final RingRepository ringRepository;
+    private final BoutEventPublisher boutEventPublisher;
 
-    public RingManagerService(BoutRepository boutRepository, RingRepository ringRepository) {
+    public RingManagerService(
+            BoutRepository boutRepository,
+            RingRepository ringRepository,
+            @Lazy BoutEventPublisher boutEventPublisher
+    ) {
         this.boutRepository = boutRepository;
         this.ringRepository = ringRepository;
+        this.boutEventPublisher = boutEventPublisher;
     }
 
     public RingManagerBoutResponse startBout(Long boutId) {
@@ -45,7 +54,9 @@ public class RingManagerService {
         ring.assignCurrentBout(bout.getId());
 
         ringRepository.save(ring);
-        return RingManagerBoutResponse.from(boutRepository.save(bout));
+        Bout savedBout = boutRepository.save(bout);
+        boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.BOUT_STARTED, savedBout));
+        return RingManagerBoutResponse.from(savedBout);
     }
 
     @Transactional(readOnly = true)
@@ -80,7 +91,9 @@ public class RingManagerService {
         ring.prepareCurrentBout(nextBout.getId());
 
         ringRepository.save(ring);
-        return RingManagerBoutResponse.from(boutRepository.save(nextBout));
+        Bout savedBout = boutRepository.save(nextBout);
+        boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.NEXT_BOUT_READY, savedBout));
+        return RingManagerBoutResponse.from(savedBout);
     }
 
     public RingManagerBoutResponse updateBoutStatus(Long boutId, BoutStatusUpdateRequest request) {
@@ -93,7 +106,9 @@ public class RingManagerService {
                 .orElseThrow(BoutNotFoundException::new);
         bout.changeStatus(request.getStatus());
 
-        return RingManagerBoutResponse.from(boutRepository.save(bout));
+        Bout savedBout = boutRepository.save(bout);
+        boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.BOUT_STATUS_CHANGED, savedBout));
+        return RingManagerBoutResponse.from(savedBout);
     }
 
     public RingManagerBoutResponse startRound(Long boutId, Integer roundNo) {
@@ -105,7 +120,9 @@ public class RingManagerService {
                 .orElseThrow(BoutNotFoundException::new);
         bout.startRound(roundNo);
 
-        return RingManagerBoutResponse.from(boutRepository.save(bout));
+        Bout savedBout = boutRepository.save(bout);
+        boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.ROUND_STARTED, savedBout, roundNo));
+        return RingManagerBoutResponse.from(savedBout);
     }
 
     private void validateStatusUpdateRequest(BoutStatusUpdateRequest request) {
