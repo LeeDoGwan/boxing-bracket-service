@@ -36,6 +36,14 @@ class RoleAccessPolicyTest {
     }
 
     @Test
+    void operationStatusAllowsGameAndServiceManager() {
+        Optional<AccessRule> rule = roleAccessPolicy.findRule("/api/admin/operations/status");
+
+        assertThat(rule).isPresent();
+        assertThat(rule.get().getRoles()).containsExactly(UserRole.GAME_MANAGER, UserRole.SERVICE_MANAGER);
+    }
+
+    @Test
     void judgeApiRequiresJudge() {
         Optional<AccessRule> rule = roleAccessPolicy.findRule("/api/judge/bouts/1/scores");
 

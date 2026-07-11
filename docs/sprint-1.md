@@ -21,8 +21,8 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 301 passed, 0 failed, 0 errors, 0 skipped.
-- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, admin management, domain rules, repositories, and health check.
+- Latest `mvn test` result: 305 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, admin management, domain rules, repositories, and health check.
 
 ## Screens
 
@@ -75,6 +75,7 @@ For sprint 1, ring manager functionality can stay minimal and focus on status ch
 - Manual bout update.
 - Manual bout deletion.
 - Athlete input.
+- Read tournament operation status by ring, result confirmation, and registered judge score submission state.
 
 CSV upload is available for admin bout import. Excel upload is deferred.
 
@@ -157,6 +158,7 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 - `POST /api/admin/accounts`
 - `PUT /api/admin/accounts/{accountId}`
 - `DELETE /api/admin/accounts/{accountId}`
+- `GET /api/admin/operations/status?tournamentId=`
 
 ## Deferred
 
