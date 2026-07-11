@@ -71,6 +71,13 @@ The first working loop is:
 5. Supervisor reviews scores, applies penalties, and confirms the result.
 6. Audience home and full bracket reflect the confirmed result.
 
+## Workflow Safety
+
+- A repeated request with the same payload must return the existing bout, round, score, or result state without a duplicate SSE event.
+- A request that conflicts with the current bout state or changes an already submitted score/result must return HTTP 409.
+- Bout, ring, round score, and bout result updates use optimistic versions. Workflow mutations also lock the affected bout or ring for the transaction.
+- A judge can have one score per bout and round, and a bout can have one confirmed result. These constraints are enforced in the database.
+
 ## Initial Data Model
 
 ### Tournament

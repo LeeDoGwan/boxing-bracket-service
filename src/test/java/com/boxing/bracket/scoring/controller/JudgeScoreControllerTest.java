@@ -1,6 +1,7 @@
 package com.boxing.bracket.scoring.controller;
 
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.scoring.domain.RoundScore;
 import com.boxing.bracket.scoring.dto.RoundScoreResponse;
 import com.boxing.bracket.scoring.dto.RoundScoreSubmitRequest;
@@ -80,6 +81,20 @@ class JudgeScoreControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Bout not found"));
+    }
+
+    @Test
+    void submitRoundScoreReturnsConflictForSubmittedScoreWithDifferentPayload() throws Exception {
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 9, 10);
+        given(judgeScoreService.submitRoundScore(eq(1L), eq(1), any(RoundScoreSubmitRequest.class)))
+                .willThrow(new WorkflowConflictException("SCORE_ALREADY_SUBMITTED"));
+
+        mockMvc.perform(post("/api/judge/bouts/{boutId}/rounds/{roundNo}/scores", 1L, 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("SCORE_ALREADY_SUBMITTED"));
     }
 
     @Test

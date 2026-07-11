@@ -4,6 +4,7 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.domain.BoutEventType;
 import com.boxing.bracket.event.dto.BoutEventResponse;
 import com.boxing.bracket.event.service.BoutEventPublisher;
@@ -45,10 +46,20 @@ public class RingManagerService {
             throw new IllegalArgumentException("boutId is required");
         }
 
-        Bout bout = boutRepository.findById(boutId)
+        Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
-        Ring ring = ringRepository.findById(bout.getRingId())
+        Ring ring = ringRepository.findWithLockById(bout.getRingId())
                 .orElseThrow(RingNotFoundException::new);
+
+        if (bout.getStatus() == BoutStatus.IN_PROGRESS) {
+            if (boutId.equals(ring.getCurrentBoutId())) {
+                return RingManagerBoutResponse.from(bout);
+            }
+            throw new WorkflowConflictException("BOUT_ALREADY_STARTED");
+        }
+        if (ring.getCurrentBoutId() != null && !boutId.equals(ring.getCurrentBoutId())) {
+            throw new WorkflowConflictException("RING_ALREADY_HAS_CURRENT_BOUT");
+        }
 
         bout.start();
         ring.assignCurrentBout(bout.getId());
@@ -79,19 +90,24 @@ public class RingManagerService {
             throw new IllegalArgumentException("ringId is required");
         }
 
-        Ring ring = ringRepository.findById(ringId)
+        Ring ring = ringRepository.findWithLockById(ringId)
                 .orElseThrow(RingNotFoundException::new);
         List<Bout> officialBouts = boutRepository.findByRingIdOrderByScheduledOrderAsc(ringId).stream()
                 .filter(bout -> !bout.isEventBout())
                 .collect(Collectors.toList());
-        Bout nextBout = findNextBout(ring, officialBouts)
+        Optional<Bout> currentBout = findCurrentBout(ring, officialBouts);
+        if (currentBout.isPresent() && currentBout.get().getStatus() != BoutStatus.FINISHED) {
+            throw new WorkflowConflictException("CURRENT_BOUT_NOT_FINISHED");
+        }
+
+        Bout nextBout = findNextBout(currentBout, officialBouts)
                 .orElseThrow(() -> new IllegalArgumentException("next bout does not exist"));
 
-        nextBout.changeStatus(BoutStatus.READY);
+        boolean statusChanged = nextBout.changeStatus(BoutStatus.READY);
         ring.prepareCurrentBout(nextBout.getId());
 
         ringRepository.save(ring);
-        Bout savedBout = boutRepository.save(nextBout);
+        Bout savedBout = statusChanged ? boutRepository.save(nextBout) : nextBout;
         boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.NEXT_BOUT_READY, savedBout));
         return RingManagerBoutResponse.from(savedBout);
     }
@@ -102,9 +118,12 @@ public class RingManagerService {
         }
         validateStatusUpdateRequest(request);
 
-        Bout bout = boutRepository.findById(boutId)
+        Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
-        bout.changeStatus(request.getStatus());
+        boolean statusChanged = bout.changeStatus(request.getStatus());
+        if (!statusChanged) {
+            return RingManagerBoutResponse.from(bout);
+        }
 
         Bout savedBout = boutRepository.save(bout);
         boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.BOUT_STATUS_CHANGED, savedBout));
@@ -116,9 +135,12 @@ public class RingManagerService {
             throw new IllegalArgumentException("boutId is required");
         }
 
-        Bout bout = boutRepository.findById(boutId)
+        Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
-        bout.startRound(roundNo);
+        boolean roundStarted = bout.startRound(roundNo);
+        if (!roundStarted) {
+            return RingManagerBoutResponse.from(bout);
+        }
 
         Bout savedBout = boutRepository.save(bout);
         boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.ROUND_STARTED, savedBout, roundNo));
@@ -134,8 +156,7 @@ public class RingManagerService {
         }
     }
 
-    private Optional<Bout> findNextBout(Ring ring, List<Bout> bouts) {
-        Optional<Bout> currentBout = findCurrentBout(ring, bouts);
+    private Optional<Bout> findNextBout(Optional<Bout> currentBout, List<Bout> bouts) {
         if (currentBout.isPresent() && currentBout.get().getScheduledOrder() != null) {
             Integer currentScheduledOrder = currentBout.get().getScheduledOrder();
             return bouts.stream()

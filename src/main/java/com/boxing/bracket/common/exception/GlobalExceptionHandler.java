@@ -13,10 +13,14 @@ import com.boxing.bracket.user.exception.AccountNotFoundException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import javax.persistence.OptimisticLockException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -91,6 +95,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(exception.getMessage()));
+    }
+
+    @ExceptionHandler(WorkflowConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleWorkflowConflict(WorkflowConflictException exception) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.fail(exception.getMessage()));
+    }
+
+    @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockException.class})
+    public ResponseEntity<ApiResponse<Void>> handleConcurrentModification(Exception exception) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.fail("CONCURRENT_MODIFICATION"));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException exception) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.fail("DATA_INTEGRITY_VIOLATION"));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

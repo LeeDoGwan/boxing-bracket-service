@@ -1,6 +1,7 @@
 package com.boxing.bracket.scoring.domain;
 
 import com.boxing.bracket.common.entity.BaseTimeEntity;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,11 +15,19 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+import javax.persistence.Version;
 import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "round_scores")
+@Table(
+        name = "round_scores",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_round_scores_bout_round_judge",
+                columnNames = {"bout_id", "round_no", "judge_id"}
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RoundScore extends BaseTimeEntity {
 
@@ -26,13 +35,16 @@ public class RoundScore extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Version
+    private Long version;
+
+    @Column(name = "bout_id", nullable = false)
     private Long boutId;
 
-    @Column(nullable = false)
+    @Column(name = "round_no", nullable = false)
     private Integer roundNo;
 
-    @Column(nullable = false)
+    @Column(name = "judge_id", nullable = false)
     private Long judgeId;
 
     private Integer redScore;
@@ -56,13 +68,25 @@ public class RoundScore extends BaseTimeEntity {
         this.submittedAt = submittedAt;
     }
 
-    public void submit(int redScore, int blueScore) {
+    public boolean submit(int redScore, int blueScore) {
         validateScore(redScore);
         validateScore(blueScore);
+        if (this.status == RoundScoreStatus.SUBMITTED) {
+            if (isSameScore(redScore, blueScore)) {
+                return false;
+            }
+            throw new WorkflowConflictException("SCORE_ALREADY_SUBMITTED");
+        }
         this.redScore = redScore;
         this.blueScore = blueScore;
         this.status = RoundScoreStatus.SUBMITTED;
         this.submittedAt = LocalDateTime.now();
+        return true;
+    }
+
+    private boolean isSameScore(int redScore, int blueScore) {
+        return Integer.valueOf(redScore).equals(this.redScore)
+                && Integer.valueOf(blueScore).equals(this.blueScore);
     }
 
     private void validateScore(int score) {

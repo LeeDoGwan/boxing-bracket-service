@@ -17,12 +17,14 @@ Implemented core areas:
 - Admin tournament, ring, athlete, bout, notice, and account management APIs
 - Admin bout CSV import API
 - Tournament operation status summary for game and service managers
+- Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
 
 ## Documentation
 
 - [Product requirements](docs/requirements.md)
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
+- [Concurrency database migration](docs/database-migration-concurrency.sql)
 
 ## Local Development
 
@@ -37,7 +39,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 56 test classes, 305 test cases.
+Current documented suite: 59 test classes, 320 test cases.
 
 ### Run application
 
