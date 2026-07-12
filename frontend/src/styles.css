@@ -279,6 +279,10 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .athlete-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 8px; }
 .athlete-search input { min-width: 0; min-height: 40px; border: 1px solid #b8c7cc; border-radius: 4px; padding: 7px 9px; background: #ffffff; color: #18242b; }
 .athlete-clear-search { width: 100%; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-wide-field { grid-column: 1 / -1; }
+.admin-form-grid textarea { min-width: 0; resize: vertical; border: 1px solid #b8c7cc; border-radius: 4px; padding: 9px 10px; background: #ffffff; color: #18242b; font: inherit; line-height: 1.5; }
+.admin-toggle-field { display: flex !important; grid-column: 1 / -1; align-items: center; gap: 8px !important; }
+.admin-toggle-field input { min-height: 18px; width: 18px; }
 
 @media (max-width: 760px) {
   .app-header { grid-template-columns: 1fr auto; gap: 14px; min-height: 0; padding: 18px 20px; }
