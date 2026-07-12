@@ -23,6 +23,7 @@ One ring can run one bout end to end:
 - Test documentation: [Testing](testing.md)
 - Latest `mvn test` result: 329 passed, 0 failed, 0 errors, 0 skipped.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
+- Audience MVP verification: 9 frontend tests passed, ESLint passed, and the Vite production build passed.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -81,6 +82,13 @@ Duplicate requests return the existing state when the payload is equivalent. Con
 - Read tournament operation status by ring, result confirmation, and registered judge score submission state.
 
 CSV upload is available for admin bout import. Excel upload is deferred.
+
+### Audience Web MVP
+
+- React/Vite public home screen.
+- Notice rotation, ring cards, current and next bouts, confirmed results, and bout detail dialog.
+- Official bracket list with athlete, affiliation, type, status, result, and search.
+- SSE refresh with reconnect state, duplicate event protection, and cleanup on unmount.
 
 ## API Draft
 

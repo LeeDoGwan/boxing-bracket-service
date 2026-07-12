@@ -16,6 +16,7 @@ Implemented core areas:
 - Ring manager bout list/start/status/round start/next
 - Admin tournament, ring, athlete, bout, notice, and account management APIs
 - Admin bout CSV import API
+- Audience React MVP with live bout updates and official bracket search
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
 - Immutable administrator audit logs for operational, admin, and authentication mutations
@@ -28,6 +29,7 @@ Implemented core areas:
 - [Concurrency database migration](docs/database-migration-concurrency.sql)
 - [Administrator audit log](docs/audit-log.md)
 - [Audit log database migration](docs/database-migration-audit-log.sql)
+- [Audience web MVP](frontend/README.md)
 
 ## Local Development
 
@@ -35,6 +37,7 @@ Implemented core areas:
 
 - Java 11
 - Maven 3.9.x
+- Node.js and npm
 
 ### Run tests
 
@@ -42,12 +45,20 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 64 test classes, 329 test cases.
+Current documented suite: 64 backend test classes, 329 backend test cases, and 9 frontend test cases.
 
 ### Run application
 
 ```bash
 mvn spring-boot:run
+```
+
+Run the audience frontend in another terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
 ### Health check
