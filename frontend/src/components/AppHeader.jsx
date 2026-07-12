@@ -20,6 +20,7 @@ export function AppHeader({ tournamentId, onTournamentChange }) {
         <NavLink to={`/admin/athletes?tournamentId=${tournamentId}`}>선수 관리</NavLink>
         <NavLink to={`/admin/notices?tournamentId=${tournamentId}`}>공지 관리</NavLink>
         <NavLink to={`/admin/bouts?tournamentId=${tournamentId}`}>대진 관리</NavLink>
+        <NavLink to={`/admin/accounts?tournamentId=${tournamentId}`}>계정 관리</NavLink>
       </nav>
       <label className="tournament-input">
         <span>대회 ID</span>
