@@ -19,6 +19,7 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - `/supervisor` - authenticated score review, penalty, and result confirmation desk
 - `/ring-manager` - authenticated ring bout operations desk
 - `/operations` - authenticated tournament operations monitoring desk
+- `/audit-logs` - authenticated administrator audit log desk
 
 ## API Mapping
 
@@ -29,11 +30,13 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - Supervisor: `/api/supervisor/bouts/{boutId}/scores`, `/api/supervisor/bouts/{boutId}/penalties`, `/api/supervisor/bouts/{boutId}/result`
 - Ring Manager: `/api/ring-manager/rings/{ringId}/bouts`, `/api/ring-manager/bouts/{boutId}/start`, `/api/ring-manager/bouts/{boutId}/rounds/{roundNo}/start`, `/api/ring-manager/bouts/{boutId}/status`, `/api/ring-manager/rings/{ringId}/next`
 - Operations: `/api/admin/operations/status?tournamentId={id}`
+- Audit Logs: `/api/admin/audit-logs?tournamentId=&actorAccountId=&actorRole=&actionType=&targetType=&ringId=&boutId=&success=&from=&to=&page=&size=`
 - Live updates: `/api/events/stream?tournamentId={id}`
 
 Audience APIs are public. Judge score APIs require a `JUDGE` bearer session. A dedicated assignment endpoint is not implemented yet, so the judge desk selects a bout from the tournament's official bout list.
 Supervisor APIs require a `SUPERVISOR` bearer session, and ring manager APIs require a `RING_MANAGER` bearer session. Ring assignment is not implemented yet, so the ring manager desk loads a ring directly by ID.
 Operations status requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.
+Audit log queries require a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and retain the server's masked before/after snapshots.
 
 ## Verification
 
@@ -43,6 +46,6 @@ npm run lint
 npm run build
 ```
 
-The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations login, score loading, submitted score locking, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, and retry states.
+The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations/audit log login, score loading, submitted score locking, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, and retry states.
 
 The test profile does not seed accounts or tournament data. Use active `JUDGE`, `SUPERVISOR`, `RING_MANAGER`, `GAME_MANAGER`, and `SERVICE_MANAGER` accounts with registered bouts to exercise authenticated desks end to end. Penalties are write-only in the current API, so the supervisor desk keeps newly created penalties in the current view and uses the confirmed result for persisted totals.
