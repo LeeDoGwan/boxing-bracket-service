@@ -21,6 +21,10 @@ function blankForm() {
   return { loginId: '', name: '', password: '', role: 'JUDGE', status: 'ACTIVE' };
 }
 
+function blankFilters() {
+  return { keyword: '', role: '', status: '' };
+}
+
 function formFromAccount(account) {
   return { loginId: account.loginId || '', name: account.name || '', password: '', role: account.role || 'JUDGE', status: account.status || 'ACTIVE' };
 }
@@ -70,6 +74,8 @@ function AccountWorkspace({ onLogout, session }) {
   const [accounts, setAccounts] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(blankForm);
+  const [filterForm, setFilterForm] = useState(blankFilters);
+  const [filters, setFilters] = useState(blankFilters);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [listError, setListError] = useState('');
@@ -81,7 +87,7 @@ function AccountWorkspace({ onLogout, session }) {
     setListError('');
     setActionError('');
     try {
-      const nextAccounts = (await getAccounts(session.accessToken)) || [];
+      const nextAccounts = (await getAccounts(filters, session.accessToken)) || [];
       setAccounts(nextAccounts);
       setSelectedId((current) => current && nextAccounts.some((item) => item.accountId === current)
         ? current
@@ -91,7 +97,7 @@ function AccountWorkspace({ onLogout, session }) {
     } finally {
       setLoading(false);
     }
-  }, [session.accessToken]);
+  }, [filters, session.accessToken]);
 
   useEffect(() => {
     loadAccounts();
@@ -105,6 +111,17 @@ function AccountWorkspace({ onLogout, session }) {
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
     setMessage('');
+  }
+
+  function handleFilterSubmit(event) {
+    event.preventDefault();
+    setFilters({ ...filterForm, keyword: filterForm.keyword.trim() });
+  }
+
+  function handleFilterReset() {
+    const nextFilters = blankFilters();
+    setFilterForm(nextFilters);
+    setFilters(nextFilters);
   }
 
   async function handleSubmit(event) {
@@ -163,6 +180,12 @@ function AccountWorkspace({ onLogout, session }) {
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
+            <form className="account-search" onSubmit={handleFilterSubmit}>
+              <label>Search<input aria-label="Account search" onChange={(event) => setFilterForm((current) => ({ ...current, keyword: event.target.value }))} placeholder="Login ID or name" value={filterForm.keyword} /></label>
+              <label>Role<select aria-label="Role filter" onChange={(event) => setFilterForm((current) => ({ ...current, role: event.target.value }))} value={filterForm.role}><option value="">All roles</option>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <label>Status<select aria-label="Status filter" onChange={(event) => setFilterForm((current) => ({ ...current, status: event.target.value }))} value={filterForm.status}><option value="">All statuses</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <div className="account-search-actions"><button className="command-button" type="submit">Filter</button><button className="secondary-button" onClick={handleFilterReset} type="button">Reset</button></div>
+            </form>
             <div className="operation-panel-heading"><div><p className="eyebrow">ACCOUNTS</p><h3>계정 목록</h3></div><span>{accounts.length}건</span></div>
             <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 계정</button>
             <div className="admin-entity-list">{accounts.map((account) => <button className={`admin-entity-option${selectedId === account.accountId ? ' selected' : ''}`} key={account.accountId} onClick={() => setSelectedId(account.accountId)} type="button"><strong>{account.loginId}</strong><span>{account.name} · {ROLE_LABELS[account.role] || account.role} · {STATUS_LABELS[account.status] || account.status}</span></button>)}</div>

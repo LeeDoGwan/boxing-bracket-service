@@ -27,7 +27,7 @@ Implemented core areas:
 - Athlete admin React desk with searchable athlete CRUD management
 - Notice admin React desk with tournament-scoped notice publishing management
 - Bout admin React desk with schedule CRUD and CSV import
-- Account admin React desk restricted to service managers
+- Account admin React desk restricted to service managers, with keyword, role, and status filters
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
 - Immutable administrator audit logs for operational, admin, and authentication mutations
@@ -56,7 +56,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 64 backend test classes, 329 backend test cases, and 40 frontend test cases.
+Current documented suite: 64 backend test classes, 331 backend test cases, and 41 frontend test cases.
 
 ### Run application
 
@@ -107,6 +107,6 @@ GET http://localhost:8080/api/health
 - `/api/admin/bouts`
 - `POST /api/admin/bouts/import`
 - `/api/admin/notices`
-- `/api/admin/accounts`
+- `/api/admin/accounts?keyword=&role=&status=`
 - `GET /api/admin/operations/status?tournamentId=`
 - `GET /api/admin/audit-logs?tournamentId=&actorAccountId=&actionType=&page=&size=`

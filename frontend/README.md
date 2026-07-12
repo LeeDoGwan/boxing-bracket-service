@@ -25,7 +25,7 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - `/admin/athletes` - authenticated searchable athlete CRUD management desk
 - `/admin/notices` - authenticated tournament-scoped notice publishing management desk
 - `/admin/bouts` - authenticated tournament-scoped bout CRUD and CSV import desk
-- `/admin/accounts` - service-manager-only account CRUD management desk
+- `/admin/accounts` - service-manager-only account CRUD management desk with search and role/status filters
 
 ## API Mapping
 
@@ -42,7 +42,7 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - Athlete Admin: `/api/admin/athletes?keyword=`, `/api/admin/athletes/{athleteId}`
 - Notice Admin: `/api/admin/notices?tournamentId={id}`, `/api/admin/notices/{noticeId}`
 - Bout Admin: `/api/admin/bouts?tournamentId={id}`, `/api/admin/bouts`, `/api/admin/bouts/import`, `/api/admin/bouts/{boutId}`
-- Account Admin: `/api/admin/accounts`, `/api/admin/accounts/{accountId}`
+- Account Admin: `/api/admin/accounts?keyword=&role=&status=`, `/api/admin/accounts/{accountId}`
 - Live updates: `/api/events/stream?tournamentId={id}`
 
 Audience APIs are public. Judge score APIs require a `JUDGE` bearer session. A dedicated assignment endpoint is not implemented yet, so the judge desk selects a bout from the tournament's official bout list.
@@ -54,7 +54,7 @@ Ring management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session an
 Athlete management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.
 Notice management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament.
 Bout management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament. Manual bout forms load ring and athlete selector data from the corresponding admin APIs. CSV import requires the documented header row and does not accept Excel files; the desk provides a matching CSV template download.
-Account management requires a `SERVICE_MANAGER` bearer session. Password inputs are sent to the server for BCrypt encoding and are never rendered from API responses.
+Account management requires a `SERVICE_MANAGER` bearer session. Account lists support login/name keyword search and role/status filters. Password inputs are sent to the server for BCrypt encoding and are never rendered from API responses.
 
 ## Verification
 
@@ -64,6 +64,6 @@ npm run lint
 npm run build
 ```
 
-The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/bout admin/account admin login, score loading, submitted score locking, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV import, account create/update/delete, and retry states.
+The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/bout admin/account admin login, score loading, submitted score locking, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV import, account search/filter/create/update/delete, and retry states.
 
 The test profile does not seed accounts or tournament data. Use active `JUDGE`, `SUPERVISOR`, `RING_MANAGER`, `GAME_MANAGER`, and `SERVICE_MANAGER` accounts with registered bouts to exercise authenticated desks end to end. Penalties are write-only in the current API, so the supervisor desk keeps newly created penalties in the current view and uses the confirmed result for persisted totals.

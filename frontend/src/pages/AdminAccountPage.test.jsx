@@ -21,6 +21,7 @@ const session = {
 };
 
 const account = { accountId: 40, loginId: 'judge01', name: 'Judge One', role: 'JUDGE', status: 'ACTIVE' };
+const ringAccount = { accountId: 41, loginId: 'ring01', name: 'Ring One', role: 'RING_MANAGER', status: 'INACTIVE' };
 
 beforeEach(() => {
   window.sessionStorage.clear();
@@ -42,8 +43,26 @@ describe('AdminAccountPage', () => {
     fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '계정 관리' })).toBeInTheDocument();
-    expect(getAccounts).toHaveBeenCalledWith('service-token');
+    expect(getAccounts).toHaveBeenCalledWith({ keyword: '', role: '', status: '' }, 'service-token');
     expect(await screen.findByText('judge01')).toBeInTheDocument();
+  });
+
+  it('filters accounts by keyword, role, and status', async () => {
+    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
+    getAccounts.mockResolvedValueOnce([account]).mockResolvedValueOnce([ringAccount]);
+
+    render(<AdminAccountPage />);
+    expect(await screen.findByText('judge01')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Account search'), { target: { value: 'ring' } });
+    fireEvent.change(screen.getByLabelText('Role filter'), { target: { value: 'RING_MANAGER' } });
+    fireEvent.change(screen.getByLabelText('Status filter'), { target: { value: 'INACTIVE' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Filter' }));
+
+    await waitFor(() => expect(getAccounts).toHaveBeenCalledWith(
+      { keyword: 'ring', role: 'RING_MANAGER', status: 'INACTIVE' },
+      'service-token'
+    ));
+    expect(await screen.findByText('ring01')).toBeInTheDocument();
   });
 
   it('creates a new role account', async () => {

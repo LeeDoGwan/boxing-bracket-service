@@ -21,9 +21,9 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 329 passed, 0 failed, 0 errors, 0 skipped.
+- Latest `mvn test` result: 331 passed, 0 failed, 0 errors, 0 skipped.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
-- Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Bout Admin, and Account Admin MVP verification: 40 frontend tests passed, ESLint passed, and the Vite production build passed.
+- Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Bout Admin, and Account Admin MVP verification: 41 frontend tests passed, ESLint passed, and the Vite production build passed.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -159,6 +159,7 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 
 - Service manager-only login with role validation and session reuse.
 - Account list with login ID, name, role, and active status; password data is never displayed.
+- Account search by login ID/name and exact role/status filters.
 - Account create, update, delete, refresh, and error states with server-side BCrypt handling.
 
 ## API Draft
@@ -255,6 +256,7 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 ### Account Admin
 
 - `GET /api/admin/accounts`
+- `GET /api/admin/accounts?keyword=&role=&status=`
 - `POST /api/admin/accounts`
 - `PUT /api/admin/accounts/{accountId}`
 - `DELETE /api/admin/accounts/{accountId}`

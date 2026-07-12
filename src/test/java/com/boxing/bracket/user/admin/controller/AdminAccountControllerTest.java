@@ -43,13 +43,27 @@ class AdminAccountControllerTest {
 
     @Test
     void getAccountsReturnsAccountList() throws Exception {
-        given(adminAccountService.getAccounts()).willReturn(List.of(response(1L)));
+        given(adminAccountService.getAccounts(null, null, null)).willReturn(List.of(response(1L)));
 
         mockMvc.perform(get("/api/admin/accounts"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].accountId").value(1))
                 .andExpect(jsonPath("$.data[0].loginId").value("judge01"));
+    }
+
+    @Test
+    void getAccountsPassesSearchFilters() throws Exception {
+        given(adminAccountService.getAccounts("ring", UserRole.RING_MANAGER, AccountStatus.INACTIVE))
+                .willReturn(List.of(response(1L)));
+
+        mockMvc.perform(get("/api/admin/accounts")
+                        .param("keyword", "ring")
+                        .param("role", "RING_MANAGER")
+                        .param("status", "INACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].accountId").value(1));
     }
 
     @Test

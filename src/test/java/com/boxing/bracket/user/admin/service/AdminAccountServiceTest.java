@@ -55,6 +55,21 @@ class AdminAccountServiceTest {
     }
 
     @Test
+    void getAccountsFiltersByKeywordRoleAndStatus() {
+        given(accountRepository.findAll(Sort.by(Sort.Direction.ASC, "id")))
+                .willReturn(List.of(
+                        createAccount(1L),
+                        createAccount(2L, "ring01", "Ring One", UserRole.RING_MANAGER, AccountStatus.INACTIVE)
+                ));
+
+        List<AdminAccountResponse> responses = adminAccountService.getAccounts(
+                " ring ", UserRole.RING_MANAGER, AccountStatus.INACTIVE
+        );
+
+        assertThat(responses).extracting(AdminAccountResponse::getLoginId).containsExactly("ring01");
+    }
+
+    @Test
     void getAccountReturnsAccount() {
         given(accountRepository.findById(1L)).willReturn(Optional.of(createAccount(1L)));
 
@@ -181,12 +196,16 @@ class AdminAccountServiceTest {
     }
 
     private Account createAccount(Long id) {
+        return createAccount(id, "judge01", "Judge One", UserRole.JUDGE, AccountStatus.ACTIVE);
+    }
+
+    private Account createAccount(Long id, String loginId, String name, UserRole role, AccountStatus status) {
         Account account = Account.builder()
-                .loginId("judge01")
+                .loginId(loginId)
                 .passwordHash("hash1")
-                .name("Judge One")
-                .role(UserRole.JUDGE)
-                .status(AccountStatus.ACTIVE)
+                .name(name)
+                .role(role)
+                .status(status)
                 .build();
         ReflectionTestUtils.setField(account, "id", id);
         return account;

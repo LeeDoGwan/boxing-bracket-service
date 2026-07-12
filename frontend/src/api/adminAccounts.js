@@ -1,7 +1,7 @@
 import { deleteApi, getApi, postApi, putApi } from './client';
 
-export function getAccounts(token) {
-  return getApi('/api/admin/accounts', undefined, { token });
+export function getAccounts(filters = {}, token) {
+  return getApi('/api/admin/accounts', filters, { token });
 }
 
 export function createAccount(account, token) {

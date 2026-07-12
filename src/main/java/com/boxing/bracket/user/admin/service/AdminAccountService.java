@@ -3,6 +3,8 @@ package com.boxing.bracket.user.admin.service;
 import com.boxing.bracket.user.admin.dto.AdminAccountRequest;
 import com.boxing.bracket.user.admin.dto.AdminAccountResponse;
 import com.boxing.bracket.user.domain.Account;
+import com.boxing.bracket.user.domain.AccountStatus;
+import com.boxing.bracket.user.domain.UserRole;
 import com.boxing.bracket.user.exception.AccountNotFoundException;
 import com.boxing.bracket.user.repository.AccountRepository;
 import org.springframework.context.annotation.Lazy;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,9 +32,24 @@ public class AdminAccountService {
 
     @Transactional(readOnly = true)
     public List<AdminAccountResponse> getAccounts() {
+        return getAccounts(null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminAccountResponse> getAccounts(String keyword, UserRole role, AccountStatus status) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
         return accountRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+                .filter(account -> normalizedKeyword.isEmpty()
+                        || containsIgnoreCase(account.getLoginId(), normalizedKeyword)
+                        || containsIgnoreCase(account.getName(), normalizedKeyword))
+                .filter(account -> role == null || role == account.getRole())
+                .filter(account -> status == null || status == account.getStatus())
                 .map(AdminAccountResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    private boolean containsIgnoreCase(String value, String normalizedKeyword) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(normalizedKeyword);
     }
 
     @Transactional(readOnly = true)
