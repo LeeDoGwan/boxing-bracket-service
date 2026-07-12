@@ -23,7 +23,7 @@ One ring can run one bout end to end:
 - Test documentation: [Testing](testing.md)
 - Latest `mvn test` result: 329 passed, 0 failed, 0 errors, 0 skipped.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
-- Audience MVP verification: 9 frontend tests passed, ESLint passed, and the Vite production build passed.
+- Audience and Judge MVP verification: 12 frontend tests passed, ESLint passed, and the Vite production build passed.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -90,6 +90,12 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 - Official bracket list with athlete, affiliation, type, status, result, and search.
 - SSE refresh with reconnect state, duplicate event protection, and cleanup on unmount.
 
+### Judge Web MVP
+
+- Judge login with session persistence and role validation.
+- Tournament bout selection, red/blue athlete context, round score entry, and submitted-state locking.
+- Authenticated Judge API calls for score query and submission. Assignment-specific API remains deferred.
+
 ## API Draft
 
 ### Auth
@@ -118,7 +124,7 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 
 ### Judge
 
-- `GET /api/judge/me/bouts/current`
+- Judge current-bout assignment API is deferred; the web desk selects from `GET /api/bouts?tournamentId=`.
 - `POST /api/judge/bouts/{boutId}/rounds/{roundNo}/scores`
 - `GET /api/judge/bouts/{boutId}/scores`
 

@@ -10,9 +10,19 @@ export function buildApiUrl(path, params = {}) {
   return configuredBaseUrl ? url.toString() : `${url.pathname}${url.search}`;
 }
 
-export async function getApi(path, params) {
+function requestHeaders(token, hasBody) {
+  return {
+    Accept: 'application/json',
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+export async function requestApi(path, { body, method = 'GET', params, token } = {}) {
   const response = await fetch(buildApiUrl(path, params), {
-    headers: { Accept: 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: requestHeaders(token, body !== undefined),
+    method,
   });
 
   let payload;
@@ -23,7 +33,17 @@ export async function getApi(path, params) {
   }
 
   if (!response.ok || !payload.success) {
-    throw new Error(payload.message || 'REQUEST_FAILED');
+    const error = new Error(payload.message || 'REQUEST_FAILED');
+    error.status = response.status;
+    throw error;
   }
   return payload.data;
+}
+
+export function getApi(path, params, options = {}) {
+  return requestApi(path, { ...options, params });
+}
+
+export function postApi(path, body, options = {}) {
+  return requestApi(path, { ...options, body, method: 'POST' });
 }

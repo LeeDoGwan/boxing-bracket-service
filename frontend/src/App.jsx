@@ -3,6 +3,7 @@ import { Route, Routes, useSearchParams } from 'react-router-dom';
 import { AppHeader } from './components/AppHeader';
 import { AudienceHome } from './pages/AudienceHome';
 import { BracketPage } from './pages/BracketPage';
+import { JudgePage } from './pages/JudgePage';
 
 function readTournamentId(searchParams) {
   const value = Number.parseInt(searchParams.get('tournamentId'), 10);
@@ -27,6 +28,7 @@ export default function App() {
       <Routes>
         <Route element={<AudienceHome tournamentId={tournamentId} />} path="/" />
         <Route element={<BracketPage tournamentId={tournamentId} />} path="/bracket" />
+        <Route element={<JudgePage tournamentId={tournamentId} />} path="/judge" />
       </Routes>
     </div>
   );

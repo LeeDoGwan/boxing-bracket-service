@@ -1,6 +1,6 @@
 # Audience Web MVP
 
-React and Vite frontend for the public tournament home and official bracket.
+React and Vite frontend for the public tournament home, official bracket, and judge scoring desk.
 
 ## Run Locally
 
@@ -15,9 +15,11 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 
 - Home: `/api/home`, `/api/notices`, `/api/rings/status`
 - Bracket: `/api/bouts`, `/api/bouts/search`, `/api/bouts/{boutId}`
+- Auth: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`
+- Judge: `/api/judge/bouts/{boutId}/scores`, `/api/judge/bouts/{boutId}/rounds/{roundNo}/scores`
 - Live updates: `/api/events/stream?tournamentId={id}`
 
-The audience APIs are public and do not require authentication.
+Audience APIs are public. Judge score APIs require a `JUDGE` bearer session. A dedicated assignment endpoint is not implemented yet, so the judge desk selects a bout from the tournament's official bout list.
 
 ## Verification
 
@@ -27,4 +29,4 @@ npm run lint
 npm run build
 ```
 
-The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, and EventSource cleanup.
+The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge login, score loading, and submitted score locking.
