@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -30,5 +31,23 @@ class RoundScoreRepositoryTest {
         assertThat(roundScoreRepository.findByBoutIdAndJudgeId(1L, 10L)).hasSize(1);
         assertThat(roundScoreRepository.findByBoutIdAndJudgeId(1L, 10L).get(0).getStatus())
                 .isEqualTo(RoundScoreStatus.SUBMITTED);
+    }
+
+    @Test
+    void rejectsDuplicateScoreForSameBoutRoundAndJudge() {
+        roundScoreRepository.saveAndFlush(RoundScore.builder()
+                .boutId(1L)
+                .roundNo(1)
+                .judgeId(10L)
+                .build());
+
+        RoundScore duplicateScore = RoundScore.builder()
+                .boutId(1L)
+                .roundNo(1)
+                .judgeId(10L)
+                .build();
+
+        assertThatThrownBy(() -> roundScoreRepository.saveAndFlush(duplicateScore))
+                .isInstanceOf(Exception.class);
     }
 }

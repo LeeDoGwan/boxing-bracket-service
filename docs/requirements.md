@@ -52,11 +52,14 @@ The service must keep the on-site UX simple because tournament staff may not be 
 - Register and update athlete information.
 - Manage basic user data.
 - Manually create bracket data in MVP. CSV bout import is available; Excel upload is deferred.
+- Read tournament operation status, including ring progress, pending results, and registered judge score submission state.
+- Read filtered administrator audit logs for tournament operations and administrative changes.
 
 ### Service Manager
 
 - Manage operational accounts.
-- Check service status and logs.
+- Read tournament operation status across rings and stalled bouts. Server log viewing remains deferred.
+- Read administrator audit logs across the service.
 - This role is lower priority for MVP implementation.
 
 ## Core User Flow
@@ -69,6 +72,13 @@ The first working loop is:
 4. Judges submit round scores.
 5. Supervisor reviews scores, applies penalties, and confirms the result.
 6. Audience home and full bracket reflect the confirmed result.
+
+## Workflow Safety
+
+- A repeated request with the same payload must return the existing bout, round, score, or result state without a duplicate SSE event.
+- A request that conflicts with the current bout state or changes an already submitted score/result must return HTTP 409.
+- Bout, ring, round score, and bout result updates use optimistic versions. Workflow mutations also lock the affected bout or ring for the transaction.
+- A judge can have one score per bout and round, and a bout can have one confirmed result. These constraints are enforced in the database.
 
 ## Initial Data Model
 
@@ -171,6 +181,18 @@ The first working loop is:
 - `createdAt`
 - `updatedAt`
 
+### AuditLog
+
+- `id`
+- `tournamentId`
+- `actorAccountId`, `actorUsername`, `actorRole`
+- `actionType`, `targetType`, `targetId`
+- `ringId`, `boutId`
+- `beforeData`, `afterData` (JSON with sensitive fields masked)
+- `ipAddress`, `userAgent`
+- `success`, `failureReason`
+- `createdAt`
+
 ### Assignment
 
 - `id`
@@ -224,3 +246,4 @@ The first working loop is:
 - Should athletes be managed per tournament or as reusable master data?
 - Should bout numbers be generated automatically or entered manually?
 - Can confirmed results be modified, and who can approve changes?
+- Which account-to-tournament assignment rule should restrict game-manager audit access?

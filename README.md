@@ -16,12 +16,18 @@ Implemented core areas:
 - Ring manager bout list/start/status/round start/next
 - Admin tournament, ring, athlete, bout, notice, and account management APIs
 - Admin bout CSV import API
+- Tournament operation status summary for game and service managers
+- Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
+- Immutable administrator audit logs for operational, admin, and authentication mutations
 
 ## Documentation
 
 - [Product requirements](docs/requirements.md)
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
+- [Concurrency database migration](docs/database-migration-concurrency.sql)
+- [Administrator audit log](docs/audit-log.md)
+- [Audit log database migration](docs/database-migration-audit-log.sql)
 
 ## Local Development
 
@@ -36,7 +42,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 54 test classes, 301 test cases.
+Current documented suite: 64 test classes, 329 test cases.
 
 ### Run application
 
@@ -78,3 +84,5 @@ GET http://localhost:8080/api/health
 - `POST /api/admin/bouts/import`
 - `/api/admin/notices`
 - `/api/admin/accounts`
+- `GET /api/admin/operations/status?tournamentId=`
+- `GET /api/admin/audit-logs?tournamentId=&actorAccountId=&actionType=&page=&size=`

@@ -4,6 +4,7 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.domain.BoutEventType;
 import com.boxing.bracket.event.dto.BoutEventResponse;
 import com.boxing.bracket.event.service.BoutEventPublisher;
@@ -51,8 +52,19 @@ public class SupervisorResultService {
         validateBoutId(boutId);
         validateRequest(request);
 
-        Bout bout = boutRepository.findById(boutId)
+        Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
+        BoutResult existingResult = boutResultRepository.findByBoutId(boutId).orElse(null);
+        if (bout.isResultConfirmed() || existingResult != null) {
+            if (existingResult != null && existingResult.matchesConfirmation(
+                    request.getWinnerSide(),
+                    request.getDecisionType(),
+                    request.getConfirmedBy()
+            )) {
+                return BoutResultResponse.from(existingResult);
+            }
+            throw new WorkflowConflictException("RESULT_ALREADY_CONFIRMED");
+        }
         List<RoundScore> roundScores = roundScoreRepository.findByBoutId(boutId);
         List<Penalty> penalties = penaltyRepository.findByBoutId(boutId);
 
@@ -61,8 +73,7 @@ public class SupervisorResultService {
         int redPenaltyTotal = sumPenalties(penalties, BoutSide.RED);
         int bluePenaltyTotal = sumPenalties(penalties, BoutSide.BLUE);
 
-        BoutResult boutResult = boutResultRepository.findByBoutId(boutId)
-                .orElseGet(() -> BoutResult.builder().boutId(boutId).build());
+        BoutResult boutResult = BoutResult.builder().boutId(boutId).build();
         boutResult.confirm(
                 redTotalScore,
                 blueTotalScore,

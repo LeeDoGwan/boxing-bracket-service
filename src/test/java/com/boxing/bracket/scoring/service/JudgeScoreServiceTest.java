@@ -4,6 +4,7 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.dto.BoutEventResponse;
 import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.scoring.domain.RoundScore;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class JudgeScoreServiceTest {
@@ -44,7 +46,7 @@ class JudgeScoreServiceTest {
     @Test
     void submitRoundScoreCreatesNewSubmittedScore() {
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
-        given(boutRepository.findById(1L)).willReturn(Optional.of(createBout(1L)));
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(1L)));
         given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
                 .willReturn(Optional.empty());
         given(roundScoreRepository.save(any(RoundScore.class)))
@@ -72,7 +74,7 @@ class JudgeScoreServiceTest {
         ReflectionTestUtils.setField(existingScore, "id", 99L);
 
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 9, 10);
-        given(boutRepository.findById(1L)).willReturn(Optional.of(createBout(1L)));
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(1L)));
         given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
                 .willReturn(Optional.of(existingScore));
         given(roundScoreRepository.save(any(RoundScore.class)))
@@ -90,7 +92,7 @@ class JudgeScoreServiceTest {
     @Test
     void submitRoundScoreRejectsMissingBout() {
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
-        given(boutRepository.findById(99L)).willReturn(Optional.empty());
+        given(boutRepository.findWithLockById(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> judgeScoreService.submitRoundScore(99L, 1, request))
                 .isInstanceOf(BoutNotFoundException.class)
@@ -118,13 +120,66 @@ class JudgeScoreServiceTest {
     @Test
     void submitRoundScoreRejectsNegativeScore() {
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, -1, 9);
-        given(boutRepository.findById(1L)).willReturn(Optional.of(createBout(1L)));
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(1L)));
         given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 1, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Score must be greater than or equal to 0");
+    }
+
+    @Test
+    void submitRoundScoreReturnsExistingScoreForDuplicatePayloadWithoutPublishingAgain() {
+        RoundScore existingScore = RoundScore.builder()
+                .boutId(1L)
+                .roundNo(1)
+                .judgeId(10L)
+                .build();
+        existingScore.submit(10, 9);
+        ReflectionTestUtils.setField(existingScore, "id", 99L);
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(1L)));
+        given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
+                .willReturn(Optional.of(existingScore));
+
+        RoundScoreResponse response = judgeScoreService.submitRoundScore(1L, 1, request);
+
+        assertThat(response.getScoreId()).isEqualTo(99L);
+        assertThat(response.getRedScore()).isEqualTo(10);
+        assertThat(response.getBlueScore()).isEqualTo(9);
+        then(roundScoreRepository).should(never()).save(any(RoundScore.class));
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void submitRoundScoreRejectsDifferentPayloadAfterSubmission() {
+        RoundScore existingScore = RoundScore.builder()
+                .boutId(1L)
+                .roundNo(1)
+                .judgeId(10L)
+                .build();
+        existingScore.submit(10, 9);
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 9, 10);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(1L)));
+        given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
+                .willReturn(Optional.of(existingScore));
+
+        assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 1, request))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("SCORE_ALREADY_SUBMITTED");
+    }
+
+    @Test
+    void submitRoundScoreRejectsCompletedBout() {
+        Bout bout = createBout(1L);
+        bout.changeStatus(BoutStatus.FINISHED);
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 1, request))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("INVALID_BOUT_STATE");
     }
 
     private Bout createBout(Long id) {

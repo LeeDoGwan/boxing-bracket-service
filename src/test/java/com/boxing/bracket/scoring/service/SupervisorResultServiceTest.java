@@ -5,6 +5,7 @@ import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.dto.BoutEventResponse;
 import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.scoring.domain.BoutResult;
@@ -57,7 +58,7 @@ class SupervisorResultServiceTest {
     void confirmResultCreatesResultFromSubmittedScoresAndPenalties() {
         Bout bout = createBout();
         BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 20L);
-        given(boutRepository.findById(1L)).willReturn(Optional.of(bout));
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(bout));
         given(roundScoreRepository.findByBoutId(1L))
                 .willReturn(List.of(
                         createSubmittedRoundScore(1L, 1, 10L, 10, 9),
@@ -94,17 +95,14 @@ class SupervisorResultServiceTest {
     }
 
     @Test
-    void confirmResultUpdatesExistingResult() {
+    void confirmResultReturnsExistingResultForDuplicateRequest() {
         Bout bout = createBout();
         BoutResult existingResult = BoutResult.builder().boutId(1L).build();
+        existingResult.confirm(8, 10, 0, 0, BoutSide.BLUE, DecisionType.RSC, 21L);
         ReflectionTestUtils.setField(existingResult, "id", 200L);
         BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.BLUE, DecisionType.RSC, 21L);
-        given(boutRepository.findById(1L)).willReturn(Optional.of(bout));
-        given(roundScoreRepository.findByBoutId(1L)).willReturn(List.of(createSubmittedRoundScore(1L, 1, 10L, 8, 10)));
-        given(penaltyRepository.findByBoutId(1L)).willReturn(List.of());
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(bout));
         given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.of(existingResult));
-        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
-        given(boutResultRepository.save(any(BoutResult.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         BoutResultResponse response = supervisorResultService.confirmResult(1L, request);
 
@@ -113,12 +111,26 @@ class SupervisorResultServiceTest {
         assertThat(response.getDecisionType()).isEqualTo(DecisionType.RSC);
         assertThat(response.getRedTotalScore()).isEqualTo(8);
         assertThat(response.getBlueTotalScore()).isEqualTo(10);
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void confirmResultRejectsDifferentRequestAfterConfirmation() {
+        BoutResult existingResult = BoutResult.builder().boutId(1L).build();
+        existingResult.confirm(8, 10, 0, 0, BoutSide.BLUE, DecisionType.RSC, 21L);
+        BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 21L);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout()));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.of(existingResult));
+
+        assertThatThrownBy(() -> supervisorResultService.confirmResult(1L, request))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("RESULT_ALREADY_CONFIRMED");
     }
 
     @Test
     void confirmResultRejectsMissingBout() {
         BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 20L);
-        given(boutRepository.findById(99L)).willReturn(Optional.empty());
+        given(boutRepository.findWithLockById(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> supervisorResultService.confirmResult(99L, request))
                 .isInstanceOf(BoutNotFoundException.class)

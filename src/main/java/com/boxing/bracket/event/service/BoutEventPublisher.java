@@ -3,6 +3,8 @@ package com.boxing.bracket.event.service;
 import com.boxing.bracket.event.dto.BoutEventResponse;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -36,6 +38,21 @@ public class BoutEventPublisher {
             return;
         }
 
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    dispatch(event);
+                }
+            });
+            return;
+        }
+
+        dispatch(event);
+    }
+
+    private void dispatch(BoutEventResponse event) {
         subscriptions.stream()
                 .filter(subscription -> subscription.matches(event))
                 .forEach(subscription -> send(subscription, event));
