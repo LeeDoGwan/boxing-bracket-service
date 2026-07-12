@@ -23,7 +23,7 @@ One ring can run one bout end to end:
 - Test documentation: [Testing](testing.md)
 - Latest `mvn test` result: 329 passed, 0 failed, 0 errors, 0 skipped.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
-- Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, and Notice Admin MVP verification: 33 frontend tests passed, ESLint passed, and the Vite production build passed.
+- Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, and Bout Admin MVP verification: 36 frontend tests passed, ESLint passed, and the Vite production build passed.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -147,6 +147,12 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 - Tournament-scoped notice list with active/inactive publishing state and display order.
 - Notice create, update, delete, refresh, and error states.
 
+### Bout Admin Web MVP
+
+- Game manager and service manager login with role validation and session reuse.
+- Tournament-scoped bout list with ring, athlete IDs, schedule order, status, and event flag.
+- Bout create, update, delete, and CSV import with success/error feedback.
+
 ## API Draft
 
 ### Auth
@@ -229,6 +235,14 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 - `POST /api/admin/notices`
 - `PUT /api/admin/notices/{noticeId}`
 - `DELETE /api/admin/notices/{noticeId}`
+
+### Bout Admin
+
+- `GET /api/admin/bouts?tournamentId=`
+- `POST /api/admin/bouts`
+- `POST /api/admin/bouts/import`
+- `PUT /api/admin/bouts/{boutId}`
+- `DELETE /api/admin/bouts/{boutId}`
 
 ### Game Manager
 

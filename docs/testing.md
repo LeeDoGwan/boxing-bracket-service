@@ -21,15 +21,15 @@ Last updated: 2026-07-12
 - Controller tests for health, audience home, public bout/ring/notice APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
 - Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.
-- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, score submission, penalty creation, result confirmation, ring commands, operations refresh/retry, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, and empty states.
+- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, bout admin login, score submission, penalty creation, result confirmation, ring commands, operations refresh/retry, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV import, and empty states.
 
 ## Frontend Verification
 
 - Working directory: `frontend`
-- `npm test`: 33 passed across 15 test files
+- `npm test`: 36 passed across 16 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
-- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, and Notice Admin login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, operations refresh/retry, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, and notice CRUD are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, bout, or audit data.
+- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, and Bout Admin login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, operations refresh/retry, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, bout CRUD, and CSV import are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, bout, or audit data.
 
 ## Verification Inventory
 

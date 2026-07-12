@@ -12,6 +12,7 @@ import { AdminTournamentPage } from './pages/AdminTournamentPage';
 import { AdminRingPage } from './pages/AdminRingPage';
 import { AdminAthletePage } from './pages/AdminAthletePage';
 import { AdminNoticePage } from './pages/AdminNoticePage';
+import { AdminBoutPage } from './pages/AdminBoutPage';
 
 function readTournamentId(searchParams) {
   const value = Number.parseInt(searchParams.get('tournamentId'), 10);
@@ -45,6 +46,7 @@ export default function App() {
         <Route element={<AdminRingPage tournamentId={tournamentId} />} path="/admin/rings" />
         <Route element={<AdminAthletePage />} path="/admin/athletes" />
         <Route element={<AdminNoticePage tournamentId={tournamentId} />} path="/admin/notices" />
+        <Route element={<AdminBoutPage tournamentId={tournamentId} />} path="/admin/bouts" />
       </Routes>
     </div>
   );

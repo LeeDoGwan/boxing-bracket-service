@@ -10,18 +10,19 @@ export function buildApiUrl(path, params = {}) {
   return configuredBaseUrl ? url.toString() : `${url.pathname}${url.search}`;
 }
 
-function requestHeaders(token, hasBody) {
+function requestHeaders(token, hasBody, isFormData) {
   return {
     Accept: 'application/json',
-    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+    ...(hasBody && !isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
 
 export async function requestApi(path, { body, method = 'GET', params, token } = {}) {
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const response = await fetch(buildApiUrl(path, params), {
-    body: body === undefined ? undefined : JSON.stringify(body),
-    headers: requestHeaders(token, body !== undefined),
+    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+    headers: requestHeaders(token, body !== undefined, isFormData),
     method,
   });
 
@@ -54,4 +55,8 @@ export function putApi(path, body, options = {}) {
 
 export function deleteApi(path, options = {}) {
   return requestApi(path, { ...options, method: 'DELETE' });
+}
+
+export function postFormDataApi(path, body, options = {}) {
+  return postApi(path, body, options);
 }
