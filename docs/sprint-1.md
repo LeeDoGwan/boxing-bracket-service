@@ -151,6 +151,7 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 
 - Game manager and service manager login with role validation and session reuse.
 - Tournament-scoped bout list with ring, athlete IDs, schedule order, status, and event flag.
+- Manual bout forms use tournament ring and athlete selector data from the admin APIs.
 - Bout create, update, delete, and CSV import with success/error feedback.
 
 ### Account Admin Web MVP

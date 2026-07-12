@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { login, logout } from '../api/auth';
 import { createBout, deleteBout, getBouts, importBouts, updateBout } from '../api/adminBouts';
+import { getAthletes } from '../api/adminAthletes';
+import { getRings } from '../api/adminRings';
 import { AdminBoutPage } from './AdminBoutPage';
 
 vi.mock('../api/auth', () => ({
@@ -16,6 +18,14 @@ vi.mock('../api/adminBouts', () => ({
   updateBout: vi.fn(),
 }));
 
+vi.mock('../api/adminAthletes', () => ({
+  getAthletes: vi.fn(),
+}));
+
+vi.mock('../api/adminRings', () => ({
+  getRings: vi.fn(),
+}));
+
 const session = {
   accessToken: 'admin-token',
   account: { accountId: 50, name: 'Game Manager', role: 'GAME_MANAGER' },
@@ -27,6 +37,8 @@ beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
   getBouts.mockResolvedValue([bout]);
+  getAthletes.mockResolvedValue([{ athleteId: 10, name: 'Red Boxer' }, { athleteId: 11, name: 'Blue Boxer' }]);
+  getRings.mockResolvedValue([{ name: 'Ring A', ringId: 1 }]);
   createBout.mockResolvedValue({ ...bout, boutId: 13, boutNumber: 2 });
   updateBout.mockResolvedValue({ ...bout, boutNumber: 3, matchType: 'Semi Final' });
   deleteBout.mockResolvedValue(undefined);
@@ -54,10 +66,10 @@ describe('AdminBoutPage', () => {
     render(<AdminBoutPage tournamentId={1} />);
     expect(await screen.findByText('경기 1 · Final')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ 새 경기' }));
-    fireEvent.change(screen.getByLabelText('링 ID'), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('링'), { target: { value: '1' } });
     fireEvent.change(screen.getByLabelText('경기 번호'), { target: { value: '2' } });
-    fireEvent.change(screen.getByLabelText('빨강 선수 ID'), { target: { value: '10' } });
-    fireEvent.change(screen.getByLabelText('파랑 선수 ID'), { target: { value: '11' } });
+    fireEvent.change(screen.getByLabelText('빨강 선수'), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText('파랑 선수'), { target: { value: '11' } });
     fireEvent.change(screen.getByLabelText('진행 순서'), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: '경기 생성' }));
     await waitFor(() => expect(createBout).toHaveBeenCalledWith(expect.objectContaining({ boutNumber: 2, ringId: 1, tournamentId: 1 }), 'admin-token'));
