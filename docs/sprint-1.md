@@ -23,7 +23,7 @@ One ring can run one bout end to end:
 - Test documentation: [Testing](testing.md)
 - Latest `mvn test` result: 329 passed, 0 failed, 0 errors, 0 skipped.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
-- Audience, Judge, Supervisor, Ring Manager, Operations, and Audit Log MVP verification: 21 frontend tests passed, ESLint passed, and the Vite production build passed.
+- Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, and Tournament Admin MVP verification: 24 frontend tests passed, ESLint passed, and the Vite production build passed.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -123,6 +123,12 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 - Newest-first paginated audit history with success/failure display.
 - Expandable before/after snapshots using the server's masked audit payloads.
 
+### Tournament Admin Web MVP
+
+- Game manager and service manager login with role validation and session reuse.
+- Tournament list with create, update, delete, and status management.
+- Date and location editing with save, delete, refresh, and error states.
+
 ## API Draft
 
 ### Auth
@@ -177,6 +183,13 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 ### Audit Log
 
 - `GET /api/admin/audit-logs?tournamentId=&actorAccountId=&actorRole=&actionType=&targetType=&ringId=&boutId=&success=&from=&to=&page=&size=`
+
+### Tournament Admin
+
+- `GET /api/admin/tournaments`
+- `POST /api/admin/tournaments`
+- `PUT /api/admin/tournaments/{tournamentId}`
+- `DELETE /api/admin/tournaments/{tournamentId}`
 
 ### Game Manager
 

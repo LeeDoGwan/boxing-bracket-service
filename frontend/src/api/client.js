@@ -47,3 +47,11 @@ export function getApi(path, params, options = {}) {
 export function postApi(path, body, options = {}) {
   return requestApi(path, { ...options, body, method: 'POST' });
 }
+
+export function putApi(path, body, options = {}) {
+  return requestApi(path, { ...options, body, method: 'PUT' });
+}
+
+export function deleteApi(path, options = {}) {
+  return requestApi(path, { ...options, method: 'DELETE' });
+}

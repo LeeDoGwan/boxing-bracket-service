@@ -22,6 +22,7 @@ Implemented core areas:
 - Ring Manager React operations desk with ring bout control and round transitions
 - Operations React monitoring desk with ring progress and exception tracking
 - Audit log React desk with operational filters and paginated change history
+- Tournament admin React desk with tournament CRUD management
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
 - Immutable administrator audit logs for operational, admin, and authentication mutations
@@ -50,7 +51,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 64 backend test classes, 329 backend test cases, and 21 frontend test cases.
+Current documented suite: 64 backend test classes, 329 backend test cases, and 24 frontend test cases.
 
 ### Run application
 
@@ -66,7 +67,7 @@ npm install
 npm run dev
 ```
 
-Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1&ringId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, or `/audit-logs?tournamentId=1` for the audit log desk. These APIs require the matching role account; assignment is deferred, so judge and supervisor desks select from the official bout list while the ring manager desk loads a ring directly by ID.
+Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1&ringId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, `/audit-logs?tournamentId=1` for the audit log desk, or `/admin/tournaments?tournamentId=1` for tournament management. These APIs require the matching role account; assignment is deferred, so judge and supervisor desks select from the official bout list while the ring manager desk loads a ring directly by ID.
 
 ### Health check
 

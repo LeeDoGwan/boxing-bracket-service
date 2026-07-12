@@ -258,6 +258,24 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .audit-empty { padding: 18px 0; }
 .audit-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; }
 .audit-pagination span { color: #52636a; font-size: 13px; font-weight: 700; }
+.admin-action-message, .admin-success-message { margin: 0 0 16px; }
+.admin-success-message { color: #168575; font-size: 13px; }
+.admin-setup-layout { display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.5fr); align-items: start; gap: 20px; }
+.admin-list-panel, .admin-form-panel { min-width: 0; border: 1px solid #d9e3e6; padding: 22px; background: #ffffff; }
+.admin-list-panel .operation-panel-heading, .admin-form-panel .operation-panel-heading { margin-bottom: 14px; }
+.admin-new-option, .admin-entity-option { display: grid; gap: 5px; width: 100%; border: 1px solid #d9e3e6; border-radius: 5px; padding: 13px 14px; background: #ffffff; color: #18242b; text-align: left; }
+.admin-new-option { margin-bottom: 8px; border-style: dashed; color: #0f7582; font-weight: 700; }
+.admin-new-option:hover, .admin-new-option.selected, .admin-entity-option:hover, .admin-entity-option.selected { border-color: #0f7582; background: #eef8f7; }
+.admin-entity-list { display: grid; gap: 8px; }
+.admin-entity-option strong { overflow-wrap: anywhere; }
+.admin-entity-option span { color: #52636a; font-size: 12px; }
+.admin-form-panel h3 { margin: 0; font-size: 20px; }
+.admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.admin-form-grid label { display: grid; gap: 6px; color: #41545c; font-size: 13px; font-weight: 700; }
+.admin-form-grid input, .admin-form-grid select { min-height: 42px; min-width: 0; border: 1px solid #b8c7cc; border-radius: 4px; padding: 8px 10px; background: #ffffff; color: #18242b; }
+.admin-form-actions { display: flex; gap: 8px; margin-top: 20px; }
+.danger-button { min-height: 40px; border: 1px solid #d07a82; border-radius: 4px; padding: 8px 14px; background: #fff7f7; color: #b42f3b; font-weight: 700; }
+.danger-button:hover { border-color: #b42f3b; background: #fce8e9; }
 
 @media (max-width: 760px) {
   .app-header { grid-template-columns: 1fr auto; gap: 14px; min-height: 0; padding: 18px 20px; }
@@ -311,4 +329,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .audit-filter-grid { grid-template-columns: 1fr 1fr; }
   .audit-filter-actions button { flex: 1; }
   .audit-snapshot-grid { grid-template-columns: 1fr; }
+  .admin-setup-layout { grid-template-columns: 1fr; }
+  .admin-list-panel, .admin-form-panel { padding: 18px; }
+  .admin-form-actions button { flex: 1; }
 }
