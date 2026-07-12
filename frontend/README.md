@@ -16,6 +16,7 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - `/` - public tournament status and ring view
 - `/bracket` - official bracket search
 - `/judge` - authenticated judge scoring desk
+- `/supervisor` - authenticated score review, penalty, and result confirmation desk
 
 ## API Mapping
 
@@ -23,6 +24,7 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - Bracket: `/api/bouts`, `/api/bouts/search`, `/api/bouts/{boutId}`
 - Auth: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`
 - Judge: `/api/judge/bouts/{boutId}/scores`, `/api/judge/bouts/{boutId}/rounds/{roundNo}/scores`
+- Supervisor: `/api/supervisor/bouts/{boutId}/scores`, `/api/supervisor/bouts/{boutId}/penalties`, `/api/supervisor/bouts/{boutId}/result`
 - Live updates: `/api/events/stream?tournamentId={id}`
 
 Audience APIs are public. Judge score APIs require a `JUDGE` bearer session. A dedicated assignment endpoint is not implemented yet, so the judge desk selects a bout from the tournament's official bout list.
@@ -35,6 +37,6 @@ npm run lint
 npm run build
 ```
 
-The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge login, score loading, and submitted score locking.
+The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor login, score loading, submitted score locking, penalty creation, and result confirmation.
 
-The test profile does not seed accounts or tournament data. Use an active `JUDGE` account and registered bouts to exercise authenticated score submission end to end.
+The test profile does not seed accounts or tournament data. Use active `JUDGE` and `SUPERVISOR` accounts with registered bouts to exercise authenticated scoring and result confirmation end to end. Penalties are write-only in the current API, so the supervisor desk keeps newly created penalties in the current view and uses the confirmed result for persisted totals.

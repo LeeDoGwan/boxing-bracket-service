@@ -18,6 +18,7 @@ Implemented core areas:
 - Admin bout CSV import API
 - Audience React MVP with live bout updates and official bracket search
 - Judge React scoring desk with authenticated login and round score submission
+- Supervisor React review desk with penalty creation and result confirmation
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
 - Immutable administrator audit logs for operational, admin, and authentication mutations
@@ -46,7 +47,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 64 backend test classes, 329 backend test cases, and 12 frontend test cases.
+Current documented suite: 64 backend test classes, 329 backend test cases, and 14 frontend test cases.
 
 ### Run application
 
@@ -62,7 +63,7 @@ npm install
 npm run dev
 ```
 
-Open `/judge?tournamentId=1` for the judge desk. Judge APIs require a `JUDGE` account; bout assignment is deferred, so the desk selects from the tournament's official bout list.
+Open `/judge?tournamentId=1` for the judge desk or `/supervisor?tournamentId=1` for the supervisor desk. These APIs require the matching role account; assignment is deferred, so both desks select from the tournament's official bout list.
 
 ### Health check
 

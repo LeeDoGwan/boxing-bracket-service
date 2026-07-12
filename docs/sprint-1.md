@@ -23,7 +23,7 @@ One ring can run one bout end to end:
 - Test documentation: [Testing](testing.md)
 - Latest `mvn test` result: 329 passed, 0 failed, 0 errors, 0 skipped.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
-- Audience and Judge MVP verification: 12 frontend tests passed, ESLint passed, and the Vite production build passed.
+- Audience, Judge, and Supervisor MVP verification: 14 frontend tests passed, ESLint passed, and the Vite production build passed.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -95,6 +95,12 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 - Judge login with session persistence and role validation.
 - Tournament bout selection, red/blue athlete context, round score entry, and submitted-state locking.
 - Authenticated Judge API calls for score query and submission. Assignment-specific API remains deferred.
+
+### Supervisor Web MVP
+
+- Supervisor login with role validation and session persistence.
+- All-judge score review, score totals, penalty creation, and winner/decision selection.
+- Result confirmation with published-state feedback. Penalty history retrieval remains deferred because the current API exposes creation only.
 
 ## API Draft
 

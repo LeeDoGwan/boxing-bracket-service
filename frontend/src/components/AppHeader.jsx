@@ -11,6 +11,7 @@ export function AppHeader({ tournamentId, onTournamentChange }) {
         <NavLink end to={`/?tournamentId=${tournamentId}`}>현황</NavLink>
         <NavLink to={`/bracket?tournamentId=${tournamentId}`}>대진표</NavLink>
         <NavLink to={`/judge?tournamentId=${tournamentId}`}>심판</NavLink>
+        <NavLink to={`/supervisor?tournamentId=${tournamentId}`}>감독</NavLink>
       </nav>
       <label className="tournament-input">
         <span>대회 ID</span>

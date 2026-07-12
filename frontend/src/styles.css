@@ -154,6 +154,35 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .red-score input { border-color: #e6aeb2; }
 .blue-score input { border-color: #a7c5e9; }
 .judge-score-card .command-button { justify-self: start; }
+.supervisor-section { margin-top: 26px; border-top: 1px solid #d9e3e6; padding-top: 20px; }
+.supervisor-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.supervisor-section-heading h3 { margin: 0; font-size: 20px; }
+.supervisor-section-heading > span { color: #52636a; font-size: 13px; }
+.supervisor-score-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.supervisor-total { display: grid; gap: 4px; border: 1px solid #d9e3e6; border-top: 4px solid #78909a; padding: 14px 16px; background: #f8fafb; }
+.supervisor-total span, .supervisor-total small { color: #52636a; font-size: 13px; }
+.supervisor-total strong { font-size: 28px; }
+.supervisor-total small { font-size: 12px; }
+.red-total { border-top-color: #d8424c; }
+.red-total strong, .red-score-text { color: #c3323f; }
+.blue-total { border-top-color: #2366c7; }
+.blue-total strong, .blue-score-text { color: #2366c7; }
+.supervisor-score-table { overflow: hidden; border: 1px solid #d9e3e6; }
+.supervisor-score-row { display: grid; grid-template-columns: 70px 1fr 70px 70px 80px; align-items: center; gap: 10px; border-bottom: 1px solid #e2eaed; padding: 11px 14px; font-size: 13px; }
+.supervisor-score-row:last-child { border-bottom: 0; }
+.supervisor-score-header { background: #edf2f3; color: #52636a; font-size: 12px; font-weight: 700; }
+.supervisor-score-row strong { font-size: 16px; }
+.supervisor-action-form { display: grid; grid-template-columns: 120px 100px minmax(160px, 1fr) auto; align-items: end; gap: 10px; }
+.supervisor-action-form label { display: grid; gap: 6px; color: #41545c; font-size: 13px; font-weight: 700; }
+.supervisor-action-form input, .supervisor-action-form select { min-height: 40px; min-width: 0; border: 1px solid #b8c7cc; border-radius: 4px; padding: 7px 9px; background: #ffffff; color: #18242b; }
+.supervisor-action-form .command-button { white-space: nowrap; }
+.penalty-list { display: grid; gap: 7px; margin: 14px 0 0; padding: 0; list-style: none; }
+.penalty-list li { display: flex; justify-content: space-between; gap: 12px; border-left: 3px solid #e3a71b; padding: 9px 11px; background: #fff9e8; font-size: 13px; }
+.penalty-list span { color: #52636a; overflow-wrap: anywhere; text-align: right; }
+.result-confirm-section { margin-bottom: 4px; }
+.result-form { grid-template-columns: 140px 140px auto; }
+.supervisor-confirmed { margin-top: 4px; }
+.supervisor-confirmed small { color: #52636a; }
 
 @media (max-width: 760px) {
   .app-header { grid-template-columns: 1fr auto; gap: 14px; min-height: 0; padding: 18px 20px; }
@@ -182,4 +211,11 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .judge-athlete { grid-template-columns: 24px minmax(0, 1fr); font-size: 14px; }
   .judge-athlete span { width: 24px; height: 24px; font-size: 11px; }
   .judge-score-fields { grid-template-columns: 1fr; }
+  .supervisor-score-summary { grid-template-columns: 1fr 1fr; }
+  .supervisor-score-row { grid-template-columns: 54px minmax(70px, 1fr) 44px 44px; gap: 7px; padding: 10px; }
+  .supervisor-score-row span:last-child { display: none; }
+  .supervisor-score-header span:last-child { display: none; }
+  .supervisor-action-form, .result-form { grid-template-columns: 1fr 1fr; }
+  .supervisor-action-form .wide-field { grid-column: 1 / -1; }
+  .supervisor-action-form .command-button { justify-self: start; }
 }
