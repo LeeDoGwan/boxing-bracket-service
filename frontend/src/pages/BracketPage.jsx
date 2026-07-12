@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getBouts, searchBouts } from '../api/audience';
 import { StatePanel } from '../components/StatePanel';
 import { athleteLabel, statusLabel, winnerLabel } from '../utils';
@@ -9,7 +9,7 @@ export function BracketPage({ tournamentId }) {
   const [state, setState] = useState({ loading: true, error: null });
   const [selectedBoutId, setSelectedBoutId] = useState(null);
 
-  const loadBouts = async (searchKeyword = '') => {
+  const loadBouts = useCallback(async (searchKeyword = '') => {
     setState({ loading: true, error: null });
     try {
       const result = searchKeyword.trim()
@@ -20,13 +20,13 @@ export function BracketPage({ tournamentId }) {
     } catch {
       setState({ loading: false, error: true });
     }
-  };
+  }, [tournamentId]);
 
   useEffect(() => {
     setKeyword('');
     setSelectedBoutId(null);
     loadBouts();
-  }, [tournamentId]);
+  }, [loadBouts]);
 
   const handleSearch = (event) => {
     event.preventDefault();
