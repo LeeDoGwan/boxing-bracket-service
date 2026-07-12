@@ -5,7 +5,7 @@ Last updated: 2026-07-12
 ## Latest Verification
 
 - Command: `mvn test`
-- Verified at: 2026-07-12T13:48:47+09:00
+- Verified at: 2026-07-12T13:59:48+09:00
 - Result: 329 passed, 0 failed, 0 errors, 0 skipped
 - Test classes: 64
 - Runtime profile: `test`
@@ -21,15 +21,15 @@ Last updated: 2026-07-12
 - Controller tests for health, audience home, public bout/ring/notice APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
 - Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.
-- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, score submission, penalty creation, result confirmation, and empty states.
+- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, score submission, penalty creation, result confirmation, ring commands, and empty states.
 
 ## Frontend Verification
 
 - Working directory: `frontend`
-- `npm test`: 14 passed across 8 test files
+- `npm test`: 16 passed across 9 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
-- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge and Supervisor login routes, and invalid-credential handling. Authenticated score submission and result confirmation are covered by the frontend page tests; the test profile does not seed role accounts or tournament data.
+- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, and Ring Manager login routes, and invalid-credential handling. Authenticated score submission, result confirmation, and ring command flows are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, or bout data.
 
 ## Verification Inventory
 

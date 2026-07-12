@@ -183,6 +183,22 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .result-form { grid-template-columns: 140px 140px auto; }
 .supervisor-confirmed { margin-top: 4px; }
 .supervisor-confirmed small { color: #52636a; }
+.ring-selector { display: flex; align-items: end; gap: 10px; margin-bottom: 18px; border: 1px solid #d9e3e6; padding: 16px; background: #ffffff; }
+.ring-selector label { display: grid; gap: 6px; color: #41545c; font-size: 13px; font-weight: 700; }
+.ring-selector input { width: 90px; min-height: 40px; border: 1px solid #b8c7cc; border-radius: 4px; padding: 7px 9px; background: #ffffff; color: #18242b; }
+.ring-selector > span { margin-left: auto; color: #52636a; font-size: 13px; }
+.ring-action-message, .ring-success-message { margin: 0 0 16px; }
+.ring-success-message { color: #168575; font-size: 13px; }
+.ring-manager-layout { display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.7fr); align-items: start; gap: 20px; }
+.ring-manager-panel { min-width: 0; border: 1px solid #d9e3e6; padding: 24px; background: #ffffff; }
+.ring-current-card { border-left: 4px solid #0f7582; padding: 14px 16px; background: #eef8f7; }
+.ring-current-card h3, .ring-selected-heading h3, .ring-next-action h3 { margin: 0; font-size: 23px; }
+.ring-current-card p:not(.eyebrow), .ring-selected-heading p:not(.eyebrow), .ring-next-action p:not(.eyebrow) { margin: 7px 0 0; color: #52636a; }
+.ring-selected-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-top: 26px; border-top: 1px solid #d9e3e6; padding-top: 20px; }
+.ring-command-grid { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; align-items: end; gap: 10px; margin-top: 16px; }
+.ring-command-grid label { display: grid; gap: 6px; color: #41545c; font-size: 13px; font-weight: 700; }
+.ring-command-grid input, .ring-command-grid select { min-height: 40px; min-width: 0; border: 1px solid #b8c7cc; border-radius: 4px; padding: 7px 9px; background: #ffffff; color: #18242b; }
+.ring-next-action { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-top: 28px; border-top: 1px solid #d9e3e6; padding-top: 20px; }
 
 @media (max-width: 760px) {
   .app-header { grid-template-columns: 1fr auto; gap: 14px; min-height: 0; padding: 18px 20px; }
@@ -218,4 +234,11 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .supervisor-action-form, .result-form { grid-template-columns: 1fr 1fr; }
   .supervisor-action-form .wide-field { grid-column: 1 / -1; }
   .supervisor-action-form .command-button { justify-self: start; }
+  .ring-selector { align-items: start; flex-wrap: wrap; }
+  .ring-selector > span { width: 100%; margin-left: 0; }
+  .ring-manager-layout { grid-template-columns: 1fr; }
+  .ring-manager-panel { padding: 18px; }
+  .ring-command-grid { grid-template-columns: 1fr 1fr; }
+  .ring-command-grid .command-button { justify-self: start; }
+  .ring-next-action { align-items: start; flex-direction: column; }
 }
