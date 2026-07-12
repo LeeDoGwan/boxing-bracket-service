@@ -53,7 +53,7 @@ Tournament management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer sess
 Ring management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament.
 Athlete management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.
 Notice management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament.
-Bout management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament. Manual bout forms load ring and athlete selector data from the corresponding admin APIs. CSV import requires the documented header row and does not accept Excel files.
+Bout management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament. Manual bout forms load ring and athlete selector data from the corresponding admin APIs. CSV import requires the documented header row and does not accept Excel files; the desk provides a matching CSV template download.
 Account management requires a `SERVICE_MANAGER` bearer session. Password inputs are sent to the server for BCrypt encoding and are never rendered from API responses.
 
 ## Verification

@@ -56,7 +56,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 64 backend test classes, 329 backend test cases, and 39 frontend test cases.
+Current documented suite: 64 backend test classes, 329 backend test cases, and 40 frontend test cases.
 
 ### Run application
 

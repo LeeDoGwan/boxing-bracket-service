@@ -81,6 +81,28 @@ describe('AdminBoutPage', () => {
     expect(await screen.findByText('2건의 경기를 가져왔습니다.')).toBeInTheDocument();
   });
 
+  it('downloads the CSV template', async () => {
+    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn().mockReturnValue('blob:template');
+    const revokeObjectUrl = vi.fn();
+    const clickAnchor = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    render(<AdminBoutPage tournamentId={1} />);
+    expect(await screen.findByText('경기 1 · Final')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'CSV 양식 다운로드' }));
+
+    expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:template');
+    expect(clickAnchor).toHaveBeenCalled();
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+    clickAnchor.mockRestore();
+  });
+
   it('updates and deletes a selected bout', async () => {
     window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
 

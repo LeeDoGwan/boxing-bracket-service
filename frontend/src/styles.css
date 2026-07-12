@@ -286,6 +286,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .bout-import-panel { display: grid; grid-template-columns: minmax(220px, 1fr) auto; align-items: end; gap: 10px; margin-top: 20px; border: 1px solid #d9e3e6; padding: 16px 18px; background: #ffffff; }
 .bout-import-panel label { display: grid; gap: 6px; color: #41545c; font-size: 13px; font-weight: 700; }
 .bout-import-panel input { min-height: 40px; min-width: 0; border: 1px solid #b8c7cc; border-radius: 4px; padding: 7px 9px; background: #ffffff; color: #18242b; }
+.bout-import-actions { display: flex; gap: 8px; }
 .bout-import-panel small { grid-column: 1 / -1; color: #52636a; font-size: 12px; }
 
 @media (max-width: 760px) {
@@ -344,5 +345,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .admin-list-panel, .admin-form-panel { padding: 18px; }
   .admin-form-actions button { flex: 1; }
   .bout-import-panel { grid-template-columns: 1fr; align-items: stretch; }
+  .bout-import-actions { flex-wrap: wrap; }
+  .bout-import-actions button { flex: 1; }
   .bout-import-panel small { grid-column: auto; }
 }

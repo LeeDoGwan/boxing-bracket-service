@@ -8,6 +8,7 @@ import { StatePanel } from '../components/StatePanel';
 const SESSION_KEY = 'boxing.operations.session';
 const ALLOWED_ROLES = new Set(['GAME_MANAGER', 'SERVICE_MANAGER']);
 const STATUS_LABELS = { CANCELED: '취소', FINISHED: '종료', IN_PROGRESS: '진행 중', READY: '준비', SCHEDULED: '예정', SCORING: '채점 중' };
+const CSV_HEADERS = 'tournamentId,ringId,boutNumber,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout';
 
 function readSession() {
   try {
@@ -217,6 +218,16 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
     }
   }
 
+  function downloadTemplate() {
+    const blob = new Blob([`${CSV_HEADERS}\n`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'boxing-bouts-template.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
@@ -226,7 +237,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
       {referenceError && <p aria-live="polite" className="form-error admin-reference-message" role="alert">{referenceError}</p>}
       {message && <p aria-live="polite" className="admin-success-message">{message}</p>}
-      <form className="bout-import-panel" onSubmit={handleImport}><label>CSV 파일<input aria-label="CSV 파일" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] || null)} type="file" /></label><button className="command-button" disabled={saving} type="submit">CSV 가져오기</button><small>필수 열: tournamentId, ringId, boutNumber, matchType, redAthleteId, blueAthleteId, totalRounds, scheduledOrder, eventBout</small></form>
+      <form className="bout-import-panel" onSubmit={handleImport}><label>CSV 파일<input aria-label="CSV 파일" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] || null)} type="file" /></label><div className="bout-import-actions"><button className="command-button" disabled={saving} type="submit">CSV 가져오기</button><button className="secondary-button" onClick={downloadTemplate} type="button">CSV 양식 다운로드</button></div><small>필수 열: {CSV_HEADERS}</small></form>
       {loading ? <StatePanel title="경기 목록을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
       {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadBouts} type="button">다시 시도</button>} title="경기 목록을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
       {!loading && !listError ? (
