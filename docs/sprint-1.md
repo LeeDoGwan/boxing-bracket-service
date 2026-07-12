@@ -21,8 +21,8 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 331 passed, 0 failed, 0 errors, 0 skipped.
-- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
+- Latest `mvn test` result: 333 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV/Excel import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
 - Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Bout Admin, and Account Admin MVP verification: 41 frontend tests passed, ESLint passed, and the Vite production build passed.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
@@ -81,7 +81,7 @@ Duplicate requests return the existing state when the payload is equivalent. Con
 - Athlete input.
 - Read tournament operation status by ring, result confirmation, and registered judge score submission state.
 
-CSV upload is available for admin bout import. Excel upload is deferred.
+CSV and Excel upload are available for admin bout import.
 
 ### Audience Web MVP
 
@@ -152,7 +152,7 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 - Game manager and service manager login with role validation and session reuse.
 - Tournament-scoped bout list with ring, athlete IDs, schedule order, status, and event flag.
 - Manual bout forms use tournament ring and athlete selector data from the admin APIs.
-- Bout create, update, delete, and CSV import with success/error feedback.
+- Bout create, update, delete, and CSV/Excel import with success/error feedback.
 - CSV template download uses the same required header order as the import API.
 
 ### Account Admin Web MVP
@@ -300,6 +300,5 @@ CSV upload is available for admin bout import. Excel upload is deferred.
 ## Deferred
 
 - Server log viewer.
-- Excel bracket upload.
 - Advanced statistics.
 - Advanced user search.

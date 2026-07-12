@@ -6,7 +6,7 @@ Last updated: 2026-07-12
 
 - Command: `mvn test`
 - Verified at: 2026-07-12T13:59:48+09:00
-- Result: 331 passed, 0 failed, 0 errors, 0 skipped
+- Result: 333 passed, 0 failed, 0 errors, 0 skipped
 - Test classes: 64
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `src/test/resources/application-test.yml`
@@ -17,11 +17,11 @@ Last updated: 2026-07-12
 - SSE event stream tests for stream subscription, event payloads, subscriber filtering, and broken subscriber cleanup.
 - Domain behavior tests for account, tournament, ring, athlete, bout, notice, and scoring models.
 - Repository slice tests for tournament, ring, athlete, bout, notice, account, round score, and bout result persistence.
-- Service tests for audience home, public bout/ring/notice queries, judge scoring, supervisor scoring, ring manager workflow, admin management flows, bout CSV import, and tournament operation status aggregation.
+- Service tests for audience home, public bout/ring/notice queries, judge scoring, supervisor scoring, ring manager workflow, admin management flows, bout CSV/Excel import, and tournament operation status aggregation.
 - Controller tests for health, audience home, public bout/ring/notice APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
 - Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.
-- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, bout admin login, account admin login, score submission, penalty creation, result confirmation, ring commands, operations refresh/retry, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV import/template download, account search/filter/create/update/delete, and empty states.
+- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, bout admin login, account admin login, score submission, penalty creation, result confirmation, ring commands, operations refresh/retry, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
 
@@ -29,7 +29,7 @@ Last updated: 2026-07-12
 - `npm test`: 41 passed across 17 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
-- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Bout Admin, and Account Admin login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, operations refresh/retry, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, bout CRUD, CSV import/template download, and account search/filter/CRUD are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, bout, or audit data.
+- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Bout Admin, and Account Admin login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, operations refresh/retry, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, bout, or audit data.
 
 ## Verification Inventory
 
@@ -50,7 +50,7 @@ Last updated: 2026-07-12
 | Athlete | `AthleteRepositoryTest` | 1 |
 | Athlete | `AdminAthleteServiceTest` | 12 |
 | Bout | `AdminBoutControllerTest` | 12 |
-| Bout | `AdminBoutServiceTest` | 17 |
+| Bout | `AdminBoutServiceTest` | 19 |
 | Bout | `BoutControllerTest` | 7 |
 | Bout | `BoutTest` | 7 |
 | Bout | `BoutRepositoryTest` | 1 |
@@ -112,6 +112,6 @@ Last updated: 2026-07-12
 - Duplicate workflow requests return the prior result without duplicate SSE delivery; conflicting state changes and different resubmissions return HTTP 409.
 - Concurrent bout starts, identical score submissions, and identical result confirmations persist one final record and publish one event.
 - Admin users can manage tournaments, rings, athletes, bouts, notices, and service accounts; account passwords are hashed before storage, and service managers can filter accounts by login/name, role, and status.
-- Game managers can import bout schedules from CSV files using the admin bout import endpoint.
+- Game managers can import bout schedules from CSV or Excel files using the admin bout import endpoint.
 - Game managers and service managers can read a tournament's read-only operation summary, including status counts, ring progress, registered judge score submissions, pending results, and bouts in progress for more than 15 minutes.
 - Authorized administrators can filter immutable audit logs for operational, admin, and authentication mutations; sensitive credentials and session material are masked, and idempotent workflow retries retain one audit record.

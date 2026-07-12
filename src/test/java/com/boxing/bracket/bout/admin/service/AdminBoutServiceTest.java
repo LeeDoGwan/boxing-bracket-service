@@ -14,6 +14,10 @@ import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +26,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -197,6 +203,30 @@ class AdminBoutServiceTest {
     }
 
     @Test
+    void importBoutsCreatesBoutsFromExcel() throws IOException {
+        givenValidReferences();
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> {
+            Bout bout = invocation.getArgument(0);
+            ReflectionTestUtils.setField(bout, "id", 30L);
+            return bout;
+        });
+
+        AdminBoutImportResponse response = adminBoutService.importBouts(excelFile());
+
+        assertThat(response.getImportedCount()).isEqualTo(1);
+        assertThat(response.getBoutIds()).containsExactly(30L);
+    }
+
+    @Test
+    void importBoutsRejectsUnsupportedExtension() {
+        MockMultipartFile file = new MockMultipartFile("file", "bouts.txt", "text/plain", "data".getBytes(StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> adminBoutService.importBouts(file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Only CSV or Excel bout import is supported");
+    }
+
+    @Test
     void updateBoutChangesBout() {
         Bout bout = createBout(20L);
         AdminBoutRequest request = new AdminBoutRequest(1L, 1L, 2, "80 - high school", 12L, 13L, 4, 2, true);
@@ -271,6 +301,37 @@ class AdminBoutServiceTest {
                 "text/csv",
                 content.getBytes(StandardCharsets.UTF_8)
         );
+    }
+
+    private MockMultipartFile excelFile() throws IOException {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("bouts");
+            String[] headers = {
+                    "tournamentId", "ringId", "boutNumber", "matchType", "redAthleteId",
+                    "blueAthleteId", "totalRounds", "scheduledOrder", "eventBout"
+            };
+            Row headerRow = sheet.createRow(0);
+            for (int index = 0; index < headers.length; index++) {
+                headerRow.createCell(index).setCellValue(headers[index]);
+            }
+            Row row = sheet.createRow(1);
+            row.createCell(0).setCellValue(1);
+            row.createCell(1).setCellValue(1);
+            row.createCell(2).setCellValue(1);
+            row.createCell(3).setCellValue("75 - middle school");
+            row.createCell(4).setCellValue(10);
+            row.createCell(5).setCellValue(11);
+            row.createCell(6).setCellValue(3);
+            row.createCell(7).setCellValue(1);
+            row.createCell(8).setCellValue(false);
+            workbook.write(output);
+            return new MockMultipartFile(
+                    "file",
+                    "bouts.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    output.toByteArray()
+            );
+        }
     }
 
     private Bout createBout(Long id) {

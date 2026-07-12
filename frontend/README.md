@@ -24,7 +24,7 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - `/admin/rings` - authenticated tournament-scoped ring CRUD management desk
 - `/admin/athletes` - authenticated searchable athlete CRUD management desk
 - `/admin/notices` - authenticated tournament-scoped notice publishing management desk
-- `/admin/bouts` - authenticated tournament-scoped bout CRUD and CSV import desk
+- `/admin/bouts` - authenticated tournament-scoped bout CRUD and CSV/Excel import desk
 - `/admin/accounts` - service-manager-only account CRUD management desk with search and role/status filters
 
 ## API Mapping
@@ -53,7 +53,7 @@ Tournament management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer sess
 Ring management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament.
 Athlete management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.
 Notice management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament.
-Bout management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament. Manual bout forms load ring and athlete selector data from the corresponding admin APIs. CSV import requires the documented header row and does not accept Excel files; the desk provides a matching CSV template download.
+Bout management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament. Manual bout forms load ring and athlete selector data from the corresponding admin APIs. CSV and Excel import require the documented header row on the first row/sheet; the desk provides a matching CSV template download.
 Account management requires a `SERVICE_MANAGER` bearer session. Account lists support login/name keyword search and role/status filters. Password inputs are sent to the server for BCrypt encoding and are never rendered from API responses.
 
 ## Verification
@@ -64,6 +64,6 @@ npm run lint
 npm run build
 ```
 
-The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/bout admin/account admin login, score loading, submitted score locking, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV import, account search/filter/create/update/delete, and retry states.
+The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/bout admin/account admin login, score loading, submitted score locking, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV/Excel import, account search/filter/create/update/delete, and retry states.
 
 The test profile does not seed accounts or tournament data. Use active `JUDGE`, `SUPERVISOR`, `RING_MANAGER`, `GAME_MANAGER`, and `SERVICE_MANAGER` accounts with registered bouts to exercise authenticated desks end to end. Penalties are write-only in the current API, so the supervisor desk keeps newly created penalties in the current view and uses the confirmed result for persisted totals.

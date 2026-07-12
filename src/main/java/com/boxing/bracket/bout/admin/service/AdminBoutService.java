@@ -13,6 +13,12 @@ import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -23,17 +29,34 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @Lazy
 @Transactional
 public class AdminBoutService {
+
+    private static final List<String> IMPORT_HEADERS = List.of(
+            "tournamentId",
+            "ringId",
+            "boutNumber",
+            "matchType",
+            "redAthleteId",
+            "blueAthleteId",
+            "totalRounds",
+            "scheduledOrder",
+            "eventBout"
+    );
 
     private final BoutRepository boutRepository;
     private final TournamentRepository tournamentRepository;
@@ -92,6 +115,10 @@ public class AdminBoutService {
 
     public AdminBoutImportResponse importBouts(MultipartFile file) {
         validateImportFile(file);
+        return isExcelFile(file) ? importExcelBouts(file) : importCsvBouts(file);
+    }
+
+    private AdminBoutImportResponse importCsvBouts(MultipartFile file) {
 
         List<AdminBoutResponse> importedBouts = new ArrayList<>();
         try (
@@ -106,6 +133,38 @@ public class AdminBoutService {
             validateImportHeaders(parser);
             for (CSVRecord record : parser) {
                 importedBouts.add(createBout(toImportRequest(record)));
+            }
+        } catch (IOException exception) {
+            throw new IllegalArgumentException("bout import file cannot be read");
+        }
+
+        if (importedBouts.isEmpty()) {
+            throw new IllegalArgumentException("bout import file has no rows");
+        }
+        return AdminBoutImportResponse.from(importedBouts);
+    }
+
+    private AdminBoutImportResponse importExcelBouts(MultipartFile file) {
+        List<AdminBoutResponse> importedBouts = new ArrayList<>();
+        DataFormatter formatter = new DataFormatter(Locale.ROOT);
+        try (InputStream inputStream = file.getInputStream(); Workbook workbook = WorkbookFactory.create(inputStream)) {
+            if (workbook.getNumberOfSheets() == 0) {
+                throw new IllegalArgumentException("bout import workbook has no sheets");
+            }
+            Sheet sheet = workbook.getSheetAt(0);
+            Map<String, Integer> headerIndexes = readExcelHeaders(sheet.getRow(0), formatter);
+            validateImportHeaders(headerIndexes.keySet());
+            for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null || isBlankRow(row, formatter)) {
+                    continue;
+                }
+                Map<String, String> values = new LinkedHashMap<>();
+                for (String header : IMPORT_HEADERS) {
+                    Cell cell = row.getCell(headerIndexes.get(header), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                    values.put(header, cell == null ? null : formatter.formatCellValue(cell));
+                }
+                importedBouts.add(createBout(toImportRequest(values, rowIndex + 1L)));
             }
         } catch (IOException exception) {
             throw new IllegalArgumentException("bout import file cannot be read");
@@ -213,50 +272,85 @@ public class AdminBoutService {
             throw new IllegalArgumentException("bout import file is required");
         }
         String filename = file.getOriginalFilename();
-        if (filename != null && (filename.endsWith(".xls") || filename.endsWith(".xlsx"))) {
-            throw new IllegalArgumentException("Only CSV bout import is supported");
+        if (filename == null || filename.trim().isEmpty()) {
+            throw new IllegalArgumentException("bout import file name is required");
+        }
+        String normalizedFilename = filename.toLowerCase(Locale.ROOT);
+        if (!normalizedFilename.endsWith(".csv")
+                && !normalizedFilename.endsWith(".xls")
+                && !normalizedFilename.endsWith(".xlsx")) {
+            throw new IllegalArgumentException("Only CSV or Excel bout import is supported");
         }
     }
 
+    private boolean isExcelFile(MultipartFile file) {
+        String filename = file.getOriginalFilename().toLowerCase(Locale.ROOT);
+        return filename.endsWith(".xls") || filename.endsWith(".xlsx");
+    }
+
     private void validateImportHeaders(CSVParser parser) {
-        List<String> headers = List.of(
-                "tournamentId",
-                "ringId",
-                "boutNumber",
-                "matchType",
-                "redAthleteId",
-                "blueAthleteId",
-                "totalRounds",
-                "scheduledOrder",
-                "eventBout"
-        );
-        for (String header : headers) {
-            if (!parser.getHeaderMap().containsKey(header)) {
+        validateImportHeaders(parser.getHeaderMap().keySet());
+    }
+
+    private void validateImportHeaders(Set<String> headers) {
+        for (String header : IMPORT_HEADERS) {
+            if (!headers.contains(header)) {
                 throw new IllegalArgumentException(header + " column is required");
             }
         }
     }
 
+    private Map<String, Integer> readExcelHeaders(Row headerRow, DataFormatter formatter) {
+        Map<String, Integer> headerIndexes = new LinkedHashMap<>();
+        if (headerRow == null || headerRow.getLastCellNum() < 0) {
+            return headerIndexes;
+        }
+        for (int cellIndex = 0; cellIndex < headerRow.getLastCellNum(); cellIndex++) {
+            String header = normalize(formatter.formatCellValue(headerRow.getCell(cellIndex)));
+            if (header != null) {
+                headerIndexes.put(header, cellIndex);
+            }
+        }
+        return headerIndexes;
+    }
+
+    private boolean isBlankRow(Row row, DataFormatter formatter) {
+        for (Cell cell : row) {
+            if (normalize(formatter.formatCellValue(cell)) != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private AdminBoutRequest toImportRequest(CSVRecord record) {
+        Map<String, String> values = new LinkedHashMap<>();
+        for (String header : IMPORT_HEADERS) {
+            values.put(header, record.get(header));
+        }
+        return toImportRequest(values, record.getRecordNumber());
+    }
+
+    private AdminBoutRequest toImportRequest(Map<String, String> values, long rowNumber) {
         try {
             return new AdminBoutRequest(
-                    parseLong(record, "tournamentId", true),
-                    parseLong(record, "ringId", true),
-                    parseInteger(record, "boutNumber", true),
-                    normalize(record.get("matchType")),
-                    parseLong(record, "redAthleteId", true),
-                    parseLong(record, "blueAthleteId", true),
-                    parseInteger(record, "totalRounds", false),
-                    parseInteger(record, "scheduledOrder", false),
-                    parseBoolean(record.get("eventBout"))
+                    parseLong(values.get("tournamentId"), "tournamentId", true),
+                    parseLong(values.get("ringId"), "ringId", true),
+                    parseInteger(values.get("boutNumber"), "boutNumber", true),
+                    normalize(values.get("matchType")),
+                    parseLong(values.get("redAthleteId"), "redAthleteId", true),
+                    parseLong(values.get("blueAthleteId"), "blueAthleteId", true),
+                    parseInteger(values.get("totalRounds"), "totalRounds", false),
+                    parseInteger(values.get("scheduledOrder"), "scheduledOrder", false),
+                    parseBoolean(values.get("eventBout"))
             );
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("row " + record.getRecordNumber() + ": " + exception.getMessage());
+            throw new IllegalArgumentException("row " + rowNumber + ": " + exception.getMessage());
         }
     }
 
-    private Long parseLong(CSVRecord record, String header, boolean required) {
-        String value = normalize(record.get(header));
+    private Long parseLong(String value, String header, boolean required) {
+        value = normalize(value);
         if (value == null) {
             if (required) {
                 throw new IllegalArgumentException(header + " is required");
@@ -270,8 +364,8 @@ public class AdminBoutService {
         }
     }
 
-    private Integer parseInteger(CSVRecord record, String header, boolean required) {
-        String value = normalize(record.get(header));
+    private Integer parseInteger(String value, String header, boolean required) {
+        value = normalize(value);
         if (value == null) {
             if (required) {
                 throw new IllegalArgumentException(header + " is required");

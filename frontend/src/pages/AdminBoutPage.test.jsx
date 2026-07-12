@@ -65,6 +65,7 @@ describe('AdminBoutPage', () => {
 
     render(<AdminBoutPage tournamentId={1} />);
     expect(await screen.findByText('경기 1 · Final')).toBeInTheDocument();
+    expect(screen.getByLabelText('대진 파일')).toHaveAttribute('accept', '.csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     fireEvent.click(screen.getByRole('button', { name: '+ 새 경기' }));
     fireEvent.change(screen.getByLabelText('링'), { target: { value: '1' } });
     fireEvent.change(screen.getByLabelText('경기 번호'), { target: { value: '2' } });
@@ -75,8 +76,8 @@ describe('AdminBoutPage', () => {
     await waitFor(() => expect(createBout).toHaveBeenCalledWith(expect.objectContaining({ boutNumber: 2, ringId: 1, tournamentId: 1 }), 'admin-token'));
 
     const csv = new File(['tournamentId,ringId'], 'bouts.csv', { type: 'text/csv' });
-    fireEvent.change(screen.getByLabelText('CSV 파일'), { target: { files: [csv] } });
-    fireEvent.click(screen.getByRole('button', { name: 'CSV 가져오기' }));
+    fireEvent.change(screen.getByLabelText('대진 파일'), { target: { files: [csv] } });
+    fireEvent.click(screen.getByRole('button', { name: '파일 가져오기' }));
     await waitFor(() => expect(importBouts).toHaveBeenCalledWith(csv, 'admin-token'));
     expect(await screen.findByText('2건의 경기를 가져왔습니다.')).toBeInTheDocument();
   });

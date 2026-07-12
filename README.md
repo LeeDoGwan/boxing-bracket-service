@@ -15,7 +15,7 @@ Implemented core areas:
 - Supervisor score overview, penalties, and result confirmation
 - Ring manager bout list/start/status/round start/next
 - Admin tournament, ring, athlete, bout, notice, and account management APIs
-- Admin bout CSV import API
+- Admin bout CSV and Excel import API
 - Audience React MVP with live bout updates and official bracket search
 - Judge React scoring desk with authenticated login and round score submission
 - Supervisor React review desk with penalty creation and result confirmation
@@ -26,7 +26,7 @@ Implemented core areas:
 - Ring admin React desk with per-tournament ring CRUD management
 - Athlete admin React desk with searchable athlete CRUD management
 - Notice admin React desk with tournament-scoped notice publishing management
-- Bout admin React desk with schedule CRUD and CSV import
+- Bout admin React desk with schedule CRUD and CSV/Excel import
 - Account admin React desk restricted to service managers, with keyword, role, and status filters
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
@@ -56,7 +56,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 64 backend test classes, 331 backend test cases, and 41 frontend test cases.
+Current documented suite: 64 backend test classes, 333 backend test cases, and 41 frontend test cases.
 
 ### Run application
 

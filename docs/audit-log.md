@@ -6,7 +6,7 @@ The service appends immutable audit records for state-changing operations:
 
 - Ring-manager bout start, status, round start, and next bout actions.
 - Judge score submission, supervisor penalty creation, and result confirmation.
-- Administrator bout, account, and notice create, update, delete, and bout CSV import actions.
+- Administrator bout, account, and notice create, update, delete, and bout CSV/Excel import actions.
 - Login success, login failure, and logout.
 
 Read-only APIs do not create audit records. Success records are written after the controller receives the committed service result. Failed controller operations are recorded independently, and an audit persistence failure is logged to the server without rolling back the business operation.
