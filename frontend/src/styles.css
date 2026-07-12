@@ -199,6 +199,40 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .ring-command-grid label { display: grid; gap: 6px; color: #41545c; font-size: 13px; font-weight: 700; }
 .ring-command-grid input, .ring-command-grid select { min-height: 40px; min-width: 0; border: 1px solid #b8c7cc; border-radius: 4px; padding: 7px 9px; background: #ffffff; color: #18242b; }
 .ring-next-action { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-top: 28px; border-top: 1px solid #d9e3e6; padding-top: 20px; }
+.operations-heading-actions { display: flex; align-items: center; gap: 8px; }
+.operation-panel { margin-top: 20px; border: 1px solid #d9e3e6; padding: 22px; background: #ffffff; }
+.operation-panel-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.operation-panel-heading h3 { margin: 0; font-size: 20px; }
+.operation-panel-heading > span { color: #52636a; font-size: 13px; }
+.operation-stat-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.operation-stat { display: grid; gap: 5px; min-width: 0; border-top: 4px solid #78909a; padding: 13px 14px; background: #f8fafb; }
+.operation-stat span { overflow-wrap: anywhere; color: #52636a; font-size: 12px; font-weight: 700; }
+.operation-stat strong { font-size: 26px; }
+.operation-stat-active { border-top-color: #0f7582; background: #eef8f7; }
+.operation-stat-active strong { color: #0f7582; }
+.operation-ring-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.operation-ring-card { min-width: 0; border: 1px solid #d9e3e6; padding: 16px; background: #f8fafb; }
+.operation-ring-heading { display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.operation-ring-heading h3 { margin: 0; font-size: 18px; }
+.operation-bout-block { display: grid; gap: 6px; border-top: 1px solid #d9e3e6; padding: 12px 0 0; }
+.operation-bout-block + .operation-bout-block { margin-top: 12px; }
+.operation-bout-block > span { color: #52636a; font-size: 12px; font-weight: 700; }
+.operation-bout-summary { display: grid; gap: 3px; min-width: 0; }
+.operation-bout-summary strong { color: #0f7582; font-size: 16px; }
+.operation-bout-summary span, .operation-bout-summary small { color: #52636a; overflow-wrap: anywhere; font-size: 12px; }
+.operation-empty { margin: 0; color: #5a6e76; font-size: 13px; }
+.operations-two-column { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); align-items: start; gap: 20px; }
+.operation-progress-list { display: grid; gap: 10px; }
+.operation-progress-row { display: grid; gap: 8px; border: 1px solid #d9e3e6; padding: 13px 14px; background: #f8fafb; }
+.operation-progress-heading, .operation-progress-detail { display: flex; justify-content: space-between; gap: 12px; }
+.operation-progress-heading span, .operation-progress-detail { color: #52636a; font-size: 12px; }
+.operation-progress-detail { flex-wrap: wrap; }
+.operation-progress-track { height: 8px; overflow: hidden; border-radius: 4px; background: #d9e3e6; }
+.operation-progress-track span { display: block; height: 100%; border-radius: inherit; background: #0f7582; }
+.operation-alert-panel { margin-bottom: 20px; }
+.operation-alert-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.operation-alert-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-left: 3px solid #e3a71b; padding: 10px 12px; background: #fff9e8; font-size: 13px; }
+.operation-alert-list li span { color: #52636a; text-align: right; }
 
 @media (max-width: 760px) {
   .app-header { grid-template-columns: 1fr auto; gap: 14px; min-height: 0; padding: 18px 20px; }
@@ -241,4 +275,11 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .ring-command-grid { grid-template-columns: 1fr 1fr; }
   .ring-command-grid .command-button { justify-self: start; }
   .ring-next-action { align-items: start; flex-direction: column; }
+  .operations-heading-actions { align-self: stretch; }
+  .operations-heading-actions button { flex: 1; }
+  .operation-panel { padding: 18px; }
+  .operation-stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .operations-two-column { grid-template-columns: 1fr; gap: 0; }
+  .operation-alert-panel { margin-top: 20px; }
+  .operation-progress-detail { display: grid; gap: 3px; }
 }

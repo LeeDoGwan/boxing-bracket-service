@@ -21,15 +21,15 @@ Last updated: 2026-07-12
 - Controller tests for health, audience home, public bout/ring/notice APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
 - Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.
-- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, score submission, penalty creation, result confirmation, ring commands, and empty states.
+- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, operations manager login, score submission, penalty creation, result confirmation, ring commands, operations refresh/retry, and empty states.
 
 ## Frontend Verification
 
 - Working directory: `frontend`
-- `npm test`: 16 passed across 9 test files
+- `npm test`: 18 passed across 10 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
-- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, and Ring Manager login routes, and invalid-credential handling. Authenticated score submission, result confirmation, and ring command flows are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, or bout data.
+- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, and Operations login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, and operations refresh/retry flows are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, or bout data.
 
 ## Verification Inventory
 
