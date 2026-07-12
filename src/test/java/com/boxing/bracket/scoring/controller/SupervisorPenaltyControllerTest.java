@@ -15,10 +15,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,6 +36,18 @@ class SupervisorPenaltyControllerTest {
 
     @MockBean
     private SupervisorPenaltyService supervisorPenaltyService;
+
+    @Test
+    void getPenaltiesReturnsHistory() throws Exception {
+        given(supervisorPenaltyService.getPenalties(1L))
+                .willReturn(List.of(PenaltyResponse.from(createPenalty())));
+
+        mockMvc.perform(get("/api/supervisor/bouts/{boutId}/penalties", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].penaltyId").value(100))
+                .andExpect(jsonPath("$.data[0].targetSide").value("RED"));
+    }
 
     @Test
     void createPenaltyReturnsCreatedPenalty() throws Exception {

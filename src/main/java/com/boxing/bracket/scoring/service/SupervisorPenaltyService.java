@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Lazy
 @Transactional
@@ -40,6 +43,18 @@ public class SupervisorPenaltyService {
                 .build();
 
         return PenaltyResponse.from(penaltyRepository.save(penalty));
+    }
+
+    @Transactional(readOnly = true)
+    public List<PenaltyResponse> getPenalties(Long boutId) {
+        validateBoutId(boutId);
+        if (!boutRepository.existsById(boutId)) {
+            throw new BoutNotFoundException();
+        }
+
+        return penaltyRepository.findByBoutIdOrderByCreatedAtAscIdAsc(boutId).stream()
+                .map(PenaltyResponse::from)
+                .collect(Collectors.toList());
     }
 
     private void validateBoutId(Long boutId) {

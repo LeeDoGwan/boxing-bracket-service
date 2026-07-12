@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,5 +80,39 @@ class SupervisorPenaltyServiceTest {
         assertThatThrownBy(() -> supervisorPenaltyService.createPenalty(1L, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Penalty point must be greater than or equal to 0");
+    }
+
+    @Test
+    void getPenaltiesReturnsBoutHistoryInCreationOrder() {
+        Penalty first = createPenalty(100L, "warning");
+        Penalty second = createPenalty(101L, "holding");
+        given(boutRepository.existsById(1L)).willReturn(true);
+        given(penaltyRepository.findByBoutIdOrderByCreatedAtAscIdAsc(1L)).willReturn(List.of(first, second));
+
+        List<PenaltyResponse> responses = supervisorPenaltyService.getPenalties(1L);
+
+        assertThat(responses).extracting(PenaltyResponse::getPenaltyId).containsExactly(100L, 101L);
+        assertThat(responses.get(1).getReason()).isEqualTo("holding");
+    }
+
+    @Test
+    void getPenaltiesRejectsMissingBout() {
+        given(boutRepository.existsById(99L)).willReturn(false);
+
+        assertThatThrownBy(() -> supervisorPenaltyService.getPenalties(99L))
+                .isInstanceOf(BoutNotFoundException.class)
+                .hasMessage("Bout not found");
+    }
+
+    private Penalty createPenalty(Long id, String reason) {
+        Penalty penalty = Penalty.builder()
+                .boutId(1L)
+                .targetSide(BoutSide.RED)
+                .penaltyPoint(1)
+                .reason(reason)
+                .createdBy(20L)
+                .build();
+        ReflectionTestUtils.setField(penalty, "id", id);
+        return penalty;
     }
 }

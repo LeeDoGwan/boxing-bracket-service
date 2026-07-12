@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getBoutDetail, getBouts } from '../api/audience';
 import { login, logout } from '../api/auth';
-import { confirmResult, createPenalty, getSupervisorScores } from '../api/supervisor';
+import { confirmResult, createPenalty, getPenalties, getSupervisorScores } from '../api/supervisor';
 import { SupervisorPage } from './SupervisorPage';
 
 vi.mock('../api/audience', () => ({
@@ -17,6 +17,7 @@ vi.mock('../api/auth', () => ({
 vi.mock('../api/supervisor', () => ({
   confirmResult: vi.fn(),
   createPenalty: vi.fn(),
+  getPenalties: vi.fn(),
   getSupervisorScores: vi.fn(),
 }));
 
@@ -45,12 +46,23 @@ beforeEach(() => {
     { blueScore: 9, boutId: 12, judgeId: 30, redScore: 10, roundNo: 1, status: 'SUBMITTED' },
     { blueScore: 10, boutId: 12, judgeId: 31, redScore: 9, roundNo: 1, status: 'SUBMITTED' },
   ]);
+  getPenalties.mockResolvedValue([]);
   createPenalty.mockResolvedValue({ boutId: 12, penaltyId: 100, penaltyPoint: 1, reason: 'Warning', targetSide: 'BLUE' });
   confirmResult.mockResolvedValue({ blueTotalScore: 19, boutId: 12, decisionType: 'POINTS', redTotalScore: 19, winnerSide: 'RED' });
   logout.mockResolvedValue(undefined);
 });
 
 describe('SupervisorPage', () => {
+  it('loads persisted penalties for the selected bout', async () => {
+    window.sessionStorage.setItem('boxing.supervisor.session', JSON.stringify(session));
+    getPenalties.mockResolvedValue([{ boutId: 12, penaltyId: 101, penaltyPoint: 2, reason: 'Persisted warning', targetSide: 'BLUE' }]);
+
+    render(<SupervisorPage tournamentId={1} />);
+
+    expect(await screen.findByText('Persisted warning')).toBeInTheDocument();
+    expect(getPenalties).toHaveBeenCalledWith(12, 'supervisor-token');
+  });
+
   it('signs in a supervisor and shows the review workspace', async () => {
     login.mockResolvedValue(session);
 

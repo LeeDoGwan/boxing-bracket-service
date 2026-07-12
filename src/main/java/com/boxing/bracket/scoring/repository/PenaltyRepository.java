@@ -8,4 +8,6 @@ import java.util.List;
 public interface PenaltyRepository extends JpaRepository<Penalty, Long> {
 
     List<Penalty> findByBoutId(Long boutId);
+
+    List<Penalty> findByBoutIdOrderByCreatedAtAscIdAsc(Long boutId);
 }

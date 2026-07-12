@@ -12,13 +12,13 @@ Implemented core areas:
 - Audience home, notice banners, ring status, current bout, official bout list/search/detail
 - SSE event stream for bout updates
 - Judge score submission and judge-specific score query filter
-- Supervisor score overview, penalties, and result confirmation
+- Supervisor score overview, penalty history, penalties, and result confirmation
 - Ring manager bout list/start/status/round start/next
 - Admin tournament, ring, athlete, bout, notice, and account management APIs
 - Admin bout CSV and Excel import API
 - Audience React MVP with live bout updates and official bracket search
 - Judge React scoring desk with authenticated login and round score submission
-- Supervisor React review desk with penalty creation and result confirmation
+- Supervisor React review desk with penalty history, creation, and result confirmation
 - Ring Manager React operations desk with ring bout control and round transitions
 - Operations React monitoring desk with ring progress and exception tracking
 - Audit log React desk with operational filters and paginated change history
@@ -56,7 +56,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 64 backend test classes, 333 backend test cases, and 41 frontend test cases.
+Current documented suite: 64 backend test classes, 336 backend test cases, and 42 frontend test cases.
 
 ### Run application
 
@@ -94,6 +94,7 @@ GET http://localhost:8080/api/health
 - `POST /api/judge/bouts/{boutId}/rounds/{roundNo}/scores`
 - `GET /api/judge/bouts/{boutId}/scores?judgeId=`
 - `GET /api/supervisor/bouts/{boutId}/scores`
+- `GET /api/supervisor/bouts/{boutId}/penalties`
 - `POST /api/supervisor/bouts/{boutId}/penalties`
 - `POST /api/supervisor/bouts/{boutId}/result`
 - `GET /api/ring-manager/rings/{ringId}/bouts`

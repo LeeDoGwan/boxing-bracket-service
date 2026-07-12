@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getBoutDetail, getBouts } from '../api/audience';
 import { login, logout } from '../api/auth';
-import { confirmResult, createPenalty, getSupervisorScores } from '../api/supervisor';
+import { confirmResult, createPenalty, getPenalties, getSupervisorScores } from '../api/supervisor';
 import { StatePanel } from '../components/StatePanel';
 
 const SESSION_KEY = 'boxing.supervisor.session';
@@ -193,13 +193,14 @@ function SupervisorWorkspace({ onLogout, session, tournamentId }) {
     Promise.all([
       getBoutDetail(selectedBoutId),
       getSupervisorScores(selectedBoutId, session.accessToken),
+      getPenalties(selectedBoutId, session.accessToken),
     ])
-      .then(([nextBout, nextScores]) => {
+      .then(([nextBout, nextScores, nextPenalties]) => {
         if (!cancelled) {
           setBout(nextBout);
           setScores(nextScores || []);
           setResult(nextBout.result || null);
-          setPenalties([]);
+          setPenalties(nextPenalties || []);
         }
       })
       .catch(() => {

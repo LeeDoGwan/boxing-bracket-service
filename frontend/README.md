@@ -16,7 +16,7 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - `/` - public tournament status and ring view
 - `/bracket` - official bracket search
 - `/judge` - authenticated judge scoring desk
-- `/supervisor` - authenticated score review, penalty, and result confirmation desk
+- `/supervisor` - authenticated score review, penalty history/entry, and result confirmation desk
 - `/ring-manager` - authenticated ring bout operations desk
 - `/operations` - authenticated tournament operations monitoring desk
 - `/audit-logs` - authenticated administrator audit log desk
@@ -64,6 +64,6 @@ npm run lint
 npm run build
 ```
 
-The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/bout admin/account admin login, score loading, submitted score locking, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV/Excel import, account search/filter/create/update/delete, and retry states.
+The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/bout admin/account admin login, score loading, submitted score locking, penalty history loading, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV/Excel import, account search/filter/create/update/delete, and retry states.
 
-The test profile does not seed accounts or tournament data. Use active `JUDGE`, `SUPERVISOR`, `RING_MANAGER`, `GAME_MANAGER`, and `SERVICE_MANAGER` accounts with registered bouts to exercise authenticated desks end to end. Penalties are write-only in the current API, so the supervisor desk keeps newly created penalties in the current view and uses the confirmed result for persisted totals.
+The test profile does not seed accounts or tournament data. Use active `JUDGE`, `SUPERVISOR`, `RING_MANAGER`, `GAME_MANAGER`, and `SERVICE_MANAGER` accounts with registered bouts to exercise authenticated desks end to end. Supervisor penalty history is loaded from the API when a bout is selected.
