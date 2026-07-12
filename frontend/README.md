@@ -11,6 +11,12 @@ npm run dev
 
 The Vite development server proxies `/api` requests to `http://localhost:8080` by default. Set `VITE_DEV_PROXY_TARGET` in `.env.local` when the backend runs elsewhere. Set `VITE_API_BASE_URL` when the frontend must call an absolute API origin instead of the Vite proxy.
 
+## Routes
+
+- `/` - public tournament status and ring view
+- `/bracket` - official bracket search
+- `/judge` - authenticated judge scoring desk
+
 ## API Mapping
 
 - Home: `/api/home`, `/api/notices`, `/api/rings/status`
@@ -30,3 +36,5 @@ npm run build
 ```
 
 The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge login, score loading, and submitted score locking.
+
+The test profile does not seed accounts or tournament data. Use an active `JUDGE` account and registered bouts to exercise authenticated score submission end to end.

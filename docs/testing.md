@@ -29,7 +29,7 @@ Last updated: 2026-07-12
 - `npm test`: 12 passed across 7 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
-- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, and bracket search. Bout detail and SSE reconnect/cleanup behavior are covered by the frontend component and hook tests.
+- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge login route, and invalid-credential handling. Authenticated score submission is covered by `JudgePage.test.jsx`; the test profile does not seed a Judge account or tournament data.
 
 ## Verification Inventory
 
