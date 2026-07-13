@@ -195,6 +195,8 @@ public class AuditLogAspect {
                 return "accountId";
             case NOTICE:
                 return "noticeId";
+            case SCHEDULE:
+                return "scheduleId";
             default:
                 return "id";
         }

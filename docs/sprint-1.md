@@ -21,9 +21,9 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
-- Latest `mvn test` result: 336 passed, 0 failed, 0 errors, 0 skipped.
-- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, audience home, bracket, bout CSV/Excel import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
-- Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Bout Admin, and Account Admin MVP verification: 41 frontend tests passed, ESLint passed, and the Vite production build passed.
+- Latest `mvn test` result: 354 passed, 0 failed, 0 errors, 0 skipped.
+- Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, schedules, audience home, bracket, bout CSV/Excel import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
+- Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Schedule Admin, Bout Admin, and Account Admin MVP verification: 47 frontend tests passed across 19 test files, ESLint passed, and the Vite production build passed.
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -89,6 +89,7 @@ CSV and Excel upload are available for admin bout import.
 - Notice rotation, ring cards, current and next bouts, confirmed results, and bout detail dialog.
 - Official bracket list with athlete, affiliation, type, status, result, and search.
 - SSE refresh with reconnect state, duplicate event protection, and cleanup on unmount.
+- Tournament schedule list for bouts, breaks, meals, performances, and events.
 
 ### Judge Web MVP
 
@@ -147,6 +148,12 @@ CSV and Excel upload are available for admin bout import.
 - Tournament-scoped notice list with active/inactive publishing state and display order.
 - Notice create, update, delete, refresh, and error states.
 
+### Schedule Admin Web MVP
+
+- Game manager and service manager login with role validation and session reuse.
+- Tournament-scoped schedule list with type, status, time range, ring, and related bout fields.
+- Schedule create, update, delete, refresh, and error states.
+
 ### Bout Admin Web MVP
 
 - Game manager and service manager login with role validation and session reuse.
@@ -175,6 +182,7 @@ CSV and Excel upload are available for admin bout import.
 - `GET /api/events/stream?tournamentId=&ringId=`
 - `GET /api/home`
 - `GET /api/notices?tournamentId=`
+- `GET /api/schedules?tournamentId=`
 - `GET /api/rings/status`
 - `GET /api/rings/{ringId}/current-bout`
 
@@ -245,6 +253,14 @@ CSV and Excel upload are available for admin bout import.
 - `POST /api/admin/notices`
 - `PUT /api/admin/notices/{noticeId}`
 - `DELETE /api/admin/notices/{noticeId}`
+
+### Schedule Admin
+
+- `GET /api/admin/schedules?tournamentId=`
+- `GET /api/admin/schedules/{scheduleId}`
+- `POST /api/admin/schedules`
+- `PUT /api/admin/schedules/{scheduleId}`
+- `DELETE /api/admin/schedules/{scheduleId}`
 
 ### Bout Admin
 

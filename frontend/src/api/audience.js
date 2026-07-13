@@ -8,6 +8,10 @@ export function getNotices(tournamentId) {
   return getApi('/api/notices', { tournamentId });
 }
 
+export function getSchedules(tournamentId) {
+  return getApi('/api/schedules', { tournamentId });
+}
+
 export function getRingStatuses(tournamentId) {
   return getApi('/api/rings/status', { tournamentId });
 }

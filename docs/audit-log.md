@@ -7,6 +7,7 @@ The service appends immutable audit records for state-changing operations:
 - Ring-manager bout start, status, round start, and next bout actions.
 - Judge score submission, supervisor penalty creation, and result confirmation.
 - Administrator bout, account, and notice create, update, delete, and bout CSV/Excel import actions.
+- Administrator schedule create, update, and delete actions.
 - Login success, login failure, and logout.
 
 Read-only APIs do not create audit records. Success records are written after the controller receives the committed service result. Failed controller operations are recorded independently, and an audit persistence failure is logged to the server without rolling back the business operation.
@@ -31,4 +32,4 @@ The current account schema has no tournament-assignment relationship. Consequent
 
 ## Database
 
-Apply [database-migration-audit-log.sql](database-migration-audit-log.sql) to MariaDB before deployment. Audit records intentionally have no foreign-key cascades so historical records remain available after a target account, notice, or bout is deleted.
+Apply [database-migration-audit-log.sql](database-migration-audit-log.sql) to MariaDB before deployment. Audit records intentionally have no foreign-key cascades so historical records remain available after a target account, notice, schedule, or bout is deleted.

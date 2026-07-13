@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BoutDetailDialog } from '../components/BoutDetailDialog';
 import { NoticeCarousel } from '../components/NoticeCarousel';
 import { RingCard } from '../components/RingCard';
+import { ScheduleList } from '../components/ScheduleList';
 import { StatePanel } from '../components/StatePanel';
 import { useAudienceData } from '../hooks/useAudienceData';
 import { useBoutEventStream } from '../hooks/useBoutEventStream';
@@ -30,6 +31,7 @@ export function AudienceHome({ tournamentId }) {
   const currentNotices = notices.length ? notices : home?.notices || [];
   const currentRings = ringStatuses.length ? ringStatuses : home?.ringStatuses || [];
   const results = home?.confirmedResults || [];
+  const schedules = home?.schedules || [];
 
   return (
     <main className="page-shell">
@@ -80,7 +82,7 @@ export function AudienceHome({ tournamentId }) {
       <section className="schedule-section">
         <p className="eyebrow">SCHEDULE</p>
         <h2>대회 일정</h2>
-        <p>등록된 일정 정보가 없습니다.</p>
+        <ScheduleList schedules={schedules} />
       </section>
       <BoutDetailDialog boutId={selectedBoutId} onClose={() => setSelectedBoutId(null)} />
     </main>

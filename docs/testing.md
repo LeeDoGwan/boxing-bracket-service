@@ -1,13 +1,13 @@
 # Testing
 
-Last updated: 2026-07-12
+Last updated: 2026-07-13
 
 ## Latest Verification
 
 - Command: `mvn test`
-- Verified at: 2026-07-12T13:59:48+09:00
-- Result: 336 passed, 0 failed, 0 errors, 0 skipped
-- Test classes: 64
+- Verified at: 2026-07-13
+- Result: 354 passed, 0 failed, 0 errors, 0 skipped
+- Test classes: 69
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `src/test/resources/application-test.yml`
 
@@ -15,21 +15,21 @@ Last updated: 2026-07-12
 
 - Auth API and role access policy tests for login, logout, current account lookup, BCrypt password matching, protected route mapping, and interceptor behavior.
 - SSE event stream tests for stream subscription, event payloads, subscriber filtering, and broken subscriber cleanup.
-- Domain behavior tests for account, tournament, ring, athlete, bout, notice, and scoring models.
-- Repository slice tests for tournament, ring, athlete, bout, notice, account, round score, and bout result persistence.
-- Service tests for audience home, public bout/ring/notice queries, judge scoring, supervisor scoring, ring manager workflow, admin management flows, bout CSV/Excel import, and tournament operation status aggregation.
-- Controller tests for health, audience home, public bout/ring/notice APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
+- Domain behavior tests for account, tournament, ring, athlete, bout, notice, schedule, and scoring models.
+- Repository slice tests for tournament, ring, athlete, bout, notice, account, round score, bout result, and schedule persistence.
+- Service tests for audience home, public bout/ring/notice/schedule queries, judge scoring, supervisor scoring, ring manager workflow, admin management flows, bout CSV/Excel import, schedule reference validation, and tournament operation status aggregation.
+- Controller tests for health, audience home, public bout/ring/notice/schedule APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
 - Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.
-- Frontend tests for utility formatting, notice rotation, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, bout admin login, account admin login, score submission, penalty history loading, penalty creation, result confirmation, ring commands, operations refresh/retry, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
+- Frontend tests for utility formatting, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, SSE deduplication/cleanup, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score submission, penalty history loading, penalty creation, result confirmation, ring commands, operations refresh/retry, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
 
 - Working directory: `frontend`
-- `npm test`: 42 passed across 17 test files
+- `npm test`: 47 passed across 19 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
-- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Bout Admin, and Account Admin login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, operations refresh/retry, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, bout, or audit data.
+- Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Schedule Admin, Bout Admin, and Account Admin login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, operations refresh/retry, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data.
 
 ## Verification Inventory
 
@@ -71,6 +71,11 @@ Last updated: 2026-07-12
 | Notice | `NoticeServiceTest` | 3 |
 | Operations | `TournamentOperationStatusControllerTest` | 1 |
 | Operations | `TournamentOperationStatusServiceTest` | 2 |
+| Schedule | `ScheduleControllerTest` | 2 |
+| Schedule | `ScheduleItemTest` | 3 |
+| Schedule | `ScheduleServiceTest` | 3 |
+| Schedule | `AdminScheduleControllerTest` | 4 |
+| Schedule | `AdminScheduleServiceTest` | 5 |
 | Ring | `AdminRingControllerTest` | 11 |
 | Ring | `AdminRingServiceTest` | 12 |
 | Ring | `RingControllerTest` | 4 |
@@ -105,6 +110,7 @@ Last updated: 2026-07-12
 - Active accounts can log in with BCrypt-hashed credentials, read the current account, log out, and be checked against role-specific protected API groups.
 - Audience clients can subscribe to bout update events by tournament and optional ring.
 - Audience can read active notice banners, and admin users can manage notice lifecycle per tournament.
+- Audience can read tournament schedules, and admin users can manage schedule lifecycle per tournament with optional same-tournament ring and bout references.
 - Audience can read tournament home data, current bout information, ring status, and official bout lists/search/detail.
 - Judges can submit round scores and retrieve judge-specific scores.
 - Supervisors can review scores, load persisted penalty history, add penalties, and confirm bout results.

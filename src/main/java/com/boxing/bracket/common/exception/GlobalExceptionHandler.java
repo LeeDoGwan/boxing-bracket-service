@@ -8,6 +8,7 @@ import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.common.response.ApiResponse;
 import com.boxing.bracket.notice.exception.NoticeNotFoundException;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
+import com.boxing.bracket.schedule.exception.ScheduleItemNotFoundException;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.user.exception.AccountNotFoundException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -88,6 +89,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail("Tournament not found"));
+    }
+
+    @ExceptionHandler(ScheduleItemNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleScheduleItemNotFound(ScheduleItemNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail("Schedule item not found"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

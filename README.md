@@ -19,6 +19,7 @@ Implemented core areas:
 - Audience React MVP with live bout updates and official bracket search
 - Judge React scoring desk with authenticated login and round score submission
 - Supervisor React review desk with penalty history, creation, and result confirmation
+- Audience schedule list for bouts, breaks, meals, performances, and events
 - Ring Manager React operations desk with ring bout control and round transitions
 - Operations React monitoring desk with ring progress and exception tracking
 - Audit log React desk with operational filters and paginated change history
@@ -26,6 +27,7 @@ Implemented core areas:
 - Ring admin React desk with per-tournament ring CRUD management
 - Athlete admin React desk with searchable athlete CRUD management
 - Notice admin React desk with tournament-scoped notice publishing management
+- Schedule admin React desk with tournament-scoped schedule CRUD management
 - Bout admin React desk with schedule CRUD and CSV/Excel import
 - Account admin React desk restricted to service managers, with keyword, role, and status filters
 - Tournament operation status summary for game and service managers
@@ -39,6 +41,7 @@ Implemented core areas:
 - [Test inventory and verification](docs/testing.md)
 - [Concurrency database migration](docs/database-migration-concurrency.sql)
 - [Administrator audit log](docs/audit-log.md)
+- [Schedule database migration](docs/database-migration-schedule.sql)
 - [Audit log database migration](docs/database-migration-audit-log.sql)
 - [Audience web MVP](frontend/README.md)
 
@@ -56,7 +59,7 @@ Implemented core areas:
 mvn test
 ```
 
-Current documented suite: 64 backend test classes, 336 backend test cases, and 42 frontend test cases.
+Current documented suite: 69 backend test classes, 354 backend test cases, and 47 frontend test cases.
 
 ### Run application
 
@@ -72,7 +75,7 @@ npm install
 npm run dev
 ```
 
-Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1&ringId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, `/audit-logs?tournamentId=1` for the audit log desk, `/admin/tournaments?tournamentId=1` for tournament management, `/admin/rings?tournamentId=1` for ring management, `/admin/athletes?tournamentId=1` for athlete management, `/admin/notices?tournamentId=1` for notice management, `/admin/bouts?tournamentId=1` for bout management, or `/admin/accounts?tournamentId=1` for account management. These APIs require the matching role account; assignment is deferred, so judge and supervisor desks select from the official bout list while the ring manager desk loads a ring directly by ID.
+Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1&ringId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, `/audit-logs?tournamentId=1` for the audit log desk, `/admin/tournaments?tournamentId=1` for tournament management, `/admin/rings?tournamentId=1` for ring management, `/admin/athletes?tournamentId=1` for athlete management, `/admin/notices?tournamentId=1` for notice management, `/admin/schedules?tournamentId=1` for schedule management, `/admin/bouts?tournamentId=1` for bout management, or `/admin/accounts?tournamentId=1` for account management. These APIs require the matching role account; assignment is deferred, so judge and supervisor desks select from the official bout list while the ring manager desk loads a ring directly by ID.
 
 ### Health check
 
@@ -88,6 +91,7 @@ GET http://localhost:8080/api/health
 - `GET /api/events/stream?tournamentId=&ringId=`
 - `GET /api/home?tournamentId=`
 - `GET /api/notices?tournamentId=`
+- `GET /api/schedules?tournamentId=`
 - `GET /api/bouts?tournamentId=`
 - `GET /api/bouts/search?tournamentId=&keyword=`
 - `GET /api/rings/status?tournamentId=`
@@ -108,6 +112,7 @@ GET http://localhost:8080/api/health
 - `/api/admin/bouts`
 - `POST /api/admin/bouts/import`
 - `/api/admin/notices`
+- `/api/admin/schedules`
 - `/api/admin/accounts?keyword=&role=&status=`
 - `GET /api/admin/operations/status?tournamentId=`
 - `GET /api/admin/audit-logs?tournamentId=&actorAccountId=&actionType=&page=&size=`

@@ -14,6 +14,7 @@ import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.dto.RingStatusResponse;
 import com.boxing.bracket.ring.service.RingService;
+import com.boxing.bracket.schedule.service.ScheduleService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +40,9 @@ class HomeServiceTest {
     @Mock
     private NoticeService noticeService;
 
+    @Mock
+    private ScheduleService scheduleService;
+
     @InjectMocks
     private HomeService homeService;
 
@@ -59,6 +63,7 @@ class HomeServiceTest {
         given(ringService.getRingStatuses(1L)).willReturn(List.of(ringStatus));
         given(boutService.getOfficialBouts(1L)).willReturn(List.of(confirmedBout, scheduledBout));
         given(noticeService.getActiveNotices(1L)).willReturn(List.of(notice));
+        given(scheduleService.getSchedules(1L)).willReturn(List.of());
 
         HomeResponse response = homeService.getHome(1L);
 
@@ -68,6 +73,7 @@ class HomeServiceTest {
         assertThat(response.getRingStatuses()).hasSize(1);
         assertThat(response.getConfirmedResults()).hasSize(1);
         assertThat(response.getConfirmedResults().get(0).getBoutId()).isEqualTo(10L);
+        assertThat(response.getSchedules()).isEmpty();
     }
 
     @Test

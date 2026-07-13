@@ -12,6 +12,7 @@ import { AdminTournamentPage } from './pages/AdminTournamentPage';
 import { AdminRingPage } from './pages/AdminRingPage';
 import { AdminAthletePage } from './pages/AdminAthletePage';
 import { AdminNoticePage } from './pages/AdminNoticePage';
+import { AdminSchedulePage } from './pages/AdminSchedulePage';
 import { AdminBoutPage } from './pages/AdminBoutPage';
 import { AdminAccountPage } from './pages/AdminAccountPage';
 
@@ -47,6 +48,7 @@ export default function App() {
         <Route element={<AdminRingPage tournamentId={tournamentId} />} path="/admin/rings" />
         <Route element={<AdminAthletePage />} path="/admin/athletes" />
         <Route element={<AdminNoticePage tournamentId={tournamentId} />} path="/admin/notices" />
+        <Route element={<AdminSchedulePage tournamentId={tournamentId} />} path="/admin/schedules" />
         <Route element={<AdminBoutPage tournamentId={tournamentId} />} path="/admin/bouts" />
         <Route element={<AdminAccountPage />} path="/admin/accounts" />
       </Routes>

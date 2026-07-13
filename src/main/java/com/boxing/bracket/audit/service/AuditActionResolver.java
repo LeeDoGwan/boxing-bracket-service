@@ -55,6 +55,9 @@ public class AuditActionResolver {
         if (requestUri.startsWith("/api/admin/notices")) {
             return mutation(method, AuditActionType.NOTICE_CREATED, AuditActionType.NOTICE_UPDATED, AuditActionType.NOTICE_DELETED, AuditTargetType.NOTICE);
         }
+        if (requestUri.startsWith("/api/admin/schedules")) {
+            return mutation(method, AuditActionType.SCHEDULE_CREATED, AuditActionType.SCHEDULE_UPDATED, AuditActionType.SCHEDULE_DELETED, AuditTargetType.SCHEDULE);
+        }
         return Optional.empty();
     }
 

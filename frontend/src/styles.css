@@ -69,6 +69,13 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .result-row:hover { border-color: #0f7582; }
 .result-row strong { color: #0f7582; font-size: 18px; }
 .result-row span:last-child, .schedule-section > p:not(.eyebrow), .empty-copy { color: #5a6e76; }
+.schedule-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.schedule-item { display: grid; grid-template-columns: 150px 72px minmax(0, 1fr) auto; align-items: center; gap: 14px; border: 1px solid #d9e3e6; border-left: 4px solid #b8c7cc; padding: 13px 15px; background: #ffffff; }
+.schedule-item time { color: #52636a; font: 12px/1.4 Consolas, monospace; }
+.schedule-type { width: fit-content; border-radius: 3px; padding: 4px 7px; background: #edf2f3; color: #41545c; font-size: 12px; font-weight: 700; }
+.schedule-status { color: #52636a; font-size: 12px; white-space: nowrap; }
+.schedule-in_progress { border-left-color: #0f7582; }
+.schedule-completed { border-left-color: #65767d; background: #f8fafb; }
 
 .state-panel { margin: 48px auto; border: 1px solid #d4e0e4; border-radius: 6px; padding: 32px; background: #ffffff; text-align: center; }
 .state-panel h2, .state-panel p { margin: 0; }
@@ -304,6 +311,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .notice-banner { min-height: 0; padding: 22px; }
   .notice-banner h2, .page-heading h2, .result-section h2, .schedule-section h2 { font-size: 22px; }
   .notice-dots { align-self: flex-start; }
+  .schedule-item { grid-template-columns: 1fr auto; gap: 8px; }
+  .schedule-item time { grid-column: 1 / -1; }
+  .schedule-item strong { min-width: 0; overflow-wrap: anywhere; }
   .ring-grid { grid-template-columns: 1fr; }
   .bracket-search { width: 100%; }
   .bracket-row { grid-template-columns: 72px minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 14px; }

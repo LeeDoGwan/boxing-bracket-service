@@ -6,6 +6,8 @@ import com.boxing.bracket.notice.domain.Notice;
 import com.boxing.bracket.notice.repository.NoticeRepository;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.schedule.domain.ScheduleItem;
+import com.boxing.bracket.schedule.repository.ScheduleItemRepository;
 import com.boxing.bracket.user.domain.Account;
 import com.boxing.bracket.user.repository.AccountRepository;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,13 @@ public class AuditStateSnapshotService {
     private static final Pattern RING_PATH = Pattern.compile("/rings/(\\d+)(?:/|$)");
     private static final Pattern ACCOUNT_PATH = Pattern.compile("/accounts/(\\d+)(?:/|$)");
     private static final Pattern NOTICE_PATH = Pattern.compile("/notices/(\\d+)(?:/|$)");
+    private static final Pattern SCHEDULE_PATH = Pattern.compile("/schedules/(\\d+)(?:/|$)");
 
     private final BoutRepository boutRepository;
     private final RingRepository ringRepository;
     private final AccountRepository accountRepository;
     private final NoticeRepository noticeRepository;
+    private final ScheduleItemRepository scheduleItemRepository;
     private final AuditDataSerializer serializer;
 
     public AuditStateSnapshotService(
@@ -33,12 +37,14 @@ public class AuditStateSnapshotService {
             RingRepository ringRepository,
             AccountRepository accountRepository,
             NoticeRepository noticeRepository,
+            ScheduleItemRepository scheduleItemRepository,
             AuditDataSerializer serializer
     ) {
         this.boutRepository = boutRepository;
         this.ringRepository = ringRepository;
         this.accountRepository = accountRepository;
         this.noticeRepository = noticeRepository;
+        this.scheduleItemRepository = scheduleItemRepository;
         this.serializer = serializer;
     }
 
@@ -69,6 +75,13 @@ public class AuditStateSnapshotService {
             return noticeRepository.findById(noticeId)
                     .map(this::fromNotice)
                     .orElse(new AuditSnapshot(null, null, null, noticeId, null));
+        }
+
+        Long scheduleId = findId(SCHEDULE_PATH, requestUri);
+        if (scheduleId != null) {
+            return scheduleItemRepository.findById(scheduleId)
+                    .map(this::fromSchedule)
+                    .orElse(new AuditSnapshot(null, null, null, scheduleId, null));
         }
 
         return AuditSnapshot.empty();
@@ -105,6 +118,16 @@ public class AuditStateSnapshotService {
                 null,
                 notice.getId(),
                 serializer.serialize(notice)
+        );
+    }
+
+    private AuditSnapshot fromSchedule(ScheduleItem item) {
+        return new AuditSnapshot(
+                item.getTournamentId(),
+                item.getRingId(),
+                item.getRelatedBoutId(),
+                item.getId(),
+                serializer.serialize(item)
         );
     }
 

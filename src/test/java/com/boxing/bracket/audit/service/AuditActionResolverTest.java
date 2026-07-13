@@ -18,4 +18,14 @@ class AuditActionResolverTest {
 
         assertThat(operation.getActionType()).isEqualTo(AuditActionType.ROUND_STARTED);
     }
+
+    @Test
+    void resolvesScheduleMutationsAsScheduleAuditActions() {
+        AuditOperation operation = resolver.resolve(
+                "PUT",
+                "/api/admin/schedules/7"
+        ).orElseThrow();
+
+        assertThat(operation.getActionType()).isEqualTo(AuditActionType.SCHEDULE_UPDATED);
+    }
 }

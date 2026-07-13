@@ -8,5 +8,6 @@ public enum AuditTargetType {
     BOUT_RESULT,
     ACCOUNT,
     NOTICE,
+    SCHEDULE,
     AUTH
 }
