@@ -2,6 +2,8 @@
 
 React and Vite frontend for the public tournament home, official bracket, judge scoring desk, supervisor review desk, ring manager operations desk, and tournament schedule administration.
 
+This application is the `front/` component of the repository. The Spring Boot API is maintained separately under `back/`.
+
 ## Run Locally
 
 ```bash

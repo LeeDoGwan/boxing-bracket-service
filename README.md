@@ -44,7 +44,13 @@ Implemented core areas:
 - [Administrator audit log](docs/audit-log.md)
 - [Schedule database migration](docs/database-migration-schedule.sql)
 - [Audit log database migration](docs/database-migration-audit-log.sql)
-- [Audience web MVP](frontend/README.md)
+- [Frontend README](front/README.md)
+
+## Repository Layout
+
+- `back/` - Spring Boot API, domain, persistence, and backend tests
+- `front/` - React/Vite web application and frontend tests
+- `docs/` - Requirements, design, sprint scope, migrations, and verification records
 
 ## Local Development
 
@@ -56,7 +62,10 @@ Implemented core areas:
 
 ### Run tests
 
+Run backend tests from `back/`:
+
 ```bash
+cd back
 mvn test
 ```
 
@@ -64,14 +73,17 @@ Current documented suite: 69 backend test classes, 354 backend test cases, and 4
 
 ### Run application
 
+Start the backend from `back/`:
+
 ```bash
+cd back
 mvn spring-boot:run
 ```
 
-Run the audience frontend in another terminal:
+Run the frontend from `front/` in another terminal:
 
 ```bash
-cd frontend
+cd front
 npm install
 npm run dev
 ```

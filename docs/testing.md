@@ -4,12 +4,13 @@ Last updated: 2026-07-14
 
 ## Latest Verification
 
+- Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-07-14
 - Result: 354 passed, 0 failed, 0 errors, 0 skipped
 - Test classes: 69
 - Runtime profile: `test`
-- Test database: H2 in-memory database configured by `src/test/resources/application-test.yml`
+- Test database: H2 in-memory database configured by `back/src/test/resources/application-test.yml`
 
 ## Test Scope
 
@@ -25,7 +26,7 @@ Last updated: 2026-07-14
 
 ## Frontend Verification
 
-- Working directory: `frontend`
+- Working directory: `front`
 - `npm test`: 47 passed across 19 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output

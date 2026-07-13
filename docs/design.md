@@ -99,7 +99,7 @@ Controllers do not access repositories directly. Cross-module references use IDs
 
 ## 5. Frontend Architecture
 
-`frontend/src/App.jsx` owns route composition and reads `tournamentId` from the URL. `AppHeader` preserves the selected tournament ID while navigating between desks.
+`front/src/App.jsx` owns route composition and reads `tournamentId` from the URL. `AppHeader` preserves the selected tournament ID while navigating between desks.
 
 ```text
 App
@@ -286,7 +286,7 @@ API groups:
 | Administration | tournaments, rings, athletes, bouts, notices, schedules | `GAME_MANAGER`, `SERVICE_MANAGER` |
 | Account administration | `/api/admin/accounts` | `SERVICE_MANAGER` |
 
-The detailed endpoint list remains in [Sprint 1 scope](sprint-1.md). Frontend-specific route and API usage remains in [frontend README](../frontend/README.md).
+The detailed endpoint list remains in [Sprint 1 scope](sprint-1.md). Frontend-specific route and API usage remains in [frontend README](../front/README.md).
 
 ## 10. Persistence and Deployment
 
