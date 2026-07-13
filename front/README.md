@@ -4,6 +4,21 @@ React and Vite frontend for the public tournament home, official bracket, judge 
 
 This application is the `front/` component of the repository. The Spring Boot API is maintained separately under `back/`.
 
+Detailed screen responsibilities, state transitions, API mapping, SSE behavior,
+responsive targets, accessibility status, test ownership, and deployment checks
+are documented in [frontend wide-frame architecture](../docs/frontend-wide-frame.md).
+
+## Structure
+
+~~~text
+src/
+  api/         API modules and shared request client
+  components/  Shared audience and state UI
+  hooks/       Audience data and SSE lifecycle hooks
+  pages/       Audience, role, operations, and admin screens
+  test/        Vitest and Testing Library setup
+~~~
+
 ## Run Locally
 
 ```bash

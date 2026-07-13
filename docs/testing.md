@@ -26,6 +26,10 @@ Last updated: 2026-07-14
 
 ## Frontend Verification
 
+The frontend screen, API, SSE, responsive, accessibility, and test ownership
+map is maintained in the
+[frontend wide-frame architecture guide](frontend-wide-frame.md).
+
 - Working directory: `front`
 - `npm test`: 47 passed across 19 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded

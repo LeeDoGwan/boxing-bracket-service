@@ -99,6 +99,10 @@ Controllers do not access repositories directly. Cross-module references use IDs
 
 ## 5. Frontend Architecture
 
+The detailed frontend screen, state, API, SSE, component, responsive,
+accessibility, test, and deployment map is maintained in the
+[frontend wide-frame architecture guide](frontend-wide-frame.md).
+
 `front/src/App.jsx` owns route composition and reads `tournamentId` from the URL. `AppHeader` preserves the selected tournament ID while navigating between desks.
 
 ```text
