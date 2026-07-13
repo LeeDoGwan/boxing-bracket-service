@@ -1,5 +1,7 @@
 # Administrator Audit Log
 
+Last updated: 2026-07-14
+
 ## Coverage
 
 The service appends immutable audit records for state-changing operations:

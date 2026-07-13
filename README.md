@@ -4,7 +4,7 @@ Boxing bracket and tournament advice service.
 
 ## Status
 
-Sprint 1 core backend flow is in progress.
+Sprint 1 core backend flow and tournament schedule management are implemented.
 
 Implemented core areas:
 
@@ -28,7 +28,7 @@ Implemented core areas:
 - Athlete admin React desk with searchable athlete CRUD management
 - Notice admin React desk with tournament-scoped notice publishing management
 - Schedule admin React desk with tournament-scoped schedule CRUD management
-- Bout admin React desk with schedule CRUD and CSV/Excel import
+- Bout admin React desk with bout CRUD and CSV/Excel import
 - Account admin React desk restricted to service managers, with keyword, role, and status filters
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
