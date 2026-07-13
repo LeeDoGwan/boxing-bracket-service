@@ -21,6 +21,7 @@ One ring can run one bout end to end:
 ## Verification Status
 
 - Test documentation: [Testing](testing.md)
+- Design documentation: [System design](design.md)
 - Latest `mvn test` result: 354 passed, 0 failed, 0 errors, 0 skipped.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, schedules, audience home, bracket, bout CSV/Excel import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
 - Audience, Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Schedule Admin, Bout Admin, and Account Admin MVP verification: 47 frontend tests passed across 19 test files, ESLint passed, and the Vite production build passed.

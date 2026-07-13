@@ -37,6 +37,7 @@ Implemented core areas:
 ## Documentation
 
 - [Product requirements](docs/requirements.md)
+- [System design](docs/design.md)
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
 - [Concurrency database migration](docs/database-migration-concurrency.sql)

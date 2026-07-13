@@ -2,6 +2,8 @@
 
 Source: ChatGPT project `복싱 대회 어드바이스 서비스`, `기능.txt`-based analysis on 2026-07-07.
 
+Reviewed against the MVP implementation on 2026-07-14. See [System design](design.md) for the implementation architecture and known boundaries.
+
 ## Goal
 
 Build a digital operations service for boxing tournaments that replaces paper-based bracket, bout status, judge scoring, supervisor confirmation, and result publishing flows.
@@ -248,3 +250,7 @@ The first working loop is:
 - Should bout numbers be generated automatically or entered manually?
 - Can confirmed results be modified, and who can approve changes?
 - Which account-to-tournament assignment rule should restrict game-manager audit access?
+
+## Current Implementation Alignment
+
+The requirements above describe product direction, while the MVP currently exposes the implementation values documented in [System design](design.md). In particular, tournament status is `READY`, `IN_PROGRESS`, or `FINISHED`; ring status is `READY`, `IN_PROGRESS`, or `CLOSED`; and bout status is `SCHEDULED`, `READY`, `IN_PROGRESS`, `SCORING`, `FINISHED`, or `CANCELED`. A status vocabulary migration should be planned explicitly before changing API or database values.
