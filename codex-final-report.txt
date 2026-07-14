@@ -1,30 +1,28 @@
 Codex Final Report
-Date: 2026-07-14
-Branch: codex/audience-web-mvp
+Date: 2026-07-15
+Repository: boxing-bracket-service
+Branch: codex/staff-ring-assignment
 
 Completed:
+- Verified the current staff ring assignment and access-control implementation.
+- Verified the frontend assigned-staff flows and assignment administration screen.
 - No new feature work was started.
-- Existing repository state was checked and was clean before this report.
-- Existing frontend and backend state was verified without source changes.
-- Git diff check completed successfully.
-- Push and pull request creation were not performed, as requested.
+- No push or pull request was created.
 
-Verification:
-- Backend: mvn -q test, 354 passed, 0 failed, 0 errors, 0 skipped.
-- Frontend tests: npm.cmd test -- --run, 19 files and 47 tests passed.
-- Frontend lint: npm.cmd run lint, passed.
-- Frontend build: npm.cmd run build, passed.
-- Git diff check: git diff --check, passed.
+Tests and verification:
+- Backend: mvn -q test - passed.
+- Frontend: npm.cmd test -- --run - 21 test files and 51 tests passed.
+- Frontend lint: npm.cmd run lint - passed.
+- Frontend production build: npm.cmd run build - passed.
+- Git diff check: git diff --check - passed.
+- Working tree was clean before this report was added.
 
-Commit:
-- Current implementation commit: 8f2f821
-- Message: docs: add frontend wide frame architecture guide
-- A local commit will include this final report file.
+Implementation commit:
+- 5615450 feat: add staff ring assignment and access control
 
 Remaining work:
-- No remaining work for this shutdown task.
-- Future project work is intentionally not started.
-- Push and PR remain pending by explicit request.
+- Confirm the Game Manager tournament ownership model.
+- Implement the next approved operator SSE and workflow UX work.
 
 Shutdown:
-- Requested command: shutdown.exe /s /t 180 /c "Codex 작업 완료 후 자동 종료"
+- The requested shutdown command will be scheduled after this report is committed.
