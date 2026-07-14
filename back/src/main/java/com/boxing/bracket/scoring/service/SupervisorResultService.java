@@ -4,6 +4,7 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.assignment.service.StaffAssignmentService;
 import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.domain.BoutEventType;
 import com.boxing.bracket.event.dto.BoutEventResponse;
@@ -18,6 +19,7 @@ import com.boxing.bracket.scoring.repository.BoutResultRepository;
 import com.boxing.bracket.scoring.repository.PenaltyRepository;
 import com.boxing.bracket.scoring.repository.RoundScoreRepository;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class SupervisorResultService {
     private final PenaltyRepository penaltyRepository;
     private final BoutResultRepository boutResultRepository;
     private final BoutEventPublisher boutEventPublisher;
+    private final StaffAssignmentService staffAssignmentService;
 
     public SupervisorResultService(
             BoutRepository boutRepository,
@@ -41,16 +44,32 @@ public class SupervisorResultService {
             BoutResultRepository boutResultRepository,
             @Lazy BoutEventPublisher boutEventPublisher
     ) {
+        this(boutRepository, roundScoreRepository, penaltyRepository, boutResultRepository, boutEventPublisher, null);
+    }
+
+    @Autowired
+    public SupervisorResultService(
+            BoutRepository boutRepository,
+            RoundScoreRepository roundScoreRepository,
+            PenaltyRepository penaltyRepository,
+            BoutResultRepository boutResultRepository,
+            @Lazy BoutEventPublisher boutEventPublisher,
+            @Lazy StaffAssignmentService staffAssignmentService
+    ) {
         this.boutRepository = boutRepository;
         this.roundScoreRepository = roundScoreRepository;
         this.penaltyRepository = penaltyRepository;
         this.boutResultRepository = boutResultRepository;
         this.boutEventPublisher = boutEventPublisher;
+        this.staffAssignmentService = staffAssignmentService;
     }
 
     public BoutResultResponse confirmResult(Long boutId, BoutResultConfirmRequest request) {
         validateBoutId(boutId);
         validateRequest(request);
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireBoutAccess(boutId);
+        }
 
         Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);

@@ -4,6 +4,7 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.assignment.service.StaffAssignmentService;
 import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.domain.BoutEventType;
 import com.boxing.bracket.event.dto.BoutEventResponse;
@@ -14,6 +15,7 @@ import com.boxing.bracket.ring.repository.RingRepository;
 import com.boxing.bracket.ringmanager.dto.BoutStatusUpdateRequest;
 import com.boxing.bracket.ringmanager.dto.RingManagerBoutResponse;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +32,27 @@ public class RingManagerService {
     private final BoutRepository boutRepository;
     private final RingRepository ringRepository;
     private final BoutEventPublisher boutEventPublisher;
+    private final StaffAssignmentService staffAssignmentService;
 
     public RingManagerService(
             BoutRepository boutRepository,
             RingRepository ringRepository,
             @Lazy BoutEventPublisher boutEventPublisher
     ) {
+        this(boutRepository, ringRepository, boutEventPublisher, null);
+    }
+
+    @Autowired
+    public RingManagerService(
+            BoutRepository boutRepository,
+            RingRepository ringRepository,
+            @Lazy BoutEventPublisher boutEventPublisher,
+            @Lazy StaffAssignmentService staffAssignmentService
+    ) {
         this.boutRepository = boutRepository;
         this.ringRepository = ringRepository;
         this.boutEventPublisher = boutEventPublisher;
+        this.staffAssignmentService = staffAssignmentService;
     }
 
     public RingManagerBoutResponse startBout(Long boutId) {
@@ -48,6 +62,9 @@ public class RingManagerService {
 
         Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireRingAccess(bout.getRingId());
+        }
         Ring ring = ringRepository.findWithLockById(bout.getRingId())
                 .orElseThrow(RingNotFoundException::new);
 
@@ -78,6 +95,9 @@ public class RingManagerService {
         if (!ringRepository.existsById(ringId)) {
             throw new RingNotFoundException();
         }
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireRingAccess(ringId);
+        }
 
         return boutRepository.findByRingIdOrderByScheduledOrderAsc(ringId).stream()
                 .filter(bout -> !bout.isEventBout())
@@ -92,6 +112,9 @@ public class RingManagerService {
 
         Ring ring = ringRepository.findWithLockById(ringId)
                 .orElseThrow(RingNotFoundException::new);
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireRingAccess(ringId);
+        }
         List<Bout> officialBouts = boutRepository.findByRingIdOrderByScheduledOrderAsc(ringId).stream()
                 .filter(bout -> !bout.isEventBout())
                 .collect(Collectors.toList());
@@ -120,6 +143,9 @@ public class RingManagerService {
 
         Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireRingAccess(bout.getRingId());
+        }
         boolean statusChanged = bout.changeStatus(request.getStatus());
         if (!statusChanged) {
             return RingManagerBoutResponse.from(bout);
@@ -137,6 +163,9 @@ public class RingManagerService {
 
         Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireRingAccess(bout.getRingId());
+        }
         boolean roundStarted = bout.startRound(roundNo);
         if (!roundStarted) {
             return RingManagerBoutResponse.from(bout);

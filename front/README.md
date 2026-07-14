@@ -44,6 +44,7 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - `/admin/schedules` - authenticated tournament-scoped schedule CRUD management desk
 - `/admin/bouts` - authenticated tournament-scoped bout CRUD and CSV/Excel import desk
 - `/admin/accounts` - service-manager-only account CRUD management desk with search and role/status filters
+- `/admin/assignments` - game/service manager staff ring assignment desk
 
 ## API Mapping
 
@@ -62,10 +63,10 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - Schedule Admin: `/api/admin/schedules?tournamentId={id}`, `/api/admin/schedules/{scheduleId}`
 - Bout Admin: `/api/admin/bouts?tournamentId={id}`, `/api/admin/bouts`, `/api/admin/bouts/import`, `/api/admin/bouts/{boutId}`
 - Account Admin: `/api/admin/accounts?keyword=&role=&status=`, `/api/admin/accounts/{accountId}`
+- Staff assignments: `/api/staff/assignments/rings?tournamentId={id}`, `/api/staff/assignments/rings/{ringId}/bouts`, `/api/admin/assignments`
 - Live updates: `/api/events/stream?tournamentId={id}`
 
-Audience APIs are public. Judge score APIs require a `JUDGE` bearer session. A dedicated assignment endpoint is not implemented yet, so the judge desk selects a bout from the tournament's official bout list.
-Supervisor APIs require a `SUPERVISOR` bearer session, and ring manager APIs require a `RING_MANAGER` bearer session. Ring assignment is not implemented yet, so the ring manager desk loads a ring directly by ID.
+Audience APIs are public. Judge, Supervisor, and Ring Manager desks load active assigned rings first and use the assigned-ring bout API. The backend checks the bearer account and active assignment on every scoped request; Judge score submission does not send `judgeId`.
 Operations status requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.
 Audit log queries require a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and retain the server's masked before/after snapshots.
 Tournament management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.
@@ -74,7 +75,7 @@ Athlete management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session
 Notice management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament.
 Schedule management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament. Schedule items can optionally reference a ring and bout from the same tournament.
 Bout management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and is scoped to the selected tournament. Manual bout forms load ring and athlete selector data from the corresponding admin APIs. CSV and Excel import require the documented header row on the first row/sheet; the desk provides a matching CSV template download.
-Account management requires a `SERVICE_MANAGER` bearer session. Account lists support login/name keyword search and role/status filters. Password inputs are sent to the server for BCrypt encoding and are never rendered from API responses.
+Account management requires a `SERVICE_MANAGER` bearer session. Account lists support login/name keyword search and role/status filters. Password inputs are sent to the server for BCrypt encoding and are never rendered from API responses. Assignment management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.
 
 ## Verification
 
@@ -84,6 +85,6 @@ npm run lint
 npm run build
 ```
 
-The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/schedule admin/bout admin/account admin login, score loading, submitted score locking, penalty history loading, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import, account search/filter/create/update/delete, and retry states.
+The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, assigned-ring loading, assignment revocation, Judge score payload ownership, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/schedule admin/bout admin/account admin login, score loading, submitted score locking, penalty history loading, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/update, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import, account search/filter/create/update/delete, assignment create/deactivate, and retry states.
 
 The test profile does not seed accounts or tournament data. Use active `JUDGE`, `SUPERVISOR`, `RING_MANAGER`, `GAME_MANAGER`, and `SERVICE_MANAGER` accounts with registered bouts to exercise authenticated desks end to end. Supervisor penalty history is loaded from the API when a bout is selected.

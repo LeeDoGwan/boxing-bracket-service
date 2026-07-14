@@ -193,6 +193,8 @@ public class AuditLogAspect {
             case ACCOUNT:
             case AUTH:
                 return "accountId";
+            case ASSIGNMENT:
+                return "assignmentId";
             case NOTICE:
                 return "noticeId";
             case SCHEDULE:

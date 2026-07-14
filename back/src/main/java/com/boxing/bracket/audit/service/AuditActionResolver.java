@@ -52,6 +52,14 @@ public class AuditActionResolver {
         if (requestUri.startsWith("/api/admin/accounts")) {
             return mutation(method, AuditActionType.ACCOUNT_CREATED, AuditActionType.ACCOUNT_UPDATED, AuditActionType.ACCOUNT_DELETED, AuditTargetType.ACCOUNT);
         }
+        if (requestUri.startsWith("/api/admin/assignments")) {
+            if ("POST".equals(method)) {
+                return Optional.of(operation(AuditActionType.ASSIGNMENT_CREATED, AuditTargetType.ASSIGNMENT));
+            }
+            if ("PUT".equals(method)) {
+                return Optional.of(operation(AuditActionType.ASSIGNMENT_UPDATED, AuditTargetType.ASSIGNMENT));
+            }
+        }
         if (requestUri.startsWith("/api/admin/notices")) {
             return mutation(method, AuditActionType.NOTICE_CREATED, AuditActionType.NOTICE_UPDATED, AuditActionType.NOTICE_DELETED, AuditTargetType.NOTICE);
         }

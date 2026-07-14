@@ -3,6 +3,7 @@ package com.boxing.bracket.common.exception;
 import com.boxing.bracket.auth.exception.AccessDeniedException;
 import com.boxing.bracket.auth.exception.AuthenticationRequiredException;
 import com.boxing.bracket.auth.exception.InvalidCredentialsException;
+import com.boxing.bracket.assignment.exception.StaffAssignmentNotFoundException;
 import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.common.response.ApiResponse;
@@ -89,6 +90,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail("Tournament not found"));
+    }
+
+    @ExceptionHandler(StaffAssignmentNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAssignmentNotFound(StaffAssignmentNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail(exception.getMessage()));
     }
 
     @ExceptionHandler(ScheduleItemNotFoundException.class)
