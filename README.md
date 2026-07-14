@@ -4,7 +4,7 @@ Boxing bracket and tournament advice service.
 
 ## Status
 
-Sprint 1 core backend flow is in progress.
+Sprint 1 core backend flow and tournament schedule management are implemented.
 
 Implemented core areas:
 
@@ -12,10 +12,24 @@ Implemented core areas:
 - Audience home, notice banners, ring status, current bout, official bout list/search/detail
 - SSE event stream for bout updates
 - Judge score submission and judge-specific score query filter
-- Supervisor score overview, penalties, and result confirmation
+- Supervisor score overview, penalty history, penalties, and result confirmation
 - Ring manager bout list/start/status/round start/next
 - Admin tournament, ring, athlete, bout, notice, and account management APIs
-- Admin bout CSV import API
+- Admin bout CSV and Excel import API
+- Audience React MVP with live bout updates and official bracket search
+- Judge React scoring desk with authenticated login and round score submission
+- Supervisor React review desk with penalty history, creation, and result confirmation
+- Audience schedule list for bouts, breaks, meals, performances, and events
+- Ring Manager React operations desk with ring bout control and round transitions
+- Operations React monitoring desk with ring progress and exception tracking
+- Audit log React desk with operational filters and paginated change history
+- Tournament admin React desk with tournament CRUD management
+- Ring admin React desk with per-tournament ring CRUD management
+- Athlete admin React desk with searchable athlete CRUD management
+- Notice admin React desk with tournament-scoped notice publishing management
+- Schedule admin React desk with tournament-scoped schedule CRUD management
+- Bout admin React desk with bout CRUD and CSV/Excel import
+- Account admin React desk restricted to service managers, with keyword, role, and status filters
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
 - Immutable administrator audit logs for operational, admin, and authentication mutations
@@ -23,11 +37,21 @@ Implemented core areas:
 ## Documentation
 
 - [Product requirements](docs/requirements.md)
+- [System design](docs/design.md)
+- [Frontend wide-frame architecture](docs/frontend-wide-frame.md)
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
 - [Concurrency database migration](docs/database-migration-concurrency.sql)
 - [Administrator audit log](docs/audit-log.md)
+- [Schedule database migration](docs/database-migration-schedule.sql)
 - [Audit log database migration](docs/database-migration-audit-log.sql)
+- [Frontend README](front/README.md)
+
+## Repository Layout
+
+- `back/` - Spring Boot API, domain, persistence, and backend tests
+- `front/` - React/Vite web application and frontend tests
+- `docs/` - Requirements, design, sprint scope, migrations, and verification records
 
 ## Local Development
 
@@ -35,20 +59,37 @@ Implemented core areas:
 
 - Java 11
 - Maven 3.9.x
+- Node.js and npm
 
 ### Run tests
 
+Run backend tests from `back/`:
+
 ```bash
+cd back
 mvn test
 ```
 
-Current documented suite: 64 test classes, 329 test cases.
+Current documented suite: 69 backend test classes, 354 backend test cases, and 47 frontend test cases.
 
 ### Run application
 
+Start the backend from `back/`:
+
 ```bash
+cd back
 mvn spring-boot:run
 ```
+
+Run the frontend from `front/` in another terminal:
+
+```bash
+cd front
+npm install
+npm run dev
+```
+
+Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1&ringId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, `/audit-logs?tournamentId=1` for the audit log desk, `/admin/tournaments?tournamentId=1` for tournament management, `/admin/rings?tournamentId=1` for ring management, `/admin/athletes?tournamentId=1` for athlete management, `/admin/notices?tournamentId=1` for notice management, `/admin/schedules?tournamentId=1` for schedule management, `/admin/bouts?tournamentId=1` for bout management, or `/admin/accounts?tournamentId=1` for account management. These APIs require the matching role account; assignment is deferred, so judge and supervisor desks select from the official bout list while the ring manager desk loads a ring directly by ID.
 
 ### Health check
 
@@ -64,12 +105,14 @@ GET http://localhost:8080/api/health
 - `GET /api/events/stream?tournamentId=&ringId=`
 - `GET /api/home?tournamentId=`
 - `GET /api/notices?tournamentId=`
+- `GET /api/schedules?tournamentId=`
 - `GET /api/bouts?tournamentId=`
 - `GET /api/bouts/search?tournamentId=&keyword=`
 - `GET /api/rings/status?tournamentId=`
 - `POST /api/judge/bouts/{boutId}/rounds/{roundNo}/scores`
 - `GET /api/judge/bouts/{boutId}/scores?judgeId=`
 - `GET /api/supervisor/bouts/{boutId}/scores`
+- `GET /api/supervisor/bouts/{boutId}/penalties`
 - `POST /api/supervisor/bouts/{boutId}/penalties`
 - `POST /api/supervisor/bouts/{boutId}/result`
 - `GET /api/ring-manager/rings/{ringId}/bouts`
@@ -83,6 +126,7 @@ GET http://localhost:8080/api/health
 - `/api/admin/bouts`
 - `POST /api/admin/bouts/import`
 - `/api/admin/notices`
-- `/api/admin/accounts`
+- `/api/admin/schedules`
+- `/api/admin/accounts?keyword=&role=&status=`
 - `GET /api/admin/operations/status?tournamentId=`
 - `GET /api/admin/audit-logs?tournamentId=&actorAccountId=&actionType=&page=&size=`
