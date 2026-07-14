@@ -1,6 +1,7 @@
 package com.boxing.bracket.bout.domain;
 
 import com.boxing.bracket.common.entity.BaseTimeEntity;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,6 +15,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Version;
 import java.time.LocalDateTime;
 
 @Getter
@@ -25,6 +27,9 @@ public class Bout extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
 
     @Column(nullable = false)
     private Long tournamentId;
@@ -111,26 +116,46 @@ public class Bout extends BaseTimeEntity {
         this.endedAt = endedAt;
     }
 
-    public void start() {
+    public boolean start() {
+        if (this.status == BoutStatus.IN_PROGRESS) {
+            return false;
+        }
+        ensureNotCompleted();
+        if (this.status != BoutStatus.SCHEDULED && this.status != BoutStatus.READY) {
+            throw new WorkflowConflictException("INVALID_BOUT_STATE");
+        }
         this.status = BoutStatus.IN_PROGRESS;
         this.startedAt = LocalDateTime.now();
+        return true;
     }
 
     public void finish(BoutSide winnerSide) {
+        if (this.resultConfirmed) {
+            throw new WorkflowConflictException("RESULT_ALREADY_CONFIRMED");
+        }
         this.status = BoutStatus.FINISHED;
         this.winnerSide = winnerSide;
-        this.endedAt = LocalDateTime.now();
+        if (this.endedAt == null) {
+            this.endedAt = LocalDateTime.now();
+        }
     }
 
     public void confirmResult(BoutSide winnerSide) {
+        if (this.resultConfirmed) {
+            throw new WorkflowConflictException("RESULT_ALREADY_CONFIRMED");
+        }
         this.winnerSide = winnerSide;
         this.resultConfirmed = true;
     }
 
-    public void changeStatus(BoutStatus status) {
+    public boolean changeStatus(BoutStatus status) {
         if (status == null) {
             throw new IllegalArgumentException("status is required");
         }
+        if (this.status == status) {
+            return false;
+        }
+        ensureNotCompleted();
         this.status = status;
         if (status == BoutStatus.IN_PROGRESS && this.startedAt == null) {
             this.startedAt = LocalDateTime.now();
@@ -138,9 +163,10 @@ public class Bout extends BaseTimeEntity {
         if (status == BoutStatus.FINISHED && this.endedAt == null) {
             this.endedAt = LocalDateTime.now();
         }
+        return true;
     }
 
-    public void startRound(Integer roundNo) {
+    public boolean startRound(Integer roundNo) {
         if (roundNo == null) {
             throw new IllegalArgumentException("roundNo is required");
         }
@@ -150,10 +176,22 @@ public class Bout extends BaseTimeEntity {
         if (totalRounds != null && roundNo > totalRounds) {
             throw new IllegalArgumentException("roundNo must not exceed totalRounds");
         }
+        ensureNotCompleted();
+        if (this.status == BoutStatus.IN_PROGRESS && roundNo.equals(this.currentRound)) {
+            return false;
+        }
+        if (roundNo < this.currentRound) {
+            throw new WorkflowConflictException("ROUND_ALREADY_STARTED");
+        }
         this.currentRound = roundNo;
         if (this.status != BoutStatus.IN_PROGRESS) {
             changeStatus(BoutStatus.IN_PROGRESS);
         }
+        return true;
+    }
+
+    public boolean isCompleted() {
+        return this.resultConfirmed || this.status == BoutStatus.FINISHED;
     }
 
     public void updateSchedule(
@@ -230,5 +268,11 @@ public class Bout extends BaseTimeEntity {
             return null;
         }
         return value.trim();
+    }
+
+    private void ensureNotCompleted() {
+        if (isCompleted()) {
+            throw new WorkflowConflictException("INVALID_BOUT_STATE");
+        }
     }
 }

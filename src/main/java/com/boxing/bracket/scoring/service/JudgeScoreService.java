@@ -3,6 +3,7 @@ package com.boxing.bracket.scoring.service;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.domain.BoutEventType;
 import com.boxing.bracket.event.dto.BoutEventResponse;
 import com.boxing.bracket.event.service.BoutEventPublisher;
@@ -37,8 +38,11 @@ public class JudgeScoreService {
         validatePathVariables(boutId, roundNo);
         validateRequest(request);
 
-        Bout bout = boutRepository.findById(boutId)
+        Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
+        if (bout.isCompleted()) {
+            throw new WorkflowConflictException("INVALID_BOUT_STATE");
+        }
 
         RoundScore roundScore = roundScoreRepository
                 .findByBoutIdAndRoundNoAndJudgeId(boutId, roundNo, request.getJudgeId())
@@ -48,7 +52,10 @@ public class JudgeScoreService {
                         .judgeId(request.getJudgeId())
                         .build());
 
-        roundScore.submit(request.getRedScore(), request.getBlueScore());
+        boolean scoreSubmitted = roundScore.submit(request.getRedScore(), request.getBlueScore());
+        if (!scoreSubmitted) {
+            return RoundScoreResponse.from(roundScore);
+        }
 
         RoundScore savedRoundScore = roundScoreRepository.save(roundScore);
         boutEventPublisher.publish(BoutEventResponse.of(BoutEventType.SCORE_SUBMITTED, bout, roundNo));

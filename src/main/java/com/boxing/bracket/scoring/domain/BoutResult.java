@@ -15,11 +15,16 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+import javax.persistence.Version;
 import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "bout_results")
+@Table(
+        name = "bout_results",
+        uniqueConstraints = @UniqueConstraint(name = "uk_bout_results_bout", columnNames = "bout_id")
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BoutResult extends BaseTimeEntity {
 
@@ -27,7 +32,10 @@ public class BoutResult extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Version
+    private Long version;
+
+    @Column(name = "bout_id", nullable = false)
     private Long boutId;
 
     private Integer redTotalScore;
@@ -93,6 +101,12 @@ public class BoutResult extends BaseTimeEntity {
         this.decisionType = decisionType == null ? DecisionType.UNKNOWN : decisionType;
         this.confirmedBy = confirmedBy;
         this.confirmedAt = LocalDateTime.now();
+    }
+
+    public boolean matchesConfirmation(BoutSide winnerSide, DecisionType decisionType, Long confirmedBy) {
+        return this.winnerSide == winnerSide
+                && this.decisionType == (decisionType == null ? DecisionType.UNKNOWN : decisionType)
+                && this.confirmedBy.equals(confirmedBy);
     }
 
     private void validateTotal(Integer total, String fieldName) {

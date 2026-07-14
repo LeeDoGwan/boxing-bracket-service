@@ -1,5 +1,8 @@
 package com.boxing.bracket.auth.web;
 
+import com.boxing.bracket.audit.service.AuditActor;
+import com.boxing.bracket.audit.service.AuditActorContext;
+import com.boxing.bracket.auth.domain.AuthSession;
 import com.boxing.bracket.auth.service.AuthService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -22,15 +25,30 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        AuditActorContext.clear();
         roleAccessPolicy.findRule(request.getRequestURI())
                 .ifPresent(rule -> {
                     String authorizationHeader = request.getHeader("Authorization");
+                    AuthSession session;
                     if (rule.hasRoleRestriction()) {
-                        authService.requireRole(authorizationHeader, rule.getRoles());
+                        session = authService.requireRole(authorizationHeader, rule.getRoles());
                     } else {
-                        authService.require(authorizationHeader);
+                        session = authService.require(authorizationHeader);
+                    }
+                    if (session != null) {
+                        AuditActorContext.set(AuditActor.from(session));
                     }
                 });
         return true;
+    }
+
+    @Override
+    public void afterCompletion(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Object handler,
+            Exception exception
+    ) {
+        AuditActorContext.clear();
     }
 }
