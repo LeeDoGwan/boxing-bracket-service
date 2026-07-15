@@ -14,7 +14,7 @@ are documented in [frontend wide-frame architecture](../docs/frontend-wide-frame
 src/
   api/         API modules and shared request client
   components/  Shared audience and state UI
-  hooks/       Audience data and SSE lifecycle hooks
+  hooks/       Audience/staff data, SSE lifecycle, and refresh-coalescing hooks
   pages/       Audience, role, operations, and admin screens
   test/        Vitest and Testing Library setup
 ~~~
@@ -85,6 +85,6 @@ npm run lint
 npm run build
 ```
 
-The UI handles initial loading, API failure, empty data, dialog loading, SSE reconnecting, duplicate SSE events, EventSource cleanup, assigned-ring loading, assignment revocation, Judge score payload ownership, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/schedule admin/bout admin/account admin login, score loading, submitted score locking, penalty history loading, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/update, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import, account search/filter/create/update/delete, assignment create/deactivate, and retry states.
+The UI handles initial loading, API failure, empty data, dialog loading, audience and selected-ring staff SSE reconnecting, event filtering, duplicate SSE events, EventSource cleanup, debounced operator refetch, manual refresh fallback, assigned-ring loading, assignment revocation, Judge score payload ownership, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/schedule admin/bout admin/account admin login, score loading, submitted score locking, penalty history loading, penalty creation, result confirmation, bout start, round start, status updates, next-bout transitions, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/update, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import, account search/filter/create/update/delete, assignment create/deactivate, and retry states.
 
 The test profile does not seed accounts or tournament data. Use active `JUDGE`, `SUPERVISOR`, `RING_MANAGER`, `GAME_MANAGER`, and `SERVICE_MANAGER` accounts with registered bouts to exercise authenticated desks end to end. Supervisor penalty history is loaded from the API when a bout is selected.

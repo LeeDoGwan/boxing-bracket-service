@@ -28,6 +28,6 @@ export function getBoutDetail(boutId) {
   return getApi(`/api/bouts/${boutId}`);
 }
 
-export function eventStreamUrl(tournamentId) {
-  return buildApiUrl('/api/events/stream', { tournamentId });
+export function eventStreamUrl(tournamentId, ringId) {
+  return buildApiUrl('/api/events/stream', { tournamentId, ringId });
 }

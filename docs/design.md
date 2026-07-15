@@ -25,12 +25,13 @@ Implemented MVP capabilities:
 - In-memory bearer sessions with a 12-hour lifetime and BCrypt password verification.
 - Tournament, ring, athlete, bout, notice, schedule, account, scoring, operation-status, and audit-log modules.
 - CSV and Excel bout import with a matching CSV template download.
-- SSE bout-update events, transaction-safe dispatch, reconnect handling, and duplicate event protection.
+- Audience and operator ring-filtered SSE bout-update events, transaction-safe dispatch, reconnect handling, and duplicate event protection.
 - Optimistic version checks, workflow row locks, idempotent retries, unique constraints, and HTTP 409 conflict responses.
 
 Known MVP boundaries:
 
 - Judge, supervisor, and ring-manager ring assignments are enforced server-side. The assignment unit and API details are in [Staff ring assignment](staff-assignment.md).
+- Assigned Judge, Supervisor, and Ring Manager screens subscribe to one selected-ring SSE stream and refetch API state after relevant events.
 - Sessions are process-local. A shared session store is required for multiple backend instances.
 - Schedule mutations do not publish a dedicated schedule SSE event. Audience clients see schedule changes on a full reload.
 - Audience tournament discovery is not implemented. The frontend currently accepts a positive `tournamentId` query parameter.
@@ -111,9 +112,9 @@ App
 |-- AppHeader and tournament query state
 |-- AudienceHome -> useAudienceData + useBoutEventStream
 |-- BracketPage
-|-- JudgePage
-|-- SupervisorPage
-|-- RingManagerPage
+|-- JudgeAssignedPage
+|-- SupervisorAssignedPage
+|-- RingManagerAssignedPage
 |-- OperationsPage
 |-- AuditLogPage
 |-- Admin*Page routes
@@ -123,6 +124,12 @@ App
 Each authenticated desk owns its login/session validation and limits the UI by role before making protected API calls. API clients share `requestApi`, which adds JSON headers, optional bearer authorization, parses the common response envelope, and turns server failures into JavaScript errors.
 
 The public home aggregates notices, ring status, confirmed results, and schedules from `/api/home`. It opens bout details through the public bout detail API. SSE reconnects trigger a fresh audience data load, so the stream is an invalidation signal rather than the source of truth.
+
+Assigned staff screens reuse the same stream with `tournamentId` and the selected
+`ringId`. They keep one `EventSource` per screen, close it when the ring changes
+or the screen unmounts, and refetch assigned bouts and selected detail data after
+relevant events. SSE payloads never replace REST responses; an unavailable stream
+leaves write actions usable and preserves the last API-confirmed state.
 
 ## 6. Authentication and Authorization
 
@@ -341,7 +348,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 The latest documented verification is:
 
 - Backend: 70 test classes, 358 test cases, zero failures, errors, or skips.
-- Frontend: 21 test files, 51 test cases, ESLint passed, and Vite production build passed.
+- Frontend: 24 test files, 59 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.
