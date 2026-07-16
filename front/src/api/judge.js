@@ -1,7 +1,7 @@
 import { getApi, postApi } from './client';
 
-export function getJudgeScores(boutId, judgeId, token) {
-  return getApi(`/api/judge/bouts/${boutId}/scores`, { judgeId }, { token });
+export function getJudgeScores(boutId, tokenOrJudgeId, maybeToken) {
+  return getApi(`/api/judge/bouts/${boutId}/scores`, undefined, { token: maybeToken || tokenOrJudgeId });
 }
 
 export function submitRoundScore(boutId, roundNo, score, token) {

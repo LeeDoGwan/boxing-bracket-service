@@ -3,6 +3,7 @@ package com.boxing.bracket.auth.web;
 import com.boxing.bracket.audit.service.AuditActor;
 import com.boxing.bracket.audit.service.AuditActorContext;
 import com.boxing.bracket.auth.domain.AuthSession;
+import com.boxing.bracket.auth.domain.AuthSessionContext;
 import com.boxing.bracket.auth.service.AuthService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         AuditActorContext.clear();
+        AuthSessionContext.clear();
         roleAccessPolicy.findRule(request.getRequestURI())
                 .ifPresent(rule -> {
                     String authorizationHeader = request.getHeader("Authorization");
@@ -37,6 +39,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                     }
                     if (session != null) {
                         AuditActorContext.set(AuditActor.from(session));
+                        AuthSessionContext.set(session);
                     }
                 });
         return true;
@@ -50,5 +53,6 @@ public class AuthInterceptor implements HandlerInterceptor {
             Exception exception
     ) {
         AuditActorContext.clear();
+        AuthSessionContext.clear();
     }
 }

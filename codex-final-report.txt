@@ -1,0 +1,28 @@
+Codex Final Report
+Date: 2026-07-15
+Repository: boxing-bracket-service
+Branch: codex/staff-ring-assignment
+
+Completed:
+- Verified the current staff ring assignment and access-control implementation.
+- Verified the frontend assigned-staff flows and assignment administration screen.
+- No new feature work was started.
+- No push or pull request was created.
+
+Tests and verification:
+- Backend: mvn -q test - passed.
+- Frontend: npm.cmd test -- --run - 21 test files and 51 tests passed.
+- Frontend lint: npm.cmd run lint - passed.
+- Frontend production build: npm.cmd run build - passed.
+- Git diff check: git diff --check - passed.
+- Working tree was clean before this report was added.
+
+Implementation commit:
+- 5615450 feat: add staff ring assignment and access control
+
+Remaining work:
+- Confirm the Game Manager tournament ownership model.
+- Implement the next approved operator SSE and workflow UX work.
+
+Shutdown:
+- The requested shutdown command will be scheduled after this report is committed.

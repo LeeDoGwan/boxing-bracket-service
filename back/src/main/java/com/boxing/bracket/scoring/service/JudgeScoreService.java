@@ -3,6 +3,10 @@ package com.boxing.bracket.scoring.service;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.assignment.service.StaffAssignmentService;
+import com.boxing.bracket.auth.domain.AuthSession;
+import com.boxing.bracket.auth.domain.AuthSessionContext;
+import com.boxing.bracket.auth.exception.AccessDeniedException;
 import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.domain.BoutEventType;
 import com.boxing.bracket.event.dto.BoutEventResponse;
@@ -12,6 +16,7 @@ import com.boxing.bracket.scoring.dto.RoundScoreResponse;
 import com.boxing.bracket.scoring.dto.RoundScoreSubmitRequest;
 import com.boxing.bracket.scoring.repository.RoundScoreRepository;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +28,27 @@ public class JudgeScoreService {
     private final BoutRepository boutRepository;
     private final RoundScoreRepository roundScoreRepository;
     private final BoutEventPublisher boutEventPublisher;
+    private final StaffAssignmentService staffAssignmentService;
 
     public JudgeScoreService(
             BoutRepository boutRepository,
             RoundScoreRepository roundScoreRepository,
             @Lazy BoutEventPublisher boutEventPublisher
     ) {
+        this(boutRepository, roundScoreRepository, boutEventPublisher, null);
+    }
+
+    @Autowired
+    public JudgeScoreService(
+            BoutRepository boutRepository,
+            RoundScoreRepository roundScoreRepository,
+            @Lazy BoutEventPublisher boutEventPublisher,
+            @Lazy StaffAssignmentService staffAssignmentService
+    ) {
         this.boutRepository = boutRepository;
         this.roundScoreRepository = roundScoreRepository;
         this.boutEventPublisher = boutEventPublisher;
+        this.staffAssignmentService = staffAssignmentService;
     }
 
     public RoundScoreResponse submitRoundScore(Long boutId, Integer roundNo, RoundScoreSubmitRequest request) {
@@ -40,16 +57,17 @@ public class JudgeScoreService {
 
         Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
+        Long judgeId = resolveJudgeId(request, boutId);
         if (bout.isCompleted()) {
             throw new WorkflowConflictException("INVALID_BOUT_STATE");
         }
 
         RoundScore roundScore = roundScoreRepository
-                .findByBoutIdAndRoundNoAndJudgeId(boutId, roundNo, request.getJudgeId())
+                .findByBoutIdAndRoundNoAndJudgeId(boutId, roundNo, judgeId)
                 .orElseGet(() -> RoundScore.builder()
                         .boutId(boutId)
                         .roundNo(roundNo)
-                        .judgeId(request.getJudgeId())
+                        .judgeId(judgeId)
                         .build());
 
         boolean scoreSubmitted = roundScore.submit(request.getRedScore(), request.getBlueScore());
@@ -82,7 +100,7 @@ public class JudgeScoreService {
         if (request == null) {
             throw new IllegalArgumentException("score request is required");
         }
-        if (request.getJudgeId() == null) {
+        if (request.getJudgeId() == null && AuthSessionContext.get() == null) {
             throw new IllegalArgumentException("judgeId is required");
         }
         if (request.getRedScore() == null) {
@@ -91,5 +109,22 @@ public class JudgeScoreService {
         if (request.getBlueScore() == null) {
             throw new IllegalArgumentException("blueScore is required");
         }
+    }
+
+    private Long resolveJudgeId(RoundScoreSubmitRequest request, Long boutId) {
+        AuthSession session = AuthSessionContext.get();
+        if (session == null) {
+            if (request.getJudgeId() == null) {
+                throw new IllegalArgumentException("judgeId is required");
+            }
+            return request.getJudgeId();
+        }
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireBoutAccess(boutId);
+        }
+        if (request.getJudgeId() != null && !session.getAccountId().equals(request.getJudgeId())) {
+            throw new AccessDeniedException("BOUT_ACCESS_DENIED");
+        }
+        return session.getAccountId();
     }
 }

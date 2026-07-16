@@ -1,6 +1,6 @@
 # Frontend Wide-Frame Architecture Guide
 
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
 This is the implementation-oriented wide frame for the frontend in front/.
 It connects screens, state, API calls, components, realtime events, tests,
@@ -18,9 +18,9 @@ Current boundaries:
 - Authenticated operational views: judge, supervisor, ring manager, operations,
   audit logs, and administration.
 
-This guide records current behavior and marks future work explicitly. It does
-not claim that future Judge, Supervisor, Ring Manager, Game Manager, or Service
-Manager capabilities are already implemented.
+This guide records current behavior and marks future work explicitly. Staff
+ring assignment and scoped operator routes are implemented; operator SSE and
+tournament ownership remain future work.
 
 ## 2. Application map
 
@@ -55,9 +55,9 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 | Audience home | / | Audience | Notices, rings, current/next bout, confirmed results, schedule | /api/home, /api/notices, /api/rings/status, /api/events/stream | AudienceHome, NoticeCarousel, RingCard, ScheduleList, BoutDetailDialog, StatePanel | Loading, error, empty sections, connected/reconnecting/offline |
 | Bracket | /bracket | Audience | List, search, highlight, and inspect bracket status/result | /api/bouts, /api/bouts/search | BracketPage, StatePanel | Loading, error, empty, search, selected row |
 | Bout detail | Home dialog | Audience | Inspect a selected audience bout | /api/bouts/{boutId} | BoutDetailDialog, StatePanel | Loading, error, empty detail |
-| Judge | /judge | Judge | Enter round scores | Judge score read and submit APIs | JudgePage, StatePanel | Session/role guard, loading, error, action feedback |
-| Supervisor | /supervisor | Supervisor | Review scores, penalties, and confirm result | Supervisor score, penalty, result APIs | SupervisorPage, StatePanel | Session/role guard, loading, error, action feedback |
-| Ring manager | /ring-manager | Ring Manager | Operate ring bouts, starts, rounds, status, and next bout | Ring manager list and action APIs | RingManagerPage, StatePanel | Session/role guard, loading, error, action feedback |
+| Judge | /judge | Judge | Select assigned ring, enter round scores | Assigned ring/bout APIs, Judge score APIs | JudgeAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
+| Supervisor | /supervisor | Supervisor | Select assigned ring, review scores/penalties, confirm result | Assigned ring/bout APIs, Supervisor APIs | SupervisorAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
+| Ring manager | /ring-manager | Ring Manager | Select assigned ring and operate bouts | Assigned ring/bout APIs, Ring Manager APIs | RingManagerAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
 | Operations | /operations | Game Manager, Service Manager | Monitor tournament operations | /api/admin/operations/status | OperationsPage, StatePanel | Session/role guard, loading, error |
 | Audit logs | /audit-logs | Game Manager, Service Manager | Search operational audit records | /api/admin/audit-logs | AuditLogPage, StatePanel | Session/role guard, loading, error, empty |
 | Tournament admin | /admin/tournaments | Game Manager, Service Manager | Tournament CRUD | /api/admin/tournaments | AdminTournamentPage, StatePanel | Guard, list, form, action errors |
@@ -67,6 +67,7 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 | Schedule admin | /admin/schedules | Game Manager, Service Manager | Schedule CRUD | /api/admin/schedules | AdminSchedulePage, StatePanel | Guard, list, form, action errors |
 | Bout admin | /admin/bouts | Game Manager, Service Manager | Bout CRUD and import | /api/admin/bouts, /api/admin/bouts/import | AdminBoutPage, StatePanel | Guard, list, form, import, errors |
 | Account admin | /admin/accounts | Service Manager | Account and role CRUD | /api/admin/accounts | AdminAccountPage, StatePanel | Guard, list, form, action errors |
+| Assignment admin | /admin/assignments | Game Manager, Service Manager | Create and activate/deactivate staff ring assignments | /api/admin/assignments, account/tournament/ring reference APIs | AdminAssignmentPage, StatePanel | Guard, reference loading, duplicate/error, active state |
 
 Authentication and role checks are performed by role pages with sessionStorage.
 Public pages do not require a session.
@@ -126,9 +127,9 @@ the source of truth.
 
 | Screen | Read APIs | Write APIs | Session and role |
 | --- | --- | --- | --- |
-| Judge | /api/judge/bouts/{boutId}/scores?judgeId= | /api/judge/bouts/{boutId}/rounds/{roundNo}/scores | boxing.judge.session, JUDGE |
-| Supervisor | /api/supervisor/bouts/{id}/scores, /penalties | /penalties, /result | boxing.supervisor.session, SUPERVISOR |
-| Ring manager | /api/ring-manager/rings/{ringId}/bouts | start, status, round start, next-bout actions | boxing.ring-manager.session, RING_MANAGER |
+| Judge | `/api/staff/assignments/rings`, assigned ring bouts, `/api/judge/bouts/{boutId}/scores` | `/api/judge/bouts/{boutId}/rounds/{roundNo}/scores` without `judgeId` | boxing.judge.session, JUDGE |
+| Supervisor | assigned ring bouts, `/api/supervisor/bouts/{id}/scores`, `/penalties` | `/penalties`, `/result` | boxing.supervisor.session, SUPERVISOR |
+| Ring manager | assigned ring bouts | start, status, round start, next-bout actions | boxing.ring-manager.session, RING_MANAGER |
 | Operations | /api/admin/operations/status?tournamentId= | None in current page | boxing.operations.session, GAME_MANAGER or SERVICE_MANAGER |
 | Audit logs | /api/admin/audit-logs with filters | None in current page | boxing.operations.session, GAME_MANAGER or SERVICE_MANAGER |
 
@@ -143,6 +144,7 @@ the source of truth.
 | Schedule admin | /api/admin/schedules?tournamentId= | Create, update, delete |
 | Bout admin | /api/admin/bouts?tournamentId= | Create, update, delete, multipart import |
 | Account admin | /api/admin/accounts with filters | Create, update, delete |
+| Assignment admin | /api/admin/assignments with tournament/account/role/active filters | Create, activate, deactivate |
 
 When a field changes, update the API module, page form, state behavior, and
 page test together. Do not depend on an undocumented response field.

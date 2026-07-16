@@ -7,6 +7,7 @@ public enum AuditTargetType {
     PENALTY,
     BOUT_RESULT,
     ACCOUNT,
+    ASSIGNMENT,
     NOTICE,
     SCHEDULE,
     AUTH

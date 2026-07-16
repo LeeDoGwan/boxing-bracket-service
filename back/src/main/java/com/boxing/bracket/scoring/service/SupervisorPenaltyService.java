@@ -2,11 +2,13 @@ package com.boxing.bracket.scoring.service;
 
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.assignment.service.StaffAssignmentService;
 import com.boxing.bracket.scoring.domain.Penalty;
 import com.boxing.bracket.scoring.dto.PenaltyCreateRequest;
 import com.boxing.bracket.scoring.dto.PenaltyResponse;
 import com.boxing.bracket.scoring.repository.PenaltyRepository;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,15 +22,30 @@ public class SupervisorPenaltyService {
 
     private final BoutRepository boutRepository;
     private final PenaltyRepository penaltyRepository;
+    private final StaffAssignmentService staffAssignmentService;
 
     public SupervisorPenaltyService(BoutRepository boutRepository, PenaltyRepository penaltyRepository) {
+        this(boutRepository, penaltyRepository, null);
+    }
+
+    @Autowired
+    public SupervisorPenaltyService(
+            BoutRepository boutRepository,
+            PenaltyRepository penaltyRepository,
+            StaffAssignmentService staffAssignmentService
+    ) {
         this.boutRepository = boutRepository;
         this.penaltyRepository = penaltyRepository;
+        this.staffAssignmentService = staffAssignmentService;
     }
 
     public PenaltyResponse createPenalty(Long boutId, PenaltyCreateRequest request) {
         validateBoutId(boutId);
         validateRequest(request);
+
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireBoutAccess(boutId);
+        }
 
         if (!boutRepository.existsById(boutId)) {
             throw new BoutNotFoundException();
@@ -48,6 +65,9 @@ public class SupervisorPenaltyService {
     @Transactional(readOnly = true)
     public List<PenaltyResponse> getPenalties(Long boutId) {
         validateBoutId(boutId);
+        if (staffAssignmentService != null) {
+            staffAssignmentService.requireBoutAccess(boutId);
+        }
         if (!boutRepository.existsById(boutId)) {
             throw new BoutNotFoundException();
         }

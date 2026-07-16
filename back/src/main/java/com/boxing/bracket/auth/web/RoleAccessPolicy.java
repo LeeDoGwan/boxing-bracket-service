@@ -28,6 +28,9 @@ public class RoleAccessPolicy {
         if (requestUri.startsWith("/api/ring-manager")) {
             return Optional.of(AccessRule.roles(UserRole.RING_MANAGER));
         }
+        if (requestUri.startsWith("/api/staff")) {
+            return Optional.of(AccessRule.roles(UserRole.JUDGE, UserRole.SUPERVISOR, UserRole.RING_MANAGER));
+        }
         return Optional.empty();
     }
 }

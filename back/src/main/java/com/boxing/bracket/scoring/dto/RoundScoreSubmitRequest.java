@@ -5,7 +5,6 @@ import javax.validation.constraints.NotNull;
 
 public class RoundScoreSubmitRequest {
 
-    @NotNull(message = "judgeId is required")
     private Long judgeId;
 
     @NotNull(message = "redScore is required")

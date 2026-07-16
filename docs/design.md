@@ -1,6 +1,6 @@
 # Boxing Bracket Service Design
 
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
 ## 1. Purpose
 
@@ -30,11 +30,11 @@ Implemented MVP capabilities:
 
 Known MVP boundaries:
 
-- Judge, supervisor, and ring-manager assignment records are not implemented. Desks select a bout or ring by ID.
+- Judge, supervisor, and ring-manager ring assignments are enforced server-side. The assignment unit and API details are in [Staff ring assignment](staff-assignment.md).
 - Sessions are process-local. A shared session store is required for multiple backend instances.
 - Schedule mutations do not publish a dedicated schedule SSE event. Audience clients see schedule changes on a full reload.
 - Audience tournament discovery is not implemented. The frontend currently accepts a positive `tournamentId` query parameter.
-- Server log viewing, advanced statistics, offline support, and assignment ownership rules remain deferred.
+- Server log viewing, advanced statistics, offline support, and Game Manager tournament ownership rules remain deferred.
 
 ## 3. System Context
 
@@ -94,6 +94,7 @@ Core modules:
 | `operation` | Tournament-wide operational monitoring |
 | `event` | Tournament/ring-filtered SSE bout updates |
 | `audit` | Mutation resolution, snapshots, masking, persistence, and search |
+| `assignment` | Staff ring assignments, assigned-ring lists, and staff scope enforcement |
 
 Controllers do not access repositories directly. Cross-module references use IDs and are validated by the owning service. The current model intentionally avoids JPA entity associations for tournament, ring, athlete, bout, account, and schedule references.
 
@@ -155,6 +156,7 @@ Current route policy:
 | `/api/judge/**` | `JUDGE` |
 | `/api/supervisor/**` | `SUPERVISOR` |
 | `/api/ring-manager/**` | `RING_MANAGER` |
+| `/api/staff/**` | `JUDGE`, `SUPERVISOR`, or `RING_MANAGER` |
 | Public audience, bracket, notice, schedule, health, and event routes | No role rule |
 
 The interceptor applies to `/api/**`, excluding health and login. A request with no matching policy is allowed to continue, which is how public routes remain unauthenticated.
@@ -175,6 +177,9 @@ erDiagram
     BOUT ||--o| BOUT_RESULT : confirms
     ATHLETE ||--o{ BOUT : red_or_blue
     ACCOUNT ||--o{ ROUND_SCORE : judge
+    ACCOUNT ||--o{ STAFF_ASSIGNMENT : receives
+    TOURNAMENT ||--o{ STAFF_ASSIGNMENT : scopes
+    RING ||--o{ STAFF_ASSIGNMENT : scopes
 
     TOURNAMENT {
         bigint id PK
@@ -211,6 +216,15 @@ erDiagram
         datetime endTime
         bigint relatedBoutId
         string status
+    }
+    STAFF_ASSIGNMENT {
+        bigint id PK
+        bigint accountId
+        bigint tournamentId
+        bigint ringId
+        string role
+        boolean active
+        bigint version
     }
 ```
 
@@ -285,10 +299,12 @@ API groups:
 | Judge | `/api/judge/bouts/{boutId}/scores`, score submit endpoint | `JUDGE` |
 | Supervisor | scores, penalties, result endpoints | `SUPERVISOR` |
 | Ring manager | ring bout list and lifecycle commands | `RING_MANAGER` |
+| Staff scope | `/api/staff/assignments/rings`, assigned ring bouts | `JUDGE`, `SUPERVISOR`, `RING_MANAGER` |
 | Operations | `/api/admin/operations/status` | `GAME_MANAGER`, `SERVICE_MANAGER` |
 | Audit | `/api/admin/audit-logs` | `GAME_MANAGER`, `SERVICE_MANAGER` |
 | Administration | tournaments, rings, athletes, bouts, notices, schedules | `GAME_MANAGER`, `SERVICE_MANAGER` |
 | Account administration | `/api/admin/accounts` | `SERVICE_MANAGER` |
+| Staff assignment administration | `/api/admin/assignments` | `GAME_MANAGER`, `SERVICE_MANAGER` |
 
 The detailed endpoint list remains in [Sprint 1 scope](sprint-1.md). Frontend-specific route and API usage remains in [frontend README](../front/README.md).
 
@@ -301,6 +317,7 @@ Migration documents currently cover:
 1. `database-migration-concurrency.sql`: version columns and workflow uniqueness constraints.
 2. `database-migration-audit-log.sql`: immutable audit storage and indexes.
 3. `database-migration-schedule.sql`: tournament schedule storage and indexes.
+4. `database-migration-staff-assignment.sql`: staff ring assignments and uniqueness/indexes.
 
 The test profile uses an H2 in-memory database with `ddl-auto: create-drop`; it discovers the JPA model directly and does not apply the MariaDB migration files.
 
@@ -323,8 +340,8 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 69 test classes, 354 test cases, zero failures, errors, or skips.
-- Frontend: 19 test files, 47 test cases, ESLint passed, and Vite production build passed.
+- Backend: 70 test classes, 358 test cases, zero failures, errors, or skips.
+- Frontend: 21 test files, 51 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.
@@ -333,7 +350,7 @@ The test profile does not seed production accounts or tournament data. Authentic
 
 The following decisions should be made before expanding beyond the MVP:
 
-- Assignment model: whether judges are assigned per bout or per ring and how manager ownership is restricted per tournament.
+- Assignment model: ring-level assignments are implemented; manager ownership per tournament remains to be decided.
 - Session storage: Redis or another shared store, token revocation, and operational session monitoring.
 - Public tournament discovery: directory endpoint, default tournament selection, and closed/completed tournament visibility.
 - Event model: whether schedule, notice, and ring-status changes should use SSE in addition to bout updates.
