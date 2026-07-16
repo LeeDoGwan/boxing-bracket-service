@@ -42,6 +42,7 @@ Implemented core areas:
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
 - [Database migration policy](docs/database-migration.md)
+- [Backend review](docs/backend-review.md)
 - [Backend CI workflow](.github/workflows/backend-ci.yml)
 - [Frontend CI workflow](.github/workflows/frontend-ci.yml)
 - [Administrator audit log](docs/audit-log.md)
