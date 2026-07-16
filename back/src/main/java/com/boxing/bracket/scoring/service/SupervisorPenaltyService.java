@@ -1,5 +1,6 @@
 package com.boxing.bracket.scoring.service;
 
+import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
 import com.boxing.bracket.assignment.service.StaffAssignmentService;
@@ -42,21 +43,22 @@ public class SupervisorPenaltyService {
     public PenaltyResponse createPenalty(Long boutId, PenaltyCreateRequest request) {
         validateBoutId(boutId);
         validateRequest(request);
+        Long actorId = SupervisorActorResolver.resolve(request.getCreatedBy());
 
         if (staffAssignmentService != null) {
             staffAssignmentService.requireBoutAccess(boutId);
         }
 
-        if (!boutRepository.existsById(boutId)) {
-            throw new BoutNotFoundException();
-        }
+        Bout bout = boutRepository.findById(boutId)
+                .orElseThrow(BoutNotFoundException::new);
+        bout.validatePenaltyCreation();
 
         Penalty penalty = Penalty.builder()
                 .boutId(boutId)
                 .targetSide(request.getTargetSide())
                 .penaltyPoint(request.getPenaltyPoint())
                 .reason(request.getReason())
-                .createdBy(request.getCreatedBy())
+                .createdBy(actorId)
                 .build();
 
         return PenaltyResponse.from(penaltyRepository.save(penalty));
@@ -93,8 +95,8 @@ public class SupervisorPenaltyService {
         if (request.getPenaltyPoint() == null) {
             throw new IllegalArgumentException("penaltyPoint is required");
         }
-        if (request.getCreatedBy() == null) {
-            throw new IllegalArgumentException("createdBy is required");
+        if (request.getPenaltyPoint() < 1) {
+            throw new IllegalArgumentException("INVALID_PENALTY_VALUE");
         }
     }
 }

@@ -2,7 +2,6 @@ package com.boxing.bracket.scoring.dto;
 
 import com.boxing.bracket.bout.domain.BoutSide;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 public class PenaltyCreateRequest {
@@ -11,12 +10,10 @@ public class PenaltyCreateRequest {
     private BoutSide targetSide;
 
     @NotNull(message = "penaltyPoint is required")
-    @Min(value = 0, message = "penaltyPoint must be greater than or equal to 0")
     private Integer penaltyPoint;
 
     private String reason;
 
-    @NotNull(message = "createdBy is required")
     private Long createdBy;
 
     protected PenaltyCreateRequest() {

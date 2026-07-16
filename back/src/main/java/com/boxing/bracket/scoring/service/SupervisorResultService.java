@@ -10,6 +10,7 @@ import com.boxing.bracket.event.domain.BoutEventType;
 import com.boxing.bracket.event.dto.BoutEventResponse;
 import com.boxing.bracket.event.service.BoutEventPublisher;
 import com.boxing.bracket.scoring.domain.BoutResult;
+import com.boxing.bracket.scoring.domain.DecisionType;
 import com.boxing.bracket.scoring.domain.Penalty;
 import com.boxing.bracket.scoring.domain.RoundScore;
 import com.boxing.bracket.scoring.domain.RoundScoreStatus;
@@ -67,6 +68,7 @@ public class SupervisorResultService {
     public BoutResultResponse confirmResult(Long boutId, BoutResultConfirmRequest request) {
         validateBoutId(boutId);
         validateRequest(request);
+        Long actorId = SupervisorActorResolver.resolve(request.getConfirmedBy());
         if (staffAssignmentService != null) {
             staffAssignmentService.requireBoutAccess(boutId);
         }
@@ -78,13 +80,16 @@ public class SupervisorResultService {
             if (existingResult != null && existingResult.matchesConfirmation(
                     request.getWinnerSide(),
                     request.getDecisionType(),
-                    request.getConfirmedBy()
+                    actorId
             )) {
                 return BoutResultResponse.from(existingResult);
             }
             throw new WorkflowConflictException("RESULT_ALREADY_CONFIRMED");
         }
+        bout.validateResultConfirmation();
         List<RoundScore> roundScores = roundScoreRepository.findByBoutId(boutId);
+        validateScores(roundScores);
+        validateDecision(request);
         List<Penalty> penalties = penaltyRepository.findByBoutId(boutId);
 
         int redTotalScore = sumRedScores(roundScores);
@@ -100,7 +105,7 @@ public class SupervisorResultService {
                 bluePenaltyTotal,
                 request.getWinnerSide(),
                 request.getDecisionType(),
-                request.getConfirmedBy()
+                actorId
         );
 
         bout.finish(request.getWinnerSide());
@@ -139,6 +144,31 @@ public class SupervisorResultService {
                 .sum();
     }
 
+    private void validateScores(List<RoundScore> roundScores) {
+        if (roundScores == null || roundScores.isEmpty()
+                || roundScores.stream().anyMatch(roundScore ->
+                roundScore.getStatus() != RoundScoreStatus.SUBMITTED
+                        || roundScore.getRedScore() == null
+                        || roundScore.getBlueScore() == null)) {
+            throw new WorkflowConflictException("SCORES_NOT_READY");
+        }
+    }
+
+    private void validateDecision(BoutResultConfirmRequest request) {
+        if (request.getWinnerSide() == null
+                || request.getWinnerSide() == BoutSide.NONE) {
+            throw new IllegalArgumentException("INVALID_WINNER_SELECTION");
+        }
+        if (request.getDecisionType() == null
+                || request.getDecisionType() == DecisionType.UNKNOWN) {
+            throw new IllegalArgumentException("INVALID_RESULT_DECISION");
+        }
+        if (request.getWinnerSide() == BoutSide.DRAW
+                && request.getDecisionType() != DecisionType.POINTS) {
+            throw new IllegalArgumentException("INVALID_WINNER_SELECTION");
+        }
+    }
+
     private void validateBoutId(Long boutId) {
         if (boutId == null) {
             throw new IllegalArgumentException("boutId is required");
@@ -154,9 +184,6 @@ public class SupervisorResultService {
         }
         if (request.getDecisionType() == null) {
             throw new IllegalArgumentException("decisionType is required");
-        }
-        if (request.getConfirmedBy() == null) {
-            throw new IllegalArgumentException("confirmedBy is required");
         }
     }
 }

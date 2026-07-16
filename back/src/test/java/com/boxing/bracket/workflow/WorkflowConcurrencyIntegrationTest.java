@@ -12,6 +12,7 @@ import com.boxing.bracket.ring.repository.RingRepository;
 import com.boxing.bracket.ringmanager.dto.RingManagerBoutResponse;
 import com.boxing.bracket.ringmanager.service.RingManagerService;
 import com.boxing.bracket.scoring.domain.DecisionType;
+import com.boxing.bracket.scoring.domain.RoundScore;
 import com.boxing.bracket.scoring.dto.BoutResultConfirmRequest;
 import com.boxing.bracket.scoring.dto.BoutResultResponse;
 import com.boxing.bracket.scoring.dto.RoundScoreResponse;
@@ -117,6 +118,13 @@ class WorkflowConcurrencyIntegrationTest {
     void concurrentIdenticalResultRequestsPersistOneResultAndPublishOneEvent() throws Exception {
         Ring ring = createRing();
         Bout bout = createBout(ring.getId(), BoutStatus.IN_PROGRESS);
+        RoundScore score = RoundScore.builder()
+                .boutId(bout.getId())
+                .roundNo(1)
+                .judgeId(30L)
+                .build();
+        score.submit(10, 9);
+        roundScoreRepository.saveAndFlush(score);
         BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 40L);
 
         List<BoutResultResponse> responses = executeConcurrently(

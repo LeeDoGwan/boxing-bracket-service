@@ -1,6 +1,6 @@
 # Staff Ring Assignment
 
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 
 ## Purpose
 
@@ -88,6 +88,12 @@ access (`403`), empty bouts, and expired sessions have explicit states.
 Judge score lifecycle validation is documented separately in [Judge scoring
 policy](scoring-policy.md). Assignment scope remains the authorization boundary;
 score value and bout/round lifecycle validation are applied after that boundary.
+
+Supervisor result and penalty lifecycle rules are documented separately in
+[Supervisor result confirmation policy](result-confirmation-policy.md). The
+Supervisor write services resolve `createdBy` and `confirmedBy` from the
+authenticated session; compatibility request fields are not a permission
+source.
 
 Ring Manager uses the same assigned-ring selector and keeps existing controls.
 Judge, Supervisor, and Ring Manager screens subscribe to
