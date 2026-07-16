@@ -80,10 +80,16 @@ Account management requires a `SERVICE_MANAGER` bearer session. Account lists su
 ## Verification
 
 ```bash
+npm ci
 npm test
 npm run lint
 npm run build
 ```
+
+The [Frontend CI workflow](../.github/workflows/frontend-ci.yml) runs the same
+verification from `front/` with Node.js 24 and npm dependency caching. It runs
+for relevant branch pushes, future pull requests, and manual dispatch; it does
+not deploy the application.
 
 The UI handles initial loading, API failure, empty data, dialog loading, audience and selected-ring staff SSE reconnecting, event filtering, duplicate SSE events, EventSource cleanup, debounced operator refetch, manual refresh fallback, assigned-ring loading, assignment revocation, Judge score payload ownership, non-negative whole-number score validation, score confirmation and duplicate-submit prevention, current/future/submitted round states, unsubmitted input preservation during live refresh, judge/supervisor/ring manager/operations/audit log/tournament admin/ring admin/athlete admin/notice admin/schedule admin/bout admin/account admin login, score loading, submitted score locking, Supervisor score readiness and penalty totals, positive penalty validation, result confirmation review/cancel/double-click prevention, actor payload ownership, post-confirmation lock, Ring Manager current-bout mismatch warnings, state-specific command visibility, round sequence validation, confirmation/cancel dialogs, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations status refresh, audit filtering/pagination, expandable snapshots, tournament create/update/delete, ring create/update/delete, athlete search/update, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import, account search/filter/create/update/delete, assignment create/deactivate, and retry states.
 

@@ -13,7 +13,7 @@ Implemented core areas:
 - SSE event stream for bout updates
 - Judge score submission and judge-specific score query filter
 - Supervisor score overview, penalty history, penalties, and result confirmation
-- Ring manager bout list/start/status/round start/next
+- Ring Manager assigned-ring workflow with server-validated state transitions, round sequencing, and next-bout selection
 - Admin tournament, ring, athlete, bout, notice, and account management APIs
 - Admin bout CSV and Excel import API
 - Audience React MVP with live bout updates and official bracket search
@@ -41,6 +41,8 @@ Implemented core areas:
 - [Frontend wide-frame architecture](docs/frontend-wide-frame.md)
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
+- [Backend CI workflow](.github/workflows/backend-ci.yml)
+- [Frontend CI workflow](.github/workflows/frontend-ci.yml)
 - [Concurrency database migration](docs/database-migration-concurrency.sql)
 - [Administrator audit log](docs/audit-log.md)
 - [Schedule database migration](docs/database-migration-schedule.sql)
@@ -59,7 +61,7 @@ Implemented core areas:
 
 - Java 11
 - Maven 3.9.x
-- Node.js and npm
+- Node.js 24.x and npm
 
 ### Run tests
 
@@ -70,7 +72,17 @@ cd back
 mvn test
 ```
 
-Current documented suite: 69 backend test classes, 354 backend test cases, and 47 frontend test cases.
+Run frontend verification from `front/`:
+
+```bash
+cd front
+npm ci
+npm test
+npm run lint
+npm run build
+```
+
+Current documented suite: 71 backend test classes, 380 backend test cases, and 78 frontend test cases.
 
 ### Run application
 
@@ -89,7 +101,16 @@ npm install
 npm run dev
 ```
 
-Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1&ringId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, `/audit-logs?tournamentId=1` for the audit log desk, `/admin/tournaments?tournamentId=1` for tournament management, `/admin/rings?tournamentId=1` for ring management, `/admin/athletes?tournamentId=1` for athlete management, `/admin/notices?tournamentId=1` for notice management, `/admin/schedules?tournamentId=1` for schedule management, `/admin/bouts?tournamentId=1` for bout management, or `/admin/accounts?tournamentId=1` for account management. These APIs require the matching role account; assignment is deferred, so judge and supervisor desks select from the official bout list while the ring manager desk loads a ring directly by ID.
+Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, `/audit-logs?tournamentId=1` for the audit log desk, `/admin/tournaments?tournamentId=1` for tournament management, `/admin/rings?tournamentId=1` for ring management, `/admin/athletes?tournamentId=1` for athlete management, `/admin/notices?tournamentId=1` for notice management, `/admin/schedules?tournamentId=1` for schedule management, `/admin/bouts?tournamentId=1` for bout management, or `/admin/accounts?tournamentId=1` for account management. These APIs require the matching role account; Judge, Supervisor, and Ring Manager desks load active assigned rings before scoped operations.
+
+## Continuous Integration
+
+GitHub Actions keeps source verification separate from deployment:
+
+- [Backend CI](.github/workflows/backend-ci.yml) runs Java 11 and `mvn -q test` from `back/`.
+- [Frontend CI](.github/workflows/frontend-ci.yml) runs Node 24, `npm ci`, `npm test`, `npm run lint`, and `npm run build` from `front/`.
+- Each workflow runs on relevant `back/` or `front/` changes, future pull requests, and manual dispatch. Pushes cancel older in-progress runs for the same workflow and ref.
+- CI uses read-only repository permissions and does not deploy, create pull requests, or require secrets.
 
 ### Health check
 
@@ -103,6 +124,8 @@ GET http://localhost:8080/api/health
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/events/stream?tournamentId=&ringId=`
+- `GET /api/staff/assignments/rings?tournamentId=`
+- `GET /api/staff/assignments/rings/{ringId}/bouts`
 - `GET /api/home?tournamentId=`
 - `GET /api/notices?tournamentId=`
 - `GET /api/schedules?tournamentId=`

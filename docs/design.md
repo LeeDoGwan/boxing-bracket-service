@@ -336,10 +336,12 @@ The test profile uses an H2 in-memory database with `ddl-auto: create-drop`; it 
 
 Operational prerequisites:
 
-- Java 11, Maven 3.9.x, Node.js, and npm.
+- Java 11, Maven 3.9.x, Node.js 24.x, and npm.
+- No Maven Wrapper is tracked; local and CI backend verification use the available Maven 3.9.x command.
 - MariaDB schema migration execution before local-profile startup.
 - Active role accounts and tournament reference data for authenticated end-to-end testing.
 - A shared session store and external event delivery strategy before running multiple backend instances.
+- Source verification runs through separate [Backend CI](../.github/workflows/backend-ci.yml) and [Frontend CI](../.github/workflows/frontend-ci.yml) workflows. CI uses Temurin Java 11, Node.js 24, Maven/npm dependency caches, read-only repository permissions, and no deployment secrets.
 
 ## 11. Audit and Observability
 

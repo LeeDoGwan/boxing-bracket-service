@@ -1,0 +1,46 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'back/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'back/**'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: maven
+          cache-dependency-path: back/pom.xml
+
+      - name: Report tool versions
+        run: |
+          java -version
+          mvn --version
+
+      - name: Run backend tests
+        run: mvn -q test

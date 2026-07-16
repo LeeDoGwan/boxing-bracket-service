@@ -12,6 +12,16 @@ Last updated: 2026-07-16
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `back/src/test/resources/application-test.yml`
 
+## Continuous Integration
+
+- [Backend CI workflow](../.github/workflows/backend-ci.yml): Temurin Java 11, Maven dependency cache, `mvn -q test` from `back/`.
+- [Frontend CI workflow](../.github/workflows/frontend-ci.yml): Node.js 24, npm dependency cache, `npm ci`, `npm test`, `npm run lint`, and `npm run build` from `front/`.
+- The repository has no Maven Wrapper or Node version file; the workflow pins Java 11 and Node.js 24 explicitly, while Maven is supplied by the GitHub-hosted runner.
+- Triggers: relevant `back/` or `front/` branch pushes, future pull requests, and manual dispatch. Documentation-only changes do not trigger these source workflows.
+- Both workflows use read-only repository permissions, a 15-minute job timeout, and cancel older runs for the same workflow and ref. Backend and frontend jobs remain independent.
+- Success requires command exit codes to pass, no failed or errored tests, no ESLint errors, and a successful production build. Test counts are intentionally not hard-coded.
+- These workflows verify source changes only. Deployment, Docker, infrastructure, secrets, migrations, performance tests, and pull request creation remain outside this stage.
+
 ## Test Scope
 
 - Auth API and role access policy tests for login, logout, current account lookup, BCrypt password matching, protected route mapping, and interceptor behavior.
