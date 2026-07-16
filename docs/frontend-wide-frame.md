@@ -276,12 +276,24 @@ The target is four viewport bands. Current CSS has an explicit mobile rule at
 max-width 760px; desktop is fluid and capped by the page shell rather than
 having explicit 768, 1024, and 1440 media queries.
 
+### 8.1 Visual direction
+
+The frontend uses a ringside control-room visual language: a paper-toned
+surface for the public canvas, charcoal for navigation and live-board context,
+red for action and urgency, blue for ring identity, teal for healthy live
+operation, and amber for notices or attention. The audience home leads with a
+live-board hero containing ring, active-bout, and waiting-bout counts. Results
+and schedule are grouped into a two-column secondary area on wide screens and
+collapse to one column on mobile. Panels remain lightly framed with small
+corner radii, restrained shadows, and clear top or side rules so repeated
+information remains scannable without becoming a collection of nested cards.
+
 | Viewport | Target | Current status | Acceptance rule |
 | --- | --- | --- | --- |
 | Mobile 360 | One column, grouped operations menu, core bout information first, no horizontal scroll | Implemented by mobile layout and overflow protection | No clipping in header, notices, rings, results, or schedule |
 | Tablet 768 | Two-column content where space allows | Partial; desktop fluid layout begins above 760px | No desktop row may escape the viewport |
 | Desktop 1024 | Two or three scannable columns | Partial; capped fluid shell | Current/next bout and ring details remain readable |
-| Wide 1440 | Centered max-width content and side margins | Implemented by 1180px page shell | Do not stretch long rows or shrink type for density |
+| Wide 1440 | Centered max-width content and side margins | Implemented by 1220px page shell | Do not stretch long rows or shrink type for density |
 
 Rules:
 

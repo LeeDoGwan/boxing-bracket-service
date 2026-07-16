@@ -23,8 +23,13 @@ export function AppHeader({ tournamentId, onTournamentChange }) {
   return (
     <header className="app-header">
       <div className="brand-block">
-        <p className="eyebrow">LIVE TOURNAMENT</p>
-        <h1>복싱 대회 현황</h1>
+        <div className="brand-lockup">
+          <span aria-hidden="true" className="brand-mark">BX</span>
+          <div>
+            <p className="eyebrow">LIVE TOURNAMENT</p>
+            <h1>복싱 대회 현황</h1>
+          </div>
+        </div>
       </div>
       <nav aria-label="공개 메뉴" className="main-nav">
         {publicLinks.map(([path, label]) => (

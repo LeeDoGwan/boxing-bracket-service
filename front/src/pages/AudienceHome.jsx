@@ -43,10 +43,25 @@ export function AudienceHome({ tournamentId }) {
     groups.set(ring.ringId, laterBouts);
     return groups;
   }, new Map());
+  const activeRingCount = currentRings.filter((ring) => ring.ringStatus === 'IN_PROGRESS').length;
+  const upcomingBoutCount = bouts.filter((bout) => ['SCHEDULED', 'READY'].includes(bout.status)).length;
 
   return (
     <main className="page-shell">
       <NoticeCarousel notices={currentNotices} />
+
+      <section aria-label="대회 라이브보드" className="home-hero">
+        <div className="home-hero-copy">
+          <p className="eyebrow">FIGHT NIGHT · LIVE BOARD</p>
+          <h2>오늘의 링 현황</h2>
+          <p>확정된 경기와 현재 진행 상태를 한 화면에서 확인하세요.</p>
+        </div>
+        <div className="home-hero-stats">
+          <div><strong>{currentRings.length}</strong><span>전체 링</span></div>
+          <div><strong>{activeRingCount}</strong><span>진행 중</span></div>
+          <div><strong>{upcomingBoutCount}</strong><span>대기 경기</span></div>
+        </div>
+      </section>
 
       <section className="page-heading">
         <div>
@@ -75,33 +90,35 @@ export function AudienceHome({ tournamentId }) {
         <StatePanel title="표시할 링이 없습니다.">대회 운영이 시작되면 링별 경기 현황이 표시됩니다.</StatePanel>
       )}
 
-      <section className="result-section">
-        <div className="section-title-row">
-          <div>
-            <p className="eyebrow">CONFIRMED</p>
-            <h2>확정 결과</h2>
+      <div className="home-secondary-grid">
+        <section className="result-section">
+          <div className="section-title-row">
+            <div>
+              <p className="eyebrow">CONFIRMED</p>
+              <h2>확정 결과</h2>
+            </div>
           </div>
-        </div>
-        {results.length ? (
-          <div className="result-list">
-            {results.map((bout) => (
-              <button className="result-row" key={bout.boutId} onClick={() => setSelectedBoutId(bout.boutId)} type="button">
-                <span>경기 {bout.boutNumber}</span>
-                <strong>{winnerText(bout)}</strong>
-                <span>{bout.result?.decisionType || '결과 확정'}</span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="empty-copy">아직 확정된 경기 결과가 없습니다.</p>
-        )}
-      </section>
+          {results.length ? (
+            <div className="result-list">
+              {results.map((bout) => (
+                <button className="result-row" key={bout.boutId} onClick={() => setSelectedBoutId(bout.boutId)} type="button">
+                  <span>경기 {bout.boutNumber}</span>
+                  <strong>{winnerText(bout)}</strong>
+                  <span>{bout.result?.decisionType || '결과 확정'}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-copy">아직 확정된 경기 결과가 없습니다.</p>
+          )}
+        </section>
 
-      <section className="schedule-section">
-        <p className="eyebrow">SCHEDULE</p>
-        <h2>대회 일정</h2>
-        <ScheduleList schedules={schedules} />
-      </section>
+        <section className="schedule-section">
+          <p className="eyebrow">SCHEDULE</p>
+          <h2>대회 일정</h2>
+          <ScheduleList schedules={schedules} />
+        </section>
+      </div>
       <BoutDetailDialog boutId={selectedBoutId} onClose={() => setSelectedBoutId(null)} />
     </main>
   );
