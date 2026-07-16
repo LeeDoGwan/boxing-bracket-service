@@ -56,11 +56,12 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 | --- | --- | --- | --- | --- | --- | --- |
 | Audience home | / | Audience | Notices, rings, current/next/later bout, confirmed results, schedule | /api/home, /api/bouts, /api/bouts/{boutId}, /api/events/stream | AudienceHome, NoticeCarousel, RingCard, ScheduleList, BoutDetailDialog, StatePanel | Loading, error, stale data/retry, empty sections, connected/reconnecting/offline |
 | Bracket | /bracket | Audience | List, search, live refresh, highlight, and inspect bracket status/result | /api/bouts, /api/bouts/search, /api/events/stream | BracketPage, StatePanel | Loading, error, stale data/retry, empty, search, selected row |
+| Staff login | /staff/login | All staff roles | Shared credential entry and role-based workspace redirect | /api/auth/login, /api/auth/logout | StaffLoginPage, StaffAuthProvider, StaffRoute | Return-path redirect, invalid credentials, unsupported role, session cleanup |
 | Bout detail | Home dialog | Audience | Inspect a selected audience bout and confirmed totals | /api/bouts/{boutId} | BoutDetailDialog, StatePanel | Loading, error/retry, empty detail, Escape/focus return |
 | Judge | /judge | Judge | Select assigned ring, enter round scores | Assigned ring/bout APIs, Judge score APIs | JudgeAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
 | Supervisor | /supervisor | Supervisor | Select assigned ring, review score readiness/penalties, confirm result | Assigned ring/bout APIs, Supervisor APIs | SupervisorAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, score readiness, confirmation review/cancel, locked result, action feedback |
 | Ring manager | /ring-manager | Ring Manager | Select assigned ring and run state-valid bout commands | Assigned ring/bout APIs, Ring Manager APIs | RingManagerAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, current-bout mismatch, state command matrix, confirmation, loading, error, action feedback |
-| Operations | /operations | Game Manager, Service Manager | Monitor tournament operations | /api/admin/operations/status | OperationsPage, StatePanel | Session/role guard, loading, error |
+| Operations | /operations | Game Manager, Service Manager | Monitor tournament operations | /api/admin/operations/status | OperationsPage, StatePanel | Session/role guard, loading, error, 15-second refresh, stale-data banner |
 | Audit logs | /audit-logs | Game Manager, Service Manager | Search operational audit records | /api/admin/audit-logs | AuditLogPage, StatePanel | Session/role guard, loading, error, empty |
 | Tournament admin | /admin/tournaments | Game Manager, Service Manager | Tournament CRUD | /api/admin/tournaments | AdminTournamentPage, StatePanel | Guard, list, form, action errors |
 | Ring admin | /admin/rings | Game Manager, Service Manager | Tournament ring CRUD | /api/admin/rings | AdminRingPage, StatePanel | Guard, list, form, action errors |
@@ -137,11 +138,11 @@ event payload is not rendered as the source of truth.
 
 | Screen | Read APIs | Write APIs | Session and role |
 | --- | --- | --- | --- |
-| Judge | `/api/staff/assignments/rings`, assigned ring bouts, `/api/judge/bouts/{boutId}/scores` | `/api/judge/bouts/{boutId}/rounds/{roundNo}/scores` without `judgeId` | boxing.judge.session, JUDGE |
-| Supervisor | `/api/staff/assignments/rings`, `/api/staff/assignments/rings/{ringId}/bouts`, `/api/supervisor/bouts/{id}/scores`, `/penalties` | `/penalties` and `/result` without client actor IDs | boxing.supervisor.session, SUPERVISOR |
-| Ring manager | assigned rings with `currentBoutId`, assigned ring bouts | state-specific start/cancel/round/scoring/next-bout actions | boxing.ring-manager.session, RING_MANAGER |
-| Operations | /api/admin/operations/status?tournamentId= | None in current page | boxing.operations.session, GAME_MANAGER or SERVICE_MANAGER |
-| Audit logs | /api/admin/audit-logs with filters | None in current page | boxing.operations.session, GAME_MANAGER or SERVICE_MANAGER |
+| Judge | `/api/staff/assignments/rings`, assigned ring bouts, `/api/judge/bouts/{boutId}/scores` | `/api/judge/bouts/{boutId}/rounds/{roundNo}/scores` without `judgeId` | `boxing.staff.session` plus legacy `boxing.judge.session`, JUDGE |
+| Supervisor | `/api/staff/assignments/rings`, `/api/staff/assignments/rings/{ringId}/bouts`, `/api/supervisor/bouts/{id}/scores`, `/penalties` | `/penalties` and `/result` without client actor IDs | `boxing.staff.session` plus legacy `boxing.supervisor.session`, SUPERVISOR |
+| Ring manager | assigned rings with `currentBoutId`, assigned ring bouts | state-specific start/cancel/round/scoring/next-bout actions | `boxing.staff.session` plus legacy `boxing.ring-manager.session`, RING_MANAGER |
+| Operations | /api/admin/operations/status?tournamentId= | None in current page | `boxing.staff.session` plus legacy `boxing.operations.session`, GAME_MANAGER or SERVICE_MANAGER |
+| Audit logs | /api/admin/audit-logs with filters | None in current page | `boxing.staff.session` plus legacy `boxing.operations.session`, GAME_MANAGER or SERVICE_MANAGER |
 
 ### 4.3 Administration
 
@@ -336,15 +337,16 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 24 test files and 79 passing tests.
+The current frontend baseline is 25 test files and 83 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
 | Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
 | Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
 | Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Composition, loading/error, live status, list/search/selection, request signal | Stale data and invalid query |
-| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, score validation/confirmation, Supervisor result readiness/penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
-| Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error | Responsive table and live status checks |
+| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, 0-10 score validation/confirmation, Supervisor result readiness/round penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
+| Shared staff auth | auth/StaffAuthContext.test.jsx | Shared and legacy session write, recovery, and cleanup | Login route rendering and browser-level token expiry |
+| Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error, refresh/retry | Responsive table and browser-level refresh timing |
 | Administration | pages/AdminTournamentPage.test.jsx, AdminRingPage.test.jsx, AdminAthletePage.test.jsx, AdminNoticePage.test.jsx, AdminSchedulePage.test.jsx, AdminBoutPage.test.jsx, AdminAccountPage.test.jsx | CRUD, filters, import, role restrictions, errors | Field validation and retry-after-failure |
 | Utilities | utils.test.js | Shared formatting and utility behavior | Add coverage with each normalization change |
 
@@ -422,6 +424,6 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 24 frontend test files and 79 tests unless coverage
+- Preserve the baseline of 25 frontend test files and 83 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.
