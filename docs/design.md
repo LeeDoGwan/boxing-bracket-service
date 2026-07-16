@@ -307,7 +307,7 @@ API groups:
 | Group | Main endpoints | Access |
 | --- | --- | --- |
 | Auth | `/api/auth/login`, `/logout`, `/me` | Login public; logout/me authenticated |
-| Audience home | `/api/home`, `/api/notices`, `/api/schedules`, `/api/rings/status`, `/api/bouts` | Public |
+| Audience home | `/api/home`, `/api/bouts`, `/api/bouts/{boutId}`, `/api/events/stream` | Public |
 | Live events | `/api/events/stream?tournamentId=&ringId=` | Public |
 | Judge | `/api/judge/bouts/{boutId}/scores`, score submit endpoint | `JUDGE` |
 | Supervisor | scores, penalties, result endpoints | `SUPERVISOR` |
@@ -367,7 +367,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 The latest documented verification is:
 
 - Backend: 72 test classes, 382 test cases, zero failures, errors, or skips.
-- Frontend: 24 test files, 78 test cases, ESLint passed, and Vite production build passed.
+- Frontend: 24 test files, 79 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.

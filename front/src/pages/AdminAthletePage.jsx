@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { login, logout } from '../api/auth';
 import { createAthlete, deleteAthlete, getAthletes, updateAthlete } from '../api/adminAthletes';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
 const SESSION_KEY = 'boxing.operations.session';
@@ -76,6 +77,7 @@ function AthleteWorkspace({ onLogout, session }) {
   const [listError, setListError] = useState('');
   const [actionError, setActionError] = useState('');
   const [message, setMessage] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const loadAthletes = useCallback(async () => {
     setLoading(true);
@@ -157,6 +159,7 @@ function AthleteWorkspace({ onLogout, session }) {
       setAthletes(remaining);
       setSelectedId(remaining[0]?.athleteId || null);
       setMessage('선수를 삭제했습니다.');
+      setConfirmingDelete(false);
     } catch (requestError) {
       setActionError(requestError.message || '선수 삭제에 실패했습니다.');
     } finally {
@@ -188,11 +191,12 @@ function AthleteWorkspace({ onLogout, session }) {
             <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `ATHLETE ${selectedId}` : 'NEW ATHLETE'}</p><h3>{selectedId ? '선수 정보 수정' : '선수 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid"><label>선수명<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>소속<input onChange={(event) => updateField('affiliation', event.target.value)} value={form.affiliation} /></label></div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '선수 저장' : '선수 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={handleDelete} type="button">선수 삭제</button> : null}</div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '선수 저장' : '선수 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">선수 삭제</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 선수를 삭제합니다. 연결된 경기 기록이 있으면 서버에서 거절될 수 있습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="선수 삭제 확인" /> : null}
     </main>
   );
 }

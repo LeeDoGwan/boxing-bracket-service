@@ -53,7 +53,7 @@ map is maintained in the
 [frontend wide-frame architecture guide](frontend-wide-frame.md).
 
 - Working directory: `front`
-- `npm test`: 78 passed across 24 test files
+- `npm test`: 79 passed across 24 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
 - Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Schedule Admin, Bout Admin, and Account Admin login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, operator SSE-driven refetch, operations refresh/retry, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data.

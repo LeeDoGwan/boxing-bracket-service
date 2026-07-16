@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { login, logout } from '../api/auth';
 import { createRing, deleteRing, getRings, updateRing } from '../api/adminRings';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
 const SESSION_KEY = 'boxing.operations.session';
@@ -79,6 +80,7 @@ function RingWorkspace({ onLogout, session, tournamentId }) {
   const [listError, setListError] = useState('');
   const [actionError, setActionError] = useState('');
   const [message, setMessage] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const loadRings = useCallback(async () => {
     setLoading(true);
@@ -148,6 +150,7 @@ function RingWorkspace({ onLogout, session, tournamentId }) {
       setRings(remaining);
       setSelectedId(remaining[0]?.ringId || null);
       setMessage('링을 삭제했습니다.');
+      setConfirmingDelete(false);
     } catch (requestError) {
       setActionError(requestError.message || '링 삭제에 실패했습니다.');
     } finally {
@@ -177,11 +180,12 @@ function RingWorkspace({ onLogout, session, tournamentId }) {
             <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `RING ${selectedId}` : 'NEW RING'}</p><h3>{selectedId ? '링 정보 수정' : '링 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid"><label>링 이름<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '링 저장' : '링 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={handleDelete} type="button">링 삭제</button> : null}</div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '링 저장' : '링 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">링 삭제</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 링을 삭제합니다. 연결된 경기나 운영 데이터가 있으면 서버에서 거절될 수 있습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="링 삭제 확인" /> : null}
     </main>
   );
 }

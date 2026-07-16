@@ -1,4 +1,4 @@
-import { statusLabel } from '../utils';
+import { athleteLabel, statusLabel } from '../utils';
 
 function BoutSummary({ bout, sideLabel }) {
   if (!bout) {
@@ -24,7 +24,7 @@ function BoutSummary({ bout, sideLabel }) {
   );
 }
 
-export function RingCard({ ring, onSelectBout }) {
+export function RingCard({ laterBouts = [], ring, onSelectBout }) {
   return (
     <article className="ring-card">
       <div className="ring-card-header">
@@ -43,6 +43,18 @@ export function RingCard({ ring, onSelectBout }) {
         <BoutSummary bout={ring.currentBout} sideLabel="현재 경기" />
       </button>
       <BoutSummary bout={ring.nextBout} sideLabel="다음 경기" />
+      {laterBouts.length > 0 && (
+        <div className="later-bouts">
+          <p className="summary-label">이후 경기</p>
+          {laterBouts.map((bout) => (
+            <button className="later-bout-button" key={bout.boutId} onClick={() => onSelectBout(bout.boutId)} type="button">
+              <span>경기 {bout.boutNumber}</span>
+              <strong>{athleteLabel(bout.redAthlete)} vs {athleteLabel(bout.blueAthlete)}</strong>
+              <small>{statusLabel(bout.status)}</small>
+            </button>
+          ))}
+        </div>
+      )}
     </article>
   );
 }

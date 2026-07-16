@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { login, logout } from '../api/auth';
 import { createNotice, deleteNotice, getNotices, updateNotice } from '../api/adminNotices';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
 const SESSION_KEY = 'boxing.operations.session';
@@ -74,6 +75,7 @@ function NoticeWorkspace({ onLogout, session, tournamentId }) {
   const [listError, setListError] = useState('');
   const [actionError, setActionError] = useState('');
   const [message, setMessage] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const loadNotices = useCallback(async () => {
     setLoading(true);
@@ -144,6 +146,7 @@ function NoticeWorkspace({ onLogout, session, tournamentId }) {
       setNotices(remaining);
       setSelectedId(remaining[0]?.noticeId || null);
       setMessage('공지를 삭제했습니다.');
+      setConfirmingDelete(false);
     } catch (requestError) {
       setActionError(requestError.message || '공지 삭제에 실패했습니다.');
     } finally {
@@ -173,11 +176,12 @@ function NoticeWorkspace({ onLogout, session, tournamentId }) {
             <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `NOTICE ${selectedId}` : 'NEW NOTICE'}</p><h3>{selectedId ? '공지 정보 수정' : '공지 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid"><label>제목<input onChange={(event) => updateField('title', event.target.value)} required value={form.title} /></label><label>표시 순서<input min="0" onChange={(event) => updateField('displayOrder', event.target.value)} type="number" value={form.displayOrder} /></label><label className="admin-wide-field">내용<textarea onChange={(event) => updateField('content', event.target.value)} required rows="8" value={form.content} /></label><label className="admin-toggle-field"><input checked={form.active} onChange={(event) => updateField('active', event.target.checked)} type="checkbox" /> 공개 중</label></div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '공지 저장' : '공지 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={handleDelete} type="button">공지 삭제</button> : null}</div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '공지 저장' : '공지 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">공지 삭제</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 공지를 삭제합니다. 이 작업은 되돌릴 수 없습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="공지 삭제 확인" /> : null}
     </main>
   );
 }

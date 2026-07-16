@@ -90,6 +90,7 @@ describe('AdminSchedulePage', () => {
 
     await waitFor(() => expect(updateSchedule).toHaveBeenCalledWith(20, expect.objectContaining({ title: 'Updated ceremony' }), 'admin-token'));
     fireEvent.click(screen.getByRole('button', { name: '일정 삭제' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(deleteSchedule).toHaveBeenCalledWith(20, 'admin-token'));
   });
 });

@@ -1,4 +1,4 @@
-import { athleteLabel, statusLabel, winnerLabel } from './utils';
+import { athleteLabel, statusLabel, winnerLabel, winnerText } from './utils';
 
 describe('display helpers', () => {
   it('formats athlete affiliation and fallback values', () => {
@@ -22,5 +22,16 @@ describe('display helpers', () => {
     };
     expect(winnerLabel(bout)).toBe('Red Boxer');
     expect(winnerLabel({ ...bout, resultConfirmed: false })).toBeNull();
+  });
+
+  it('renders a draw without assigning a winner', () => {
+    const bout = {
+      blueAthlete: { name: 'Blue Boxer' },
+      redAthlete: { name: 'Red Boxer' },
+      resultConfirmed: true,
+      winnerSide: 'DRAW',
+    };
+    expect(winnerLabel(bout)).toBe('무승부');
+    expect(winnerText(bout)).toBe('무승부');
   });
 });

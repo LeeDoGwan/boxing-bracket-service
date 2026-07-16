@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { login, logout } from '../api/auth';
 import { createTournament, deleteTournament, getTournaments, updateTournament } from '../api/adminTournaments';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
 const SESSION_KEY = 'boxing.operations.session';
@@ -84,6 +85,7 @@ function TournamentWorkspace({ onLogout, session }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const loadTournaments = useCallback(async () => {
     setLoading(true);
@@ -152,6 +154,7 @@ function TournamentWorkspace({ onLogout, session }) {
       setTournaments(remaining);
       setSelectedId(remaining[0]?.tournamentId || null);
       setMessage('대회를 삭제했습니다.');
+      setConfirmingDelete(false);
     } catch (requestError) {
       setError(requestError.message || '대회 삭제에 실패했습니다.');
     } finally {
@@ -186,11 +189,12 @@ function TournamentWorkspace({ onLogout, session }) {
                 <label>종료일<input onChange={(event) => updateField('endDate', event.target.value)} type="date" value={form.endDate} /></label>
                 <label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               </div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '대회 저장' : '대회 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={handleDelete} type="button">대회 삭제</button> : null}</div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '대회 저장' : '대회 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">대회 삭제</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 대회를 삭제합니다. 연결된 링, 경기, 일정 데이터가 있으면 서버에서 거절될 수 있습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="대회 삭제 확인" /> : null}
     </main>
   );
 }
