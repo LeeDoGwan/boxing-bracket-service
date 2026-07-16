@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getBoutDetail } from '../api/audience';
 import { login, logout } from '../api/auth';
 import { getJudgeScores, submitRoundScore } from '../api/judge';
@@ -8,6 +8,21 @@ import { useBoutEventStream } from '../hooks/useBoutEventStream';
 import { useEventRefresh } from '../hooks/useEventRefresh';
 
 const JUDGE_EVENT_TYPES = ['BOUT_STARTED', 'BOUT_STATUS_CHANGED', 'ROUND_STARTED', 'NEXT_BOUT_READY', 'RESULT_CONFIRMED'];
+const SCORE_ERROR_MESSAGES = {
+  BOUT_ACCESS_DENIED: 'You are not assigned to this bout.',
+  BOUT_NOT_STARTED: 'The bout must be started before scores can be submitted.',
+  INVALID_BOUT_STATE: 'Scores cannot be submitted for this bout.',
+  INVALID_ROUND_NUMBER: 'This round is outside the bout round range.',
+  INVALID_SCORE_VALUE: 'Scores must be non-negative whole numbers.',
+  RING_ACCESS_DENIED: 'Your ring assignment is no longer active.',
+  ROUND_NOT_STARTED: 'This round has not started yet.',
+  SCORE_ALREADY_SUBMITTED: 'This round score was already submitted.',
+};
+
+function scoreErrorMessage(requestError) {
+  if (requestError.status === 401) return 'Session expired.';
+  return SCORE_ERROR_MESSAGES[requestError.message] || requestError.message || 'Score submission failed.';
+}
 
 export function JudgeAssignedPage({ session, onLogout, tournamentId }) {
   const [rings, setRings] = useState([]);
@@ -20,6 +35,7 @@ export function JudgeAssignedPage({ session, onLogout, tournamentId }) {
   const [error, setError] = useState('');
   const [detailError, setDetailError] = useState('');
   const [busy, setBusy] = useState(false);
+  const submitLockRef = useRef(false);
 
   const loadRings = useCallback(async () => {
     setLoading(true);
@@ -105,14 +121,17 @@ export function JudgeAssignedPage({ session, onLogout, tournamentId }) {
   });
 
   async function submit(roundNo, score) {
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
     setBusy(true);
     try {
       const saved = await submitRoundScore(boutId, roundNo, score, session.accessToken);
       setScores((current) => [...current.filter((item) => item.roundNo !== roundNo), saved]);
     } catch (requestError) {
-      setDetailError(requestError.status === 403 ? 'Assignment access denied.' : requestError.message || 'Score submission failed.');
+      setDetailError(scoreErrorMessage(requestError));
     } finally {
       setBusy(false);
+      submitLockRef.current = false;
     }
   }
 
@@ -133,7 +152,7 @@ export function JudgeAssignedPage({ session, onLogout, tournamentId }) {
       </aside>
       <section className="judge-score-panel" aria-label="Score entry">
         {detailError && <StatePanel title={detailError} tone="error">Refresh the assigned ring before retrying.</StatePanel>}
-        {bout && <><h3>Bout {bout.boutNumber}</h3><p>{bout.redAthlete?.name || 'Red'} vs {bout.blueAthlete?.name || 'Blue'}</p>{rounds.map((roundNo) => <ScoreCard key={roundNo} busy={busy} bout={bout} onSubmit={submit} roundNo={roundNo} score={scores.find((score) => score.roundNo === roundNo)} />)}</>}
+        {bout && <><h3>Bout {bout.boutNumber}</h3><p>{bout.redAthlete?.name || 'Red'} vs {bout.blueAthlete?.name || 'Blue'}</p>{rounds.map((roundNo) => <ScoreCard key={`${bout.boutId}-${roundNo}`} busy={busy} bout={bout} onSubmit={submit} roundNo={roundNo} score={scores.find((score) => score.roundNo === roundNo)} />)}</>}
       </section>
     </div>}
   </main>;
@@ -168,13 +187,53 @@ export function AssignedJudgeRoute({ tournamentId }) {
 function ScoreCard({ bout, busy, onSubmit, roundNo, score }) {
   const [redScore, setRedScore] = useState(score?.redScore ?? '');
   const [blueScore, setBlueScore] = useState(score?.blueScore ?? '');
+  const [dirty, setDirty] = useState(false);
+  const [validationError, setValidationError] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const submittingRef = useRef(false);
   const submitted = score?.status === 'SUBMITTED';
   const closed = bout.resultConfirmed || bout.status === 'FINISHED';
-  useEffect(() => { setRedScore(score?.redScore ?? ''); setBlueScore(score?.blueScore ?? ''); }, [score?.redScore, score?.blueScore]);
+  const currentRound = Number(bout.currentRound || 0);
+  const futureRound = currentRound < roundNo;
+  const canSubmit = !busy && !submitted && !closed && !futureRound && currentRound > 0;
+  const roundStatus = submitted ? 'Submitted' : closed ? 'Closed' : futureRound ? 'Not started' : roundNo === currentRound ? 'Current round' : 'Previous round';
+  useEffect(() => {
+    if (!dirty || score?.status === 'SUBMITTED') {
+      setRedScore(score?.redScore ?? '');
+      setBlueScore(score?.blueScore ?? '');
+      setDirty(false);
+    }
+  }, [dirty, score?.blueScore, score?.redScore, score?.status]);
   function submit(event) {
     event.preventDefault();
-    const red = Number(redScore); const blue = Number(blueScore);
-    if (Number.isInteger(red) && red >= 0 && Number.isInteger(blue) && blue >= 0) onSubmit(roundNo, { blueScore: blue, redScore: red });
+    if (!canSubmit || confirming || submittingRef.current) return;
+    if (redScore === '' || blueScore === '') {
+      setValidationError('Both scores are required.');
+      return;
+    }
+    if (!/^\d+$/.test(String(redScore)) || !/^\d+$/.test(String(blueScore))) {
+      setValidationError('Scores must be non-negative whole numbers.');
+      return;
+    }
+    setValidationError('');
+    setConfirming(true);
   }
-  return <form className="judge-score-card" onSubmit={submit}><h4>Round {roundNo}</h4><label>Red score<input disabled={busy || submitted || closed} min="0" required type="number" value={redScore} onChange={(event) => setRedScore(event.target.value)} /></label><label>Blue score<input disabled={busy || submitted || closed} min="0" required type="number" value={blueScore} onChange={(event) => setBlueScore(event.target.value)} /></label>{!submitted && !closed && <button className="command-button" disabled={busy} type="submit">Submit round</button>}</form>;
+  async function confirmSubmission() {
+    if (!canSubmit || submittingRef.current) return;
+    submittingRef.current = true;
+    setConfirming(false);
+    try {
+      await onSubmit(roundNo, { blueScore: Number(blueScore), redScore: Number(redScore) });
+    } finally {
+      submittingRef.current = false;
+    }
+  }
+  return <form className={`judge-score-card${roundNo === currentRound ? ' current-round' : ''}`} noValidate onSubmit={submit}>
+    <h4>Round {roundNo}</h4><p className="round-status">{roundStatus}</p>
+    <label>Red score<input aria-describedby={validationError ? `round-${roundNo}-error` : undefined} disabled={busy || submitted || closed || futureRound} inputMode="numeric" min="0" pattern="[0-9]*" required type="number" value={redScore} onChange={(event) => { setDirty(true); setValidationError(''); setRedScore(event.target.value); }} /></label>
+    <label>Blue score<input aria-describedby={validationError ? `round-${roundNo}-error` : undefined} disabled={busy || submitted || closed || futureRound} inputMode="numeric" min="0" pattern="[0-9]*" required type="number" value={blueScore} onChange={(event) => { setDirty(true); setValidationError(''); setBlueScore(event.target.value); }} /></label>
+    {validationError && <p className="form-error" id={`round-${roundNo}-error`} role="alert">{validationError}</p>}
+    {!submitted && !closed && <button className="command-button" disabled={!canSubmit} type="submit">Submit round</button>}
+    {confirming && <div aria-label={`Confirm round ${roundNo} score`} className="score-confirmation" role="dialog"><p>Round {roundNo}: Red {redScore}, Blue {blueScore}</p><div><button className="command-button" disabled={busy} onClick={confirmSubmission} type="button">Confirm score</button><button className="secondary-button" onClick={() => setConfirming(false)} type="button">Cancel</button></div></div>}
+  </form>;
 }

@@ -291,14 +291,14 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 19 test files and 47 passing tests.
+The current frontend baseline is 24 test files and 64 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
 | Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
 | Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
 | Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Composition, loading/error, live status, list/search/selection | Stale data and invalid query |
-| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, API feedback, live refresh | Expired token, duplicate submit, and browser-level stream failure |
+| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, score validation/confirmation, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
 | Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error | Responsive table and live status checks |
 | Administration | pages/AdminTournamentPage.test.jsx, AdminRingPage.test.jsx, AdminAthletePage.test.jsx, AdminNoticePage.test.jsx, AdminSchedulePage.test.jsx, AdminBoutPage.test.jsx, AdminAccountPage.test.jsx | CRUD, filters, import, role restrictions, errors | Field validation and retry-after-failure |
 | Utilities | utils.test.js | Shared formatting and utility behavior | Add coverage with each normalization change |
@@ -360,7 +360,7 @@ Minimum post-deploy smoke:
 
 | Role | Route or scope | Reuse | New work required |
 | --- | --- | --- | --- |
-| Judge | /judge | Judge session, score API, StatePanel | Assignment selection, score validation, conflicts |
+| Judge | /judge | Judge session, score API, StatePanel, scoring policy | Venue-specific score limits, association rules, and browser-level stream failure |
 | Supervisor | /supervisor | Session, score/penalty/result APIs | Result policy and audit feedback |
 | Ring Manager | /ring-manager | Ring session and action APIs | Ring assignment and transition safeguards |
 | Game Manager | Operations and admin routes | Operations session, admin modules, header | Tournament workflow and permissions |
@@ -376,6 +376,6 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 19 frontend test files and 47 tests unless coverage
+- Preserve the baseline of 24 frontend test files and 64 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.

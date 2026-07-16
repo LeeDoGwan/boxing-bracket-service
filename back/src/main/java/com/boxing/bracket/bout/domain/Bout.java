@@ -194,6 +194,27 @@ public class Bout extends BaseTimeEntity {
         return this.resultConfirmed || this.status == BoutStatus.FINISHED;
     }
 
+    public void validateScoreSubmission(Integer roundNo) {
+        if (roundNo == null || roundNo < 1) {
+            throw new IllegalArgumentException("INVALID_ROUND_NUMBER");
+        }
+        if (isCompleted()) {
+            throw new WorkflowConflictException("INVALID_BOUT_STATE");
+        }
+        if (status == BoutStatus.SCHEDULED || status == BoutStatus.READY) {
+            throw new WorkflowConflictException("BOUT_NOT_STARTED");
+        }
+        if (status != BoutStatus.IN_PROGRESS && status != BoutStatus.SCORING) {
+            throw new WorkflowConflictException("INVALID_BOUT_STATE");
+        }
+        if (totalRounds != null && roundNo > totalRounds) {
+            throw new IllegalArgumentException("INVALID_ROUND_NUMBER");
+        }
+        if (currentRound == null || currentRound < 1 || roundNo > currentRound) {
+            throw new WorkflowConflictException("ROUND_NOT_STARTED");
+        }
+    }
+
     public void updateSchedule(
             Long tournamentId,
             Long ringId,

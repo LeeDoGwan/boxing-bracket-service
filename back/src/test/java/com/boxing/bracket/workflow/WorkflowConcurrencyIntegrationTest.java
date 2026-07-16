@@ -145,6 +145,7 @@ class WorkflowConcurrencyIntegrationTest {
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
                 .status(status)
+                .currentRound(status == BoutStatus.IN_PROGRESS ? 1 : 0)
                 .scheduledOrder(1)
                 .build());
     }

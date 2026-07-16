@@ -91,7 +91,7 @@ public class RoundScore extends BaseTimeEntity {
 
     private void validateScore(int score) {
         if (score < 0) {
-            throw new IllegalArgumentException("Score must be greater than or equal to 0");
+            throw new IllegalArgumentException("INVALID_SCORE_VALUE");
         }
     }
 }

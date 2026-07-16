@@ -85,6 +85,10 @@ bout load, bout selection, then score/review actions. One ring is selected
 automatically; multiple rings show a selector. Empty assignments, revoked
 access (`403`), empty bouts, and expired sessions have explicit states.
 
+Judge score lifecycle validation is documented separately in [Judge scoring
+policy](scoring-policy.md). Assignment scope remains the authorization boundary;
+score value and bout/round lifecycle validation are applied after that boundary.
+
 Ring Manager uses the same assigned-ring selector and keeps existing controls.
 Judge, Supervisor, and Ring Manager screens subscribe to
 `GET /api/events/stream?tournamentId={tournamentId}&ringId={selectedRingId}`

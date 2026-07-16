@@ -1,13 +1,13 @@
 # Testing
 
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 
 ## Latest Verification
 
 - Backend working directory: `back`
 - Command: `mvn test`
-- Verified at: 2026-07-15
-- Result: 358 passed, 0 failed, 0 errors, 0 skipped
+- Verified at: 2026-07-16
+- Result: 363 passed, 0 failed, 0 errors, 0 skipped
 - Test classes: 70
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `back/src/test/resources/application-test.yml`
@@ -23,7 +23,7 @@ Last updated: 2026-07-15
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
 - Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.
 - Staff assignment tests for active account/role validation, ring/tournament mismatch, duplicate handling, and immediate unassigned-ring denial.
-- Frontend tests for utility formatting, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score submission, penalty history loading, penalty creation, result confirmation, ring commands, operations refresh/retry, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
+- Frontend tests for utility formatting, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation, score input preservation during refresh, penalty history loading, penalty creation, result confirmation, ring commands, operations refresh/retry, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
 
@@ -32,7 +32,7 @@ map is maintained in the
 [frontend wide-frame architecture guide](frontend-wide-frame.md).
 
 - Working directory: `front`
-- `npm test`: 59 passed across 24 test files
+- `npm test`: 64 passed across 24 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
 - Browser verification covers the public home and bracket routes, API failure and empty states, tournament selection, bracket search, the Judge, Supervisor, Ring Manager, Operations, Audit Log, Tournament Admin, Ring Admin, Athlete Admin, Notice Admin, Schedule Admin, Bout Admin, and Account Admin login routes, and invalid-credential handling. Authenticated score submission, result confirmation, ring commands, operator SSE-driven refetch, operations refresh/retry, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by the frontend page tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data.
@@ -94,10 +94,10 @@ map is maintained in the
 | Scoring | `SupervisorPenaltyControllerTest` | 4 |
 | Scoring | `SupervisorResultControllerTest` | 3 |
 | Scoring | `SupervisorScoreControllerTest` | 2 |
-| Scoring | `RoundScoreTest` | 3 |
+| Scoring | `RoundScoreTest` | 4 |
 | Scoring | `RoundScoreRepositoryTest` | 2 |
 | Scoring | `BoutResultRepositoryTest` | 1 |
-| Scoring | `JudgeScoreServiceTest` | 9 |
+| Scoring | `JudgeScoreServiceTest` | 13 |
 | Scoring | `ScoreQueryServiceTest` | 4 |
 | Scoring | `SupervisorPenaltyServiceTest` | 6 |
 | Scoring | `SupervisorResultServiceTest` | 5 |
@@ -119,6 +119,7 @@ map is maintained in the
 - Audience can read tournament schedules, and admin users can manage schedule lifecycle per tournament with optional same-tournament ring and bout references.
 - Audience can read tournament home data, current bout information, ring status, and official bout lists/search/detail.
 - Judges can submit round scores and retrieve judge-specific scores.
+- Judge score submission rejects invalid values, unstarted/future/out-of-range rounds, and closed bouts; same-payload retries remain idempotent and successful submissions publish one event.
 - Supervisors can review scores, load persisted penalty history, add penalties, and confirm bout results.
 - Ring managers can list bouts, start bouts, start rounds, update bout status, and advance to the next bout.
 - Duplicate workflow requests return the prior result without duplicate SSE delivery; conflicting state changes and different resubmissions return HTTP 409.
