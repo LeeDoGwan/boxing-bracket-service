@@ -78,7 +78,7 @@ public class RingManagerService {
             throw new WorkflowConflictException("RING_ALREADY_HAS_CURRENT_BOUT");
         }
 
-        bout.start();
+        bout.startForRingManager();
         ring.assignCurrentBout(bout.getId());
 
         ringRepository.save(ring);
@@ -122,11 +122,17 @@ public class RingManagerService {
         if (currentBout.isPresent() && currentBout.get().getStatus() != BoutStatus.FINISHED) {
             throw new WorkflowConflictException("CURRENT_BOUT_NOT_FINISHED");
         }
+        if (currentBout.isPresent() && officialBouts.stream()
+                .anyMatch(bout -> !bout.getId().equals(currentBout.get().getId())
+                        && (bout.getStatus() == BoutStatus.IN_PROGRESS
+                        || bout.getStatus() == BoutStatus.SCORING))) {
+            throw new WorkflowConflictException("BOUT_ALREADY_IN_PROGRESS");
+        }
 
         Bout nextBout = findNextBout(currentBout, officialBouts)
-                .orElseThrow(() -> new IllegalArgumentException("next bout does not exist"));
+                .orElseThrow(() -> new WorkflowConflictException("NEXT_BOUT_NOT_FOUND"));
 
-        boolean statusChanged = nextBout.changeStatus(BoutStatus.READY);
+        boolean statusChanged = nextBout.transitionForRingManager(BoutStatus.READY);
         ring.prepareCurrentBout(nextBout.getId());
 
         ringRepository.save(ring);
@@ -146,7 +152,17 @@ public class RingManagerService {
         if (staffAssignmentService != null) {
             staffAssignmentService.requireRingAccess(bout.getRingId());
         }
-        boolean statusChanged = bout.changeStatus(request.getStatus());
+        if (request.getStatus() == BoutStatus.READY && bout.getStatus() == BoutStatus.SCHEDULED) {
+            throw new WorkflowConflictException("INVALID_BOUT_TRANSITION");
+        }
+        if (request.getStatus() == BoutStatus.CANCELED && bout.getStatus() == BoutStatus.READY) {
+            Ring ring = ringRepository.findWithLockById(bout.getRingId())
+                    .orElseThrow(RingNotFoundException::new);
+            if (boutId.equals(ring.getCurrentBoutId())) {
+                throw new WorkflowConflictException("INVALID_BOUT_TRANSITION");
+            }
+        }
+        boolean statusChanged = bout.transitionForRingManager(request.getStatus());
         if (!statusChanged) {
             return RingManagerBoutResponse.from(bout);
         }
@@ -166,7 +182,7 @@ public class RingManagerService {
         if (staffAssignmentService != null) {
             staffAssignmentService.requireRingAccess(bout.getRingId());
         }
-        boolean roundStarted = bout.startRound(roundNo);
+        boolean roundStarted = bout.startRoundForRingManager(roundNo);
         if (!roundStarted) {
             return RingManagerBoutResponse.from(bout);
         }
@@ -186,16 +202,18 @@ public class RingManagerService {
     }
 
     private Optional<Bout> findNextBout(Optional<Bout> currentBout, List<Bout> bouts) {
+        List<Bout> candidates = bouts.stream()
+                .filter(this::isNextCandidate)
+                .collect(Collectors.toList());
         if (currentBout.isPresent() && currentBout.get().getScheduledOrder() != null) {
             Integer currentScheduledOrder = currentBout.get().getScheduledOrder();
-            return bouts.stream()
+            return candidates.stream()
                     .filter(bout -> bout.getScheduledOrder() != null)
                     .filter(bout -> bout.getScheduledOrder() > currentScheduledOrder)
                     .min(Comparator.comparing(Bout::getScheduledOrder));
         }
 
-        return bouts.stream()
-                .filter(this::isNextCandidate)
+        return candidates.stream()
                 .filter(bout -> bout.getScheduledOrder() != null)
                 .min(Comparator.comparing(Bout::getScheduledOrder));
     }
@@ -211,7 +229,9 @@ public class RingManagerService {
         }
 
         return bouts.stream()
-                .filter(bout -> bout.getStatus() == BoutStatus.IN_PROGRESS)
+                .filter(bout -> bout.getStatus() == BoutStatus.IN_PROGRESS
+                        || bout.getStatus() == BoutStatus.SCORING
+                        || bout.getStatus() == BoutStatus.READY)
                 .findFirst();
     }
 

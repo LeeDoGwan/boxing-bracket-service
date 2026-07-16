@@ -32,6 +32,7 @@ Known MVP boundaries:
 
 - Judge, supervisor, and ring-manager ring assignments are enforced server-side. The assignment unit and API details are in [Staff ring assignment](staff-assignment.md).
 - Assigned Judge, Supervisor, and Ring Manager screens subscribe to one selected-ring SSE stream and refetch API state after relevant events.
+- Ring Manager state transitions use the existing lifecycle endpoints and the [bout state transition policy](bout-state-transition-policy.md); the server chooses the next official bout and the screen exposes state-specific commands only.
 - Judge score submission enforces non-negative whole-number input, started-bout/current-round checks, configured round bounds, and idempotent retry behavior. The provisional policy is in [Judge scoring policy](scoring-policy.md).
 - Supervisor result confirmation uses the active assigned-ring scope, authenticated session actor, submitted-score readiness, bout lifecycle, decision, and penalty validation. The contract is in [Supervisor result confirmation policy](result-confirmation-policy.md).
 - Sessions are process-local. A shared session store is required for multiple backend instances.
@@ -285,6 +286,7 @@ Workflow rules:
 6. SSE dispatch is registered after transaction commit, so rolled-back state is not broadcast.
 7. Judge score validation is performed before persistence; failed validation does not publish a score event.
 8. Supervisor result and penalty validation is performed before persistence; failed mutations do not publish scoring events.
+9. Ring Manager lifecycle validation is performed in the bout domain before persistence; failed transitions do not publish bout events.
 
 ## 9. API Contract
 
@@ -351,8 +353,8 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 71 test classes, 374 test cases, zero failures, errors, or skips.
-- Frontend: 24 test files, 71 test cases, ESLint passed, and Vite production build passed.
+- Backend: 71 test classes, 380 test cases, zero failures, errors, or skips.
+- Frontend: 24 test files, 78 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.
@@ -366,6 +368,7 @@ The following decisions should be made before expanding beyond the MVP:
 - Public tournament discovery: directory endpoint, default tournament selection, and closed/completed tournament visibility.
 - Event model: whether schedule, notice, and ring-status changes should use SSE in addition to bout updates.
 - Result policy: allowed decision types, confirmed-result correction workflow, and approval requirements; current implementation is documented in [Supervisor result confirmation policy](result-confirmation-policy.md).
+- Ring Manager lifecycle: current status transitions, round sequencing, next-bout ordering, and cancellation semantics are documented in [Bout state transition policy](bout-state-transition-policy.md); cancellation and exceptional-bout behavior remain venue decisions.
 - Boxing scoring policy: maximum score, ten-point rule, tied-round handling, deduction interaction, and exceptional-bout timing require venue confirmation; see [Judge scoring policy](scoring-policy.md).
 - Data ownership: whether athletes remain global master data or become tournament-scoped records.
 - Production migration tooling: repeatable versioned migrations and rollback policy.

@@ -155,8 +155,8 @@ class RingManagerServiceTest {
         given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L)).willReturn(List.of(currentBout));
 
         assertThatThrownBy(() -> ringManagerService.moveToNextBout(1L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("next bout does not exist");
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("NEXT_BOUT_NOT_FOUND");
     }
 
     @Test
@@ -171,6 +171,8 @@ class RingManagerServiceTest {
     @Test
     void updateBoutStatusChangesBoutStatus() {
         Bout bout = createBout(10L);
+        bout.startForRingManager();
+        bout.startRoundForRingManager(1);
         BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(BoutStatus.SCORING);
         given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
         given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -205,13 +207,14 @@ class RingManagerServiceTest {
     @Test
     void startRoundUpdatesBoutCurrentRound() {
         Bout bout = createBout(10L);
+        bout.startForRingManager();
         given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
         given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        RingManagerBoutResponse response = ringManagerService.startRound(10L, 2);
+        RingManagerBoutResponse response = ringManagerService.startRound(10L, 1);
 
         assertThat(response.getBoutId()).isEqualTo(10L);
-        assertThat(response.getCurrentRound()).isEqualTo(2);
+        assertThat(response.getCurrentRound()).isEqualTo(1);
         assertThat(response.getStatus()).isEqualTo(BoutStatus.IN_PROGRESS);
         then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
@@ -228,11 +231,12 @@ class RingManagerServiceTest {
     @Test
     void startRoundRejectsInvalidRoundNo() {
         Bout bout = createBout(10L);
+        bout.startForRingManager();
         given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
 
         assertThatThrownBy(() -> ringManagerService.startRound(10L, 0))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("roundNo must be greater than or equal to 1");
+                .hasMessage("INVALID_ROUND_NUMBER");
     }
 
     @Test
@@ -290,6 +294,7 @@ class RingManagerServiceTest {
     @Test
     void startRoundReturnsCurrentStateForDuplicateRequestWithoutPublishingAgain() {
         Bout bout = createBout(10L);
+        bout.startForRingManager();
         given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
         given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -301,11 +306,120 @@ class RingManagerServiceTest {
         then(boutEventPublisher).should(times(1)).publish(any(BoutEventResponse.class));
     }
 
+    @Test
+    void startBoutRejectsScheduledBoutUntilItIsPrepared() {
+        Bout bout = createBout(10L, 1, BoutStatus.SCHEDULED);
+        Ring ring = createRing(1L);
+        given(ringRepository.findWithLockById(1L)).willReturn(Optional.of(ring));
+        given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> ringManagerService.startBout(10L))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("INVALID_BOUT_TRANSITION");
+        then(ringRepository).should(never()).save(any(Ring.class));
+        then(boutRepository).should(never()).save(any(Bout.class));
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void startRoundRejectsSkippedRound() {
+        Bout bout = createBout(10L);
+        bout.startForRingManager();
+        given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> ringManagerService.startRound(10L, 2))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("ROUND_SEQUENCE_INVALID");
+        then(boutRepository).should(never()).save(any(Bout.class));
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void updateBoutStatusRejectsFinishedWithoutConfirmedResult() {
+        Bout bout = createBout(10L);
+        bout.startForRingManager();
+        bout.startRoundForRingManager(1);
+        BoutStatusUpdateRequest request = new BoutStatusUpdateRequest(BoutStatus.FINISHED);
+        given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> ringManagerService.updateBoutStatus(10L, request))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("BOUT_RESULT_REQUIRED");
+        then(boutRepository).should(never()).save(any(Bout.class));
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void updateBoutStatusDoesNotAllowClientToPrepareAnArbitraryScheduledBout() {
+        Bout bout = createBout(10L, 1, BoutStatus.SCHEDULED);
+        given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> ringManagerService.updateBoutStatus(
+                10L,
+                new BoutStatusUpdateRequest(BoutStatus.READY)
+        ))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("INVALID_BOUT_TRANSITION");
+        then(boutRepository).should(never()).save(any(Bout.class));
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void updateBoutStatusRejectsScoringBeforeFinalRound() {
+        Bout bout = Bout.builder()
+                .tournamentId(1L)
+                .ringId(1L)
+                .boutNumber(1)
+                .matchType("75 - middle school")
+                .redAthleteId(10L)
+                .blueAthleteId(11L)
+                .status(BoutStatus.IN_PROGRESS)
+                .totalRounds(3)
+                .currentRound(1)
+                .scheduledOrder(1)
+                .build();
+        ReflectionTestUtils.setField(bout, "id", 10L);
+        given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> ringManagerService.updateBoutStatus(
+                10L,
+                new BoutStatusUpdateRequest(BoutStatus.SCORING)
+        ))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("INVALID_BOUT_TRANSITION");
+        then(boutRepository).should(never()).save(any(Bout.class));
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void moveToNextBoutSkipsFinishedAndCanceledCandidates() {
+        Ring ring = createRing(1L);
+        ring.assignCurrentBout(10L);
+        Bout currentBout = createBout(10L);
+        currentBout.changeStatus(BoutStatus.FINISHED);
+        Bout canceledBout = createBout(11L, 2, BoutStatus.CANCELED);
+        Bout nextBout = createBout(12L, 3, BoutStatus.SCHEDULED);
+        given(ringRepository.findWithLockById(1L)).willReturn(Optional.of(ring));
+        given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(currentBout, canceledBout, nextBout));
+        given(ringRepository.save(any(Ring.class))).willAnswer(invocation -> invocation.getArgument(0));
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        RingManagerBoutResponse response = ringManagerService.moveToNextBout(1L);
+
+        assertThat(response.getBoutId()).isEqualTo(12L);
+        assertThat(response.getStatus()).isEqualTo(BoutStatus.READY);
+    }
+
     private Bout createBout(Long id) {
-        return createBout(id, 1);
+        return createBout(id, 1, BoutStatus.READY);
     }
 
     private Bout createBout(Long id, int scheduledOrder) {
+        return createBout(id, scheduledOrder, BoutStatus.READY);
+    }
+
+    private Bout createBout(Long id, int scheduledOrder, BoutStatus status) {
         Bout bout = Bout.builder()
                 .tournamentId(1L)
                 .ringId(1L)
@@ -313,7 +427,7 @@ class RingManagerServiceTest {
                 .matchType("75 - middle school")
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
-                .status(BoutStatus.READY)
+                .status(status)
                 .scheduledOrder(scheduledOrder)
                 .build();
         ReflectionTestUtils.setField(bout, "id", id);

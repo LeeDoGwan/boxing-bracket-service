@@ -57,7 +57,7 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 | Bout detail | Home dialog | Audience | Inspect a selected audience bout | /api/bouts/{boutId} | BoutDetailDialog, StatePanel | Loading, error, empty detail |
 | Judge | /judge | Judge | Select assigned ring, enter round scores | Assigned ring/bout APIs, Judge score APIs | JudgeAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
 | Supervisor | /supervisor | Supervisor | Select assigned ring, review score readiness/penalties, confirm result | Assigned ring/bout APIs, Supervisor APIs | SupervisorAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, score readiness, confirmation review/cancel, locked result, action feedback |
-| Ring manager | /ring-manager | Ring Manager | Select assigned ring and operate bouts | Assigned ring/bout APIs, Ring Manager APIs | RingManagerAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
+| Ring manager | /ring-manager | Ring Manager | Select assigned ring and run state-valid bout commands | Assigned ring/bout APIs, Ring Manager APIs | RingManagerAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, current-bout mismatch, state command matrix, confirmation, loading, error, action feedback |
 | Operations | /operations | Game Manager, Service Manager | Monitor tournament operations | /api/admin/operations/status | OperationsPage, StatePanel | Session/role guard, loading, error |
 | Audit logs | /audit-logs | Game Manager, Service Manager | Search operational audit records | /api/admin/audit-logs | AuditLogPage, StatePanel | Session/role guard, loading, error, empty |
 | Tournament admin | /admin/tournaments | Game Manager, Service Manager | Tournament CRUD | /api/admin/tournaments | AdminTournamentPage, StatePanel | Guard, list, form, action errors |
@@ -129,7 +129,7 @@ the source of truth.
 | --- | --- | --- | --- |
 | Judge | `/api/staff/assignments/rings`, assigned ring bouts, `/api/judge/bouts/{boutId}/scores` | `/api/judge/bouts/{boutId}/rounds/{roundNo}/scores` without `judgeId` | boxing.judge.session, JUDGE |
 | Supervisor | `/api/staff/assignments/rings`, `/api/staff/assignments/rings/{ringId}/bouts`, `/api/supervisor/bouts/{id}/scores`, `/penalties` | `/penalties` and `/result` without client actor IDs | boxing.supervisor.session, SUPERVISOR |
-| Ring manager | assigned ring bouts | start, status, round start, next-bout actions | boxing.ring-manager.session, RING_MANAGER |
+| Ring manager | assigned rings with `currentBoutId`, assigned ring bouts | state-specific start/cancel/round/scoring/next-bout actions | boxing.ring-manager.session, RING_MANAGER |
 | Operations | /api/admin/operations/status?tournamentId= | None in current page | boxing.operations.session, GAME_MANAGER or SERVICE_MANAGER |
 | Audit logs | /api/admin/audit-logs with filters | None in current page | boxing.operations.session, GAME_MANAGER or SERVICE_MANAGER |
 
@@ -148,6 +148,24 @@ the source of truth.
 
 When a field changes, update the API module, page form, state behavior, and
 page test together. Do not depend on an undocumented response field.
+
+### 4.4 Ring Manager command matrix
+
+The routed page uses the server-provided assigned ring and current bout. It
+does not accept a numeric `ringId` or expose an all-status selector.
+
+| Selected bout status | Available commands | Disabled conditions |
+| --- | --- | --- |
+| `SCHEDULED` | Cancel | Request in flight |
+| `READY` | Start bout | Selected bout is not the ring current bout |
+| `IN_PROGRESS` | Start exact next round, send to scoring after configured rounds | Wrong current bout, invalid round sequence, request in flight |
+| `SCORING` | Supervisor waiting state | Read only |
+| `FINISHED` | Prepare next bout when ring is complete | Read only until next preparation |
+| `CANCELED` | Canceled state | Read only |
+
+Start, cancel, scoring, and next-bout actions require an accessible confirm or
+cancel step. The server-selected next bout is requested with the ring ID only.
+The backend contract is maintained in [Bout state transition policy](bout-state-transition-policy.md).
 
 ## 5. SSE design
 
@@ -291,7 +309,7 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 24 test files and 71 passing tests.
+The current frontend baseline is 24 test files and 78 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |

@@ -13,7 +13,9 @@ public class RingManagerBoutResponse {
     private final String matchType;
     private final BoutStatus status;
     private final Integer currentRound;
+    private final Integer totalRounds;
     private final Integer scheduledOrder;
+    private final boolean resultConfirmed;
     private final LocalDateTime startedAt;
 
     private RingManagerBoutResponse(
@@ -23,7 +25,9 @@ public class RingManagerBoutResponse {
             String matchType,
             BoutStatus status,
             Integer currentRound,
+            Integer totalRounds,
             Integer scheduledOrder,
+            boolean resultConfirmed,
             LocalDateTime startedAt
     ) {
         this.boutId = boutId;
@@ -32,7 +36,9 @@ public class RingManagerBoutResponse {
         this.matchType = matchType;
         this.status = status;
         this.currentRound = currentRound;
+        this.totalRounds = totalRounds;
         this.scheduledOrder = scheduledOrder;
+        this.resultConfirmed = resultConfirmed;
         this.startedAt = startedAt;
     }
 
@@ -44,7 +50,9 @@ public class RingManagerBoutResponse {
                 bout.getMatchType(),
                 bout.getStatus(),
                 bout.getCurrentRound(),
+                bout.getTotalRounds(),
                 bout.getScheduledOrder(),
+                bout.isResultConfirmed(),
                 bout.getStartedAt()
         );
     }
@@ -73,8 +81,16 @@ public class RingManagerBoutResponse {
         return currentRound;
     }
 
+    public Integer getTotalRounds() {
+        return totalRounds;
+    }
+
     public Integer getScheduledOrder() {
         return scheduledOrder;
+    }
+
+    public boolean isResultConfirmed() {
+        return resultConfirmed;
     }
 
     public LocalDateTime getStartedAt() {
