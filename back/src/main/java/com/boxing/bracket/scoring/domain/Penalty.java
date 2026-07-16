@@ -33,6 +33,9 @@ public class Penalty extends BaseTimeEntity {
     @Column(nullable = false)
     private BoutSide targetSide;
 
+    @Column(name = "round_no")
+    private Integer roundNo;
+
     @Column(nullable = false)
     private Integer penaltyPoint;
 
@@ -42,12 +45,13 @@ public class Penalty extends BaseTimeEntity {
     private Long createdBy;
 
     @Builder
-    private Penalty(Long boutId, BoutSide targetSide, Integer penaltyPoint, String reason, Long createdBy) {
+    private Penalty(Long boutId, BoutSide targetSide, Integer roundNo, Integer penaltyPoint, String reason, Long createdBy) {
         if (penaltyPoint == null || penaltyPoint < 1) {
             throw new IllegalArgumentException("INVALID_PENALTY_VALUE");
         }
         this.boutId = boutId;
         this.targetSide = targetSide;
+        this.roundNo = roundNo;
         this.penaltyPoint = penaltyPoint;
         this.reason = reason;
         this.createdBy = createdBy;

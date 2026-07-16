@@ -35,6 +35,14 @@ class RoundScoreTest {
     }
 
     @Test
+    void submitRejectsScoreAboveTen() {
+        RoundScore roundScore = createRoundScore();
+
+        assertThatThrownBy(() -> roundScore.submit(11, 9))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void submitAcceptsZeroScores() {
         RoundScore roundScore = createRoundScore();
 

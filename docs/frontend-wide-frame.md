@@ -71,7 +71,8 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 | Account admin | /admin/accounts | Service Manager | Account and role CRUD | /api/admin/accounts | AdminAccountPage, StatePanel | Guard, list, form, action errors |
 | Assignment admin | /admin/assignments | Game Manager, Service Manager | Create and activate/deactivate staff ring assignments | /api/admin/assignments, account/tournament/ring reference APIs | AdminAssignmentPage, StatePanel | Guard, reference loading, duplicate/error, active state |
 
-Authentication and role checks are performed by role pages with sessionStorage.
+Authentication and role checks are performed by the shared staff provider and
+route guard, with role pages retaining their assignment-specific checks.
 Public pages do not require a session.
 
 The public header is audience-only. Staff enter through one shared
@@ -299,8 +300,8 @@ information remains scannable without becoming a collection of nested cards.
 | Viewport | Target | Current status | Acceptance rule |
 | --- | --- | --- | --- |
 | Mobile 360 | One column, grouped operations menu, core bout information first, no horizontal scroll | Implemented by mobile layout and overflow protection | No clipping in header, notices, rings, results, or schedule |
-| Tablet 768 | Two-column content where space allows | Partial; desktop fluid layout begins above 760px | No desktop row may escape the viewport |
-| Desktop 1024 | Two or three scannable columns | Partial; capped fluid shell | Current/next bout and ring details remain readable |
+| Tablet 768 | Two-column content where space allows | Implemented with a tablet breakpoint above 760px | No desktop row may escape the viewport |
+| Desktop 1024 | Two or three scannable columns | Implemented with capped fluid shell and tablet tuning | Current/next bout and ring details remain readable |
 | Wide 1440 | Centered max-width content and side margins | Implemented by 1220px page shell | Do not stretch long rows or shrink type for density |
 
 Rules:
@@ -319,7 +320,7 @@ Rules:
 | Keyboard focus | Implemented | Visible focus outline for buttons, inputs, and links |
 | Text labels | Implemented | Forms and navigation have accessible names |
 | Status not conveyed by color alone | Implemented in core audience/bracket labels | Keep red/blue text alongside color |
-| Touch target size | Partial | Verify new controls at mobile widths |
+| Touch target size | Implemented in staff controls | Verify new controls at mobile widths |
 | Heading hierarchy | Partial | Preserve page heading order |
 | Error announcement | Implemented | role alert or aria-live where appropriate |
 | Realtime announcement | Partial | Connection state is announced; raw event spam is avoided |

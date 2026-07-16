@@ -1,27 +1,34 @@
 import { NavLink } from 'react-router-dom';
+import { STAFF_ROLE_LABELS, useStaffAuth } from '../auth/StaffAuthContext';
 
-export function AppHeader({ tournamentId, onTournamentChange }) {
+export function AppHeader({ tournamentId }) {
+  const { session, signOut } = useStaffAuth();
   const publicLinks = [
     ['/', '현황'],
     ['/bracket', '대진표'],
   ];
-  const operationLinks = [
-    ['/judge', '심판'],
-    ['/supervisor', '감독'],
-    ['/ring-manager', '링 운영'],
-    ['/operations', '운영 현황'],
-    ['/audit-logs', '감사 로그'],
-    ['/admin/tournaments', '대회 관리'],
-    ['/admin/rings', '링 관리'],
-    ['/admin/athletes', '선수 관리'],
-    ['/admin/notices', '공지 관리'],
-    ['/admin/schedules', '일정 관리'],
-    ['/admin/bouts', '대진 관리'],
-    ['/admin/accounts', '계정 관리'],
-    ['/admin/assignments', '배정 관리'],
-  ];
+  const staffLinks = {
+    JUDGE: [['/judge', '심판 작업실']],
+    SUPERVISOR: [['/supervisor', '감독관 작업실']],
+    RING_MANAGER: [['/ring-manager', '링 운영']],
+    GAME_MANAGER: [
+      ['/operations', '운영 현황'], ['/audit-logs', '감사 로그'],
+      ['/admin/tournaments', '대회 관리'], ['/admin/rings', '링 관리'],
+      ['/admin/athletes', '선수 관리'], ['/admin/notices', '공지 관리'],
+      ['/admin/schedules', '일정 관리'], ['/admin/bouts', '대진 관리'],
+      ['/admin/assignments', '배정 관리'],
+    ],
+    SERVICE_MANAGER: [
+      ['/operations', '운영 현황'], ['/audit-logs', '감사 로그'],
+      ['/admin/tournaments', '대회 관리'], ['/admin/rings', '링 관리'],
+      ['/admin/athletes', '선수 관리'], ['/admin/notices', '공지 관리'],
+      ['/admin/schedules', '일정 관리'], ['/admin/bouts', '대진 관리'],
+      ['/admin/accounts', '계정 관리'], ['/admin/assignments', '배정 관리'],
+    ],
+  };
+  const operationLinks = session ? staffLinks[session.account.role] || [] : [];
   return (
-    <header className="app-header">
+    <header className={`app-header${session ? ' is-staff' : ' is-public'}`}>
       <div className="brand-block">
         <div className="brand-lockup">
           <span aria-hidden="true" className="brand-mark">BX</span>
@@ -36,23 +43,16 @@ export function AppHeader({ tournamentId, onTournamentChange }) {
           <NavLink end={path === '/'} key={path} to={`${path}?tournamentId=${tournamentId}`}>{label}</NavLink>
         ))}
       </nav>
-      <details className="operations-menu">
+      {session && <details className="operations-menu">
         <summary>운영 메뉴</summary>
         <nav aria-label="운영 메뉴" className="operations-menu-panel">
-          {operationLinks.map(([path, label]) => (
-            <NavLink key={path} to={`${path}?tournamentId=${tournamentId}`}>{label}</NavLink>
-          ))}
+          {operationLinks.map(([path, label]) => <NavLink key={path} to={`${path}?tournamentId=${tournamentId}`}>{label}</NavLink>)}
         </nav>
-      </details>
-      <label className="tournament-input">
-        <span>대회 ID</span>
-        <input
-          min="1"
-          type="number"
-          value={tournamentId}
-          onChange={(event) => onTournamentChange(event.target.value)}
-        />
-      </label>
+      </details>}
+      {session && <div className="staff-session">
+        <span><b>{session.account.name}</b><small>{STAFF_ROLE_LABELS[session.account.role]} · 대회 {tournamentId}</small></span>
+        <button aria-label="로그아웃" className="header-logout" onClick={signOut} type="button">로그아웃</button>
+      </div>}
     </header>
   );
 }

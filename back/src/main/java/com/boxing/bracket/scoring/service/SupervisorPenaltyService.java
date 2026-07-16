@@ -52,10 +52,12 @@ public class SupervisorPenaltyService {
         Bout bout = boutRepository.findById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
         bout.validatePenaltyCreation();
+        validateRoundNo(bout, request.getRoundNo());
 
         Penalty penalty = Penalty.builder()
                 .boutId(boutId)
                 .targetSide(request.getTargetSide())
+                .roundNo(request.getRoundNo())
                 .penaltyPoint(request.getPenaltyPoint())
                 .reason(request.getReason())
                 .createdBy(actorId)
@@ -97,6 +99,15 @@ public class SupervisorPenaltyService {
         }
         if (request.getPenaltyPoint() < 1) {
             throw new IllegalArgumentException("INVALID_PENALTY_VALUE");
+        }
+    }
+
+    private void validateRoundNo(Bout bout, Integer roundNo) {
+        if (roundNo == null) {
+            return;
+        }
+        if (roundNo < 1 || (bout.getTotalRounds() != null && roundNo > bout.getTotalRounds())) {
+            throw new IllegalArgumentException("INVALID_ROUND_NUMBER");
         }
     }
 }

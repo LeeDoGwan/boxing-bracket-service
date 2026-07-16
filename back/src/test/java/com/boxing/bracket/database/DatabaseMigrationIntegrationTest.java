@@ -20,10 +20,10 @@ class DatabaseMigrationIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void appliesInitialMigrationAndLeavesNoPendingChanges() {
+    void appliesAllMigrationsAndLeavesNoPendingChanges() {
         assertThat(flyway.info().applied())
                 .extracting(migration -> migration.getVersion().getVersion())
-                .containsExactly("1");
+                .containsExactly("1", "2");
         assertThat(flyway.info().pending()).isEmpty();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbcTemplate.queryForObject(
@@ -55,6 +55,7 @@ class DatabaseMigrationIntegrationTest {
         assertThat(columnExists("round_scores", "version")).isTrue();
         assertThat(columnExists("bout_results", "version")).isTrue();
         assertThat(columnExists("staff_assignments", "version")).isTrue();
+        assertThat(columnExists("penalties", "round_no")).isTrue();
     }
 
     private boolean tableExists(String tableName) {

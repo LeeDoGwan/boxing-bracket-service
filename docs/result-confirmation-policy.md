@@ -1,6 +1,6 @@
 # Supervisor Result Confirmation Policy
 
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 This document defines the current server and frontend contract for Supervisor
 review and bout result confirmation. It complements [Staff ring assignment](staff-assignment.md)
@@ -17,7 +17,7 @@ and [Judge scoring policy](scoring-policy.md).
 | Result and penalty lock | Implemented; confirmed/finished bouts reject further mutations |
 | Judge-count minimum | Odd Judge count confirmed; exact count and missing-submission rule remain open |
 | Boxing decision combinations | Broad multi-type result support confirmed; exact catalog remains open |
-| Penalty scope | Round-level entry with bout-level aggregate confirmed; round reference implementation pending |
+| Penalty scope | Implemented; round-level entry is stored and the aggregate remains bout-level |
 
 ## Confirmation Contract
 

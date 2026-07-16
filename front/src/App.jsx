@@ -1,6 +1,10 @@
 import { lazy, Suspense, useMemo } from 'react';
 import { Route, Routes, useSearchParams } from 'react-router-dom';
+import { StaffAuthProvider } from './auth/StaffAuthContext';
+import { AppFooter } from './components/AppFooter';
 import { AppHeader } from './components/AppHeader';
+import { StaffRoute } from './components/StaffRoute';
+import { StaffLoginPage } from './pages/StaffLoginPage';
 
 const AudienceHome = lazy(() => import('./pages/AudienceHome').then(({ AudienceHome: page }) => ({ default: page })));
 const BracketPage = lazy(() => import('./pages/BracketPage').then(({ BracketPage: page }) => ({ default: page })));
@@ -28,40 +32,38 @@ function readTournamentId(searchParams) {
   return Number.isInteger(value) && value > 0 ? value : DEFAULT_TOURNAMENT_ID;
 }
 
-export default function App() {
-  const [searchParams, setSearchParams] = useSearchParams();
+function AppRoutes() {
+  const [searchParams] = useSearchParams();
   const tournamentId = useMemo(() => readTournamentId(searchParams), [searchParams]);
-
-  const updateTournamentId = (value) => {
-    const nextTournamentId = Number.parseInt(value, 10);
-    if (!Number.isInteger(nextTournamentId) || nextTournamentId < 1) {
-      return;
-    }
-    setSearchParams({ tournamentId: String(nextTournamentId) });
-  };
 
   return (
     <div className="app-shell">
-      <AppHeader onTournamentChange={updateTournamentId} tournamentId={tournamentId} />
+      <AppHeader tournamentId={tournamentId} />
       <Suspense fallback={<main className="page-shell"><p className="dialog-state">화면을 불러오는 중입니다.</p></main>}>
         <Routes>
         <Route element={<AudienceHome tournamentId={tournamentId} />} path="/" />
         <Route element={<BracketPage tournamentId={tournamentId} />} path="/bracket" />
-        <Route element={<AssignedJudgeRoute tournamentId={tournamentId} />} path="/judge" />
-        <Route element={<AssignedSupervisorRoute tournamentId={tournamentId} />} path="/supervisor" />
-        <Route element={<AssignedRingManagerRoute tournamentId={tournamentId} />} path="/ring-manager" />
-        <Route element={<OperationsPage tournamentId={tournamentId} />} path="/operations" />
-        <Route element={<AuditLogPage tournamentId={tournamentId} />} path="/audit-logs" />
-        <Route element={<AdminTournamentPage />} path="/admin/tournaments" />
-        <Route element={<AdminRingPage tournamentId={tournamentId} />} path="/admin/rings" />
-        <Route element={<AdminAthletePage />} path="/admin/athletes" />
-        <Route element={<AdminNoticePage tournamentId={tournamentId} />} path="/admin/notices" />
-        <Route element={<AdminSchedulePage tournamentId={tournamentId} />} path="/admin/schedules" />
-        <Route element={<AdminBoutPage tournamentId={tournamentId} />} path="/admin/bouts" />
-        <Route element={<AdminAccountPage />} path="/admin/accounts" />
-        <Route element={<AdminAssignmentPage />} path="/admin/assignments" />
+        <Route element={<StaffLoginPage />} path="/staff/login" />
+        <Route element={<StaffRoute allowedRoles={['JUDGE']}><AssignedJudgeRoute tournamentId={tournamentId} /></StaffRoute>} path="/judge" />
+        <Route element={<StaffRoute allowedRoles={['SUPERVISOR']}><AssignedSupervisorRoute tournamentId={tournamentId} /></StaffRoute>} path="/supervisor" />
+        <Route element={<StaffRoute allowedRoles={['RING_MANAGER']}><AssignedRingManagerRoute tournamentId={tournamentId} /></StaffRoute>} path="/ring-manager" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><OperationsPage tournamentId={tournamentId} /></StaffRoute>} path="/operations" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AuditLogPage tournamentId={tournamentId} /></StaffRoute>} path="/audit-logs" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminTournamentPage /></StaffRoute>} path="/admin/tournaments" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminRingPage tournamentId={tournamentId} /></StaffRoute>} path="/admin/rings" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminAthletePage /></StaffRoute>} path="/admin/athletes" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminNoticePage tournamentId={tournamentId} /></StaffRoute>} path="/admin/notices" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminSchedulePage tournamentId={tournamentId} /></StaffRoute>} path="/admin/schedules" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminBoutPage tournamentId={tournamentId} /></StaffRoute>} path="/admin/bouts" />
+        <Route element={<StaffRoute allowedRoles={['SERVICE_MANAGER']}><AdminAccountPage /></StaffRoute>} path="/admin/accounts" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminAssignmentPage /></StaffRoute>} path="/admin/assignments" />
         </Routes>
       </Suspense>
+      <AppFooter />
     </div>
   );
+}
+
+export default function App() {
+  return <StaffAuthProvider><AppRoutes /></StaffAuthProvider>;
 }

@@ -62,6 +62,7 @@ class SupervisorPenaltyControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.boutId").value(1))
                 .andExpect(jsonPath("$.data.targetSide").value("RED"))
+                .andExpect(jsonPath("$.data.roundNo").value(1))
                 .andExpect(jsonPath("$.data.penaltyPoint").value(1))
                 .andExpect(jsonPath("$.data.createdBy").value(20));
     }
@@ -96,6 +97,7 @@ class SupervisorPenaltyControllerTest {
         Penalty penalty = Penalty.builder()
                 .boutId(1L)
                 .targetSide(BoutSide.RED)
+                .roundNo(1)
                 .penaltyPoint(1)
                 .reason("warning")
                 .createdBy(20L)

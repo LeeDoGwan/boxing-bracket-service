@@ -49,12 +49,18 @@ authorized staff and a clear distinction between discoverability and security.
 
 ## Implementation Notes
 
-The following are confirmed product targets but are not all implemented yet:
+The following confirmed targets are implemented in the current baseline:
 
-- Add maximum-score validation to the backend and frontend.
-- Add round-level penalty reference while retaining bout-level totals.
-- Consolidate role-specific login forms into the shared staff login flow.
-- Replace the raw public tournament ID control with a tournament context that
-  is meaningful to the current one-tournament experience.
-- Define and implement the complete exceptional decision-type catalog after
-  venue confirmation.
+- Maximum score `10` is enforced by backend validation and browser validation.
+- Penalties accept an optional round reference, while totals remain bout-level;
+  the frontend sends the selected round for new entries.
+- Role-specific entry points are consolidated into `/staff/login`, with a
+  shared session, protected routes, role-aware navigation, and logout cleanup.
+- The public header no longer exposes a raw tournament ID control; the current
+  one-tournament context is carried by the public navigation and staff session.
+
+Still open after venue confirmation:
+
+- The complete exceptional result-type catalog and allowed winner combinations.
+- Exact Judge count and association-specific tie or missing-submission rules.
+- A post-submission score correction workflow, if the venue requires one.

@@ -111,7 +111,8 @@ public class JudgeScoreService {
     }
 
     private void validateScoreValues(RoundScoreSubmitRequest request) {
-        if (request.getRedScore() < 0 || request.getBlueScore() < 0) {
+        if (request.getRedScore() < 0 || request.getBlueScore() < 0
+                || request.getRedScore() > 10 || request.getBlueScore() > 10) {
             throw new IllegalArgumentException("INVALID_SCORE_VALUE");
         }
     }

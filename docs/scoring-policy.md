@@ -1,6 +1,6 @@
 # Judge Scoring Policy
 
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 This document describes the score submission rules currently enforced by the
 backend and the corresponding Judge screen behavior. It separates generic
@@ -15,7 +15,7 @@ safety rules from boxing-association rules that still require venue confirmation
 | Bout and round lifecycle checks | Implemented |
 | One submitted score per Judge, bout, and round | Implemented |
 | Same-payload retry idempotency | Implemented |
-| Maximum score | Confirmed as 10; backend/frontend enforcement pending |
+| Maximum score | Implemented as 10 in backend and frontend |
 | Ten-point-must rule | Provisional; validation required from boxing association officials |
 | Tie-round policy | Provisional; validation required from boxing association officials |
 | Deduction interaction with Judge input | Provisional; validation required from boxing association officials |
@@ -25,7 +25,7 @@ safety rules from boxing-association rules that still require venue confirmation
 The existing `POST /api/judge/bouts/{boutId}/rounds/{roundNo}/scores` endpoint
 enforces the following rules:
 
-1. Both red and blue scores are required integers greater than or equal to zero.
+1. Both red and blue scores are required integers from 0 through 10.
 2. A bout must be `IN_PROGRESS` or `SCORING` and must not be finished or result-confirmed.
 3. A bout in `SCHEDULED` or `READY` rejects scores with `BOUT_NOT_STARTED`.
 4. When `totalRounds` is configured, the requested round must be within that range.
@@ -75,7 +75,7 @@ successful response locks the round; a server error maps the stable message to
 a short operator-facing message without exposing stack traces.
 
 Browser validation is convenience only. The backend remains the final authority
-for score values, bout state, round state, and assignment access.
+for score values from 0 through 10, bout state, round state, and assignment access.
 
 ## Required Venue Decisions
 

@@ -8,6 +8,7 @@ public class PenaltyResponse {
     private final Long penaltyId;
     private final Long boutId;
     private final BoutSide targetSide;
+    private final Integer roundNo;
     private final Integer penaltyPoint;
     private final String reason;
     private final Long createdBy;
@@ -16,6 +17,7 @@ public class PenaltyResponse {
             Long penaltyId,
             Long boutId,
             BoutSide targetSide,
+            Integer roundNo,
             Integer penaltyPoint,
             String reason,
             Long createdBy
@@ -23,6 +25,7 @@ public class PenaltyResponse {
         this.penaltyId = penaltyId;
         this.boutId = boutId;
         this.targetSide = targetSide;
+        this.roundNo = roundNo;
         this.penaltyPoint = penaltyPoint;
         this.reason = reason;
         this.createdBy = createdBy;
@@ -33,6 +36,7 @@ public class PenaltyResponse {
                 penalty.getId(),
                 penalty.getBoutId(),
                 penalty.getTargetSide(),
+                penalty.getRoundNo(),
                 penalty.getPenaltyPoint(),
                 penalty.getReason(),
                 penalty.getCreatedBy()
@@ -53,6 +57,10 @@ public class PenaltyResponse {
 
     public Integer getPenaltyPoint() {
         return penaltyPoint;
+    }
+
+    public Integer getRoundNo() {
+        return roundNo;
     }
 
     public String getReason() {
