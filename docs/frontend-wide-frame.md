@@ -1,6 +1,6 @@
 # Frontend Wide-Frame Architecture Guide
 
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 This is the implementation-oriented wide frame for the frontend in front/.
 It connects screens, state, API calls, components, realtime events, tests,
@@ -73,6 +73,14 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 
 Authentication and role checks are performed by role pages with sessionStorage.
 Public pages do not require a session.
+
+The public header is audience-only. Staff enter through one shared
+`/staff/login` flow, after which the application exposes only the navigation
+allowed by the authenticated role and active ring assignment. Direct access to
+a protected route preserves a return path through the shared login. Staff
+screens are tablet-first, remain usable on mobile, and treat offline operation
+as out of scope while retaining reconnect, stale-data, retry, and conflict
+feedback.
 
 ## 3. State model
 

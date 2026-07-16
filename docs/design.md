@@ -1,6 +1,6 @@
 # Boxing Bracket Service Design
 
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 ## 1. Purpose
 
@@ -62,7 +62,7 @@ flowchart LR
     audit --> db
 ```
 
-The frontend and backend can be deployed separately. During local development, Vite proxies `/api` to `http://localhost:8080`; production deployment should provide an equivalent reverse-proxy or configure `VITE_API_BASE_URL`.
+The frontend and backend can be deployed separately. During local development, Vite proxies `/api` to `http://localhost:8080`; production deployment should provide an equivalent reverse-proxy or configure `VITE_API_BASE_URL`. Product and UX decisions are recorded in [Product decisions](product-decisions.md).
 
 ## 4. Backend Architecture
 
@@ -124,7 +124,7 @@ App
 `-- shared components, API clients, hooks, and styles
 ```
 
-Each authenticated desk owns its login/session validation and limits the UI by role before making protected API calls. API clients share `requestApi`, which adds JSON headers, optional bearer authorization, parses the common response envelope, and turns server failures into JavaScript errors.
+The MVP currently gives each authenticated desk its own login/session validation and limits the UI by role before making protected API calls. The target UX consolidates these forms into one `/staff/login` entry point, then routes the authenticated account to its role-specific workspace and navigation. API clients share `requestApi`, which adds JSON headers, optional bearer authorization, parses the common response envelope, and turns server failures into JavaScript errors.
 
 The public home aggregates notices, ring status, confirmed results, and schedules from `/api/home`. It opens bout details through the public bout detail API. SSE reconnects trigger a fresh audience data load, so the stream is an invalidation signal rather than the source of truth.
 

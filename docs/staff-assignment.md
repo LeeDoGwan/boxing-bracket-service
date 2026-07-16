@@ -13,7 +13,7 @@ ring before it can read or mutate that ring's bouts.
 | Decision | Current rule | Status |
 | --- | --- | --- |
 | Assignment unit | `account + tournament + ring + role` | Implemented; validate at field operation |
-| Judge granularity | Ring, not individual bout | Provisional; review after venue operation feedback |
+| Judge granularity | Ring, not individual bout | Confirmed |
 | Multiple rings | One account may have multiple ring rows in one tournament | Implemented |
 | Role changes | An account role must match the assignment role | Implemented |
 | Deactivation | Existing scores and audit history remain; subsequent requests are denied | Implemented |

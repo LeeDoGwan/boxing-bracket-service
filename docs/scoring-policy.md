@@ -15,7 +15,7 @@ safety rules from boxing-association rules that still require venue confirmation
 | Bout and round lifecycle checks | Implemented |
 | One submitted score per Judge, bout, and round | Implemented |
 | Same-payload retry idempotency | Implemented |
-| Maximum score | Provisional; validation required from boxing association officials |
+| Maximum score | Confirmed as 10; backend/frontend enforcement pending |
 | Ten-point-must rule | Provisional; validation required from boxing association officials |
 | Tie-round policy | Provisional; validation required from boxing association officials |
 | Deduction interaction with Judge input | Provisional; validation required from boxing association officials |
@@ -34,6 +34,13 @@ enforces the following rules:
 7. A different payload for a submitted score returns `SCORE_ALREADY_SUBMITTED`.
 8. The authenticated Judge assignment remains the authorization source; the frontend does not send `judgeId`.
 9. Validation failures do not publish `SCORE_SUBMITTED`. Successful persistence publishes one event after the existing transaction/event flow.
+
+## Confirmed Target Rules
+
+The product decision is that each red or blue athlete score is an integer from
+0 through 10. A submitted score remains immutable. The event's Judge count is
+odd, so a tie is expected to be uncommon, but the exact count and any
+association-specific tie handling remain open.
 
 ## State Matrix
 
@@ -74,7 +81,7 @@ for score values, bout state, round state, and assignment access.
 
 Before enforcing association-specific rules, confirm:
 
-- maximum and minimum per-athlete round scores;
+- minimum per-athlete round scores;
 - whether every round must include a ten-point score;
 - whether tied rounds are valid;
 - whether deductions are entered separately and how they affect final totals;

@@ -15,8 +15,9 @@ and [Judge scoring policy](scoring-policy.md).
 | Score readiness | Implemented; every existing score record must be submitted with both values |
 | Bout lifecycle | Implemented; confirmation requires an in-progress or scoring bout |
 | Result and penalty lock | Implemented; confirmed/finished bouts reject further mutations |
-| Judge-count minimum | Provisional; no fixed 3 or 5 Judge count is hard-coded |
-| Boxing decision combinations | Provisional; venue officials must confirm exceptional-bout rules |
+| Judge-count minimum | Odd Judge count confirmed; exact count and missing-submission rule remain open |
+| Boxing decision combinations | Broad multi-type result support confirmed; exact catalog remains open |
+| Penalty scope | Round-level entry with bout-level aggregate confirmed; round reference implementation pending |
 
 ## Confirmation Contract
 
@@ -73,6 +74,8 @@ field instead of a hard-coded number.
 - Penalty points are positive integers. Zero and negative values return
   `400 INVALID_PENALTY_VALUE`.
 - Penalties cannot be added after result confirmation.
+- Penalties may be entered with a round reference, while the adjusted total is
+  calculated across the whole bout.
 - Duplicate penalty reasons are not blocked because the venue policy is not
   yet defined.
 
