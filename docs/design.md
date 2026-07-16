@@ -323,22 +323,33 @@ The detailed endpoint list remains in [Sprint 1 scope](sprint-1.md). Frontend-sp
 
 ## 10. Persistence and Deployment
 
-The local profile expects MariaDB at `boxing_bracket` with `ddl-auto: none`. The service therefore assumes that the base schema and migrations have already been applied.
+The local profile expects MariaDB at `boxing_bracket`, runs Flyway from
+`back/src/main/resources/db/migration/`, and uses `ddl-auto: validate`. Flyway
+is the schema owner; Hibernate validates the resulting schema and never creates
+or alters tables at application startup. The policy and operator procedures are
+in [Database migration policy](database-migration.md).
 
-Migration documents currently cover:
+The current baseline is `V1__create_initial_schema.sql`. It includes all
+currently mapped tables, optimistic-lock columns, workflow uniqueness
+constraints, schedule and staff-assignment indexes, and audit-log indexes.
+Entity references are scalar IDs, so this baseline intentionally does not add
+foreign keys that the current model does not declare.
 
-1. `database-migration-concurrency.sql`: version columns and workflow uniqueness constraints.
-2. `database-migration-audit-log.sql`: immutable audit storage and indexes.
-3. `database-migration-schedule.sql`: tournament schedule storage and indexes.
-4. `database-migration-staff-assignment.sql`: staff ring assignments and uniqueness/indexes.
+The repository contains no evidence of a deployed shared database. New
+installations therefore start from V1. An existing database must be inspected,
+backed up, and explicitly baselined only after its schema is proven equivalent;
+`baseline-on-migrate` is disabled so an unknown schema cannot start silently.
 
-The test profile uses an H2 in-memory database with `ddl-auto: create-drop`; it discovers the JPA model directly and does not apply the MariaDB migration files.
+The test profile uses H2 in MySQL compatibility mode, applies the same Flyway
+V1 migration, and then validates the JPA mapping. A migration integration test
+checks the history table, idempotent startup, tables, version columns, and
+operational unique constraints.
 
 Operational prerequisites:
 
 - Java 11, Maven 3.9.x, Node.js 24.x, and npm.
 - No Maven Wrapper is tracked; local and CI backend verification use the available Maven 3.9.x command.
-- MariaDB schema migration execution before local-profile startup.
+- MariaDB database and account setup before local-profile startup; Flyway applies pending migrations automatically.
 - Active role accounts and tournament reference data for authenticated end-to-end testing.
 - A shared session store and external event delivery strategy before running multiple backend instances.
 - Source verification runs through separate [Backend CI](../.github/workflows/backend-ci.yml) and [Frontend CI](../.github/workflows/frontend-ci.yml) workflows. CI uses Temurin Java 11, Node.js 24, Maven/npm dependency caches, read-only repository permissions, and no deployment secrets.
@@ -355,7 +366,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 71 test classes, 380 test cases, zero failures, errors, or skips.
+- Backend: 72 test classes, 382 test cases, zero failures, errors, or skips.
 - Frontend: 24 test files, 78 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
@@ -373,4 +384,4 @@ The following decisions should be made before expanding beyond the MVP:
 - Ring Manager lifecycle: current status transitions, round sequencing, next-bout ordering, and cancellation semantics are documented in [Bout state transition policy](bout-state-transition-policy.md); cancellation and exceptional-bout behavior remain venue decisions.
 - Boxing scoring policy: maximum score, ten-point rule, tied-round handling, deduction interaction, and exceptional-bout timing require venue confirmation; see [Judge scoring policy](scoring-policy.md).
 - Data ownership: whether athletes remain global master data or become tournament-scoped records.
-- Production migration tooling: repeatable versioned migrations and rollback policy.
+- Production migration operations: backup, approval, rollback/forward-fix policy, and schema ownership for shared databases.

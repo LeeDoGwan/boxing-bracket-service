@@ -28,7 +28,8 @@ receives tournament scope.
 ## Entity and constraints
 
 `staff_assignments` stores scalar IDs to match the rest of the backend model.
-The MariaDB migration is [database-migration-staff-assignment.sql](database-migration-staff-assignment.sql).
+The table, unique constraint, and indexes are created by the V1 Flyway
+migration documented in [Database migration policy](database-migration.md).
 
 Required fields are `id`, `version`, `accountId`, `tournamentId`, `ringId`,
 `role`, `active`, `createdAt`, and `updatedAt`. MariaDB rejects duplicate

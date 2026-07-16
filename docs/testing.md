@@ -7,8 +7,8 @@ Last updated: 2026-07-16
 - Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-07-16
-- Result: 380 passed, 0 failed, 0 errors, 0 skipped
-- Test classes: 71
+- Result: 382 passed, 0 failed, 0 errors, 0 skipped
+- Test classes: 72
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `back/src/test/resources/application-test.yml`
 
@@ -20,7 +20,16 @@ Last updated: 2026-07-16
 - Triggers: relevant `back/` or `front/` branch pushes, future pull requests, and manual dispatch. Documentation-only changes do not trigger these source workflows.
 - Both workflows use read-only repository permissions, a 15-minute job timeout, and cancel older runs for the same workflow and ref. Backend and frontend jobs remain independent.
 - Success requires command exit codes to pass, no failed or errored tests, no ESLint errors, and a successful production build. Test counts are intentionally not hard-coded.
-- These workflows verify source changes only. Deployment, Docker, infrastructure, secrets, migrations, performance tests, and pull request creation remain outside this stage.
+- These workflows verify source changes only. Deployment, Docker, infrastructure, production database credentials, performance tests, and pull request creation remain outside this stage. The backend test profile does apply the checked-in Flyway migration to H2.
+
+## Database Migration Verification
+
+- Flyway migration files live in `back/src/main/resources/db/migration/` and are applied before Hibernate schema validation.
+- `back/src/main/resources/application-local.yml` enables MariaDB migration and sets `ddl-auto: validate`; it does not create or alter tables through Hibernate.
+- `back/src/test/resources/application-test.yml` uses the same migration location with H2 MySQL compatibility mode and `ddl-auto: validate`.
+- `DatabaseMigrationIntegrationTest` verifies the V1 history record, no pending or duplicate migration, entity tables, optimistic-lock columns, and operational unique constraints.
+- `mvn test` is the migration test command. It does not require MariaDB credentials and does not prove every MariaDB-specific execution detail; a deployment rehearsal must run the same files against an approved MariaDB instance.
+- Existing `docs/database-migration-*.sql` files are historical pointers only. They contain no executable duplicate DDL; the Flyway directory is the single execution source.
 
 ## Test Scope
 

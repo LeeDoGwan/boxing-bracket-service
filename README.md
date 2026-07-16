@@ -41,12 +41,10 @@ Implemented core areas:
 - [Frontend wide-frame architecture](docs/frontend-wide-frame.md)
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
+- [Database migration policy](docs/database-migration.md)
 - [Backend CI workflow](.github/workflows/backend-ci.yml)
 - [Frontend CI workflow](.github/workflows/frontend-ci.yml)
-- [Concurrency database migration](docs/database-migration-concurrency.sql)
 - [Administrator audit log](docs/audit-log.md)
-- [Schedule database migration](docs/database-migration-schedule.sql)
-- [Audit log database migration](docs/database-migration-audit-log.sql)
 - [Frontend README](front/README.md)
 
 ## Repository Layout
@@ -82,7 +80,12 @@ npm run lint
 npm run build
 ```
 
-Current documented suite: 71 backend test classes, 380 backend test cases, and 78 frontend test cases.
+Current documented suite: 72 backend test classes, 382 backend test cases, and 78 frontend test cases.
+
+The local backend profile connects to MariaDB and runs Flyway migrations before
+Hibernate validates the schema. Create the `boxing_bracket` database and a
+least-privilege application account before starting the backend; schema changes
+are versioned under `back/src/main/resources/db/migration/`.
 
 ### Run application
 
