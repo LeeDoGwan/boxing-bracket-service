@@ -18,7 +18,7 @@ ring before it can read or mutate that ring's bouts.
 | Role changes | An account role must match the assignment role | Implemented |
 | Deactivation | Existing scores and audit history remain; subsequent requests are denied | Implemented |
 | Manager ownership | Existing Game Manager admin policy remains; tournament ownership records are deferred | Provisional |
-| Operator realtime | Explicit refetch after actions; no operator SSE in this change | Implemented |
+| Operator realtime | One selected-ring SSE stream per staff screen; events invalidate REST data and do not authorize writes | Implemented |
 
 `SERVICE_MANAGER` has global administrative authority. `GAME_MANAGER` and
 `SERVICE_MANAGER` retain the existing `/api/admin/**` policy. A separate
@@ -86,5 +86,11 @@ automatically; multiple rings show a selector. Empty assignments, revoked
 access (`403`), empty bouts, and expired sessions have explicit states.
 
 Ring Manager uses the same assigned-ring selector and keeps existing controls.
-Successful actions refetch the selected ring. Operator SSE remains future work;
-audience SSE is unchanged.
+Judge, Supervisor, and Ring Manager screens subscribe to
+`GET /api/events/stream?tournamentId={tournamentId}&ringId={selectedRingId}`
+when an active ring is selected. The stream is an invalidation signal only:
+relevant events trigger debounced assigned-bout/detail refetches, while the
+current form state remains intact. A ring change closes the previous
+`EventSource`; unmount and disabled/no-ring states close or avoid the connection.
+SSE failure preserves the current data and does not block write APIs. Audience
+SSE behavior remains unchanged.

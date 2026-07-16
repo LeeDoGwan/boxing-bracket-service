@@ -1,12 +1,14 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getBoutDetail } from '../api/audience';
 import { getJudgeScores, submitRoundScore } from '../api/judge';
 import { getAssignedBouts, getAssignedRings } from '../api/staffAssignments';
+import { useBoutEventStream } from '../hooks/useBoutEventStream';
 import { JudgeAssignedPage } from './JudgeAssignedPage';
 
 vi.mock('../api/audience', () => ({ getBoutDetail: vi.fn() }));
 vi.mock('../api/judge', () => ({ getJudgeScores: vi.fn(), submitRoundScore: vi.fn() }));
 vi.mock('../api/staffAssignments', () => ({ getAssignedBouts: vi.fn(), getAssignedRings: vi.fn() }));
+vi.mock('../hooks/useBoutEventStream', () => ({ useBoutEventStream: vi.fn(() => 'connected') }));
 
 const session = { accessToken: 'judge-token', account: { accountId: 7, name: 'Judge', role: 'JUDGE' } };
 const ring = { name: 'Ring A', ringId: 4 };
@@ -14,6 +16,7 @@ const bout = { boutId: 12, boutNumber: 12, currentRound: 1, redAthlete: { name: 
 
 beforeEach(() => {
   vi.clearAllMocks();
+  useBoutEventStream.mockReturnValue('connected');
   getAssignedRings.mockResolvedValue([ring]);
   getAssignedBouts.mockResolvedValue([{ boutId: 12, boutNumber: 12, matchType: 'Final', ringId: 4, status: 'IN_PROGRESS' }]);
   getBoutDetail.mockResolvedValue(bout);
@@ -37,5 +40,17 @@ describe('JudgeAssignedPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit round' }));
     await waitFor(() => expect(submitRoundScore).toHaveBeenCalledWith(12, 1, { blueScore: 9, redScore: 10 }, 'judge-token'));
     expect(submitRoundScore.mock.calls[0][2]).not.toHaveProperty('judgeId');
+  });
+
+  it('refreshes the selected bout after a live status event', async () => {
+    render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
+    const streamOptions = useBoutEventStream.mock.calls.slice(-1)[0][1];
+
+    act(() => streamOptions.onEvent({ boutId: 12, eventType: 'RESULT_CONFIRMED' }));
+
+    await waitFor(() => expect(getAssignedBouts).toHaveBeenCalledTimes(2));
+    expect(getBoutDetail).toHaveBeenCalledTimes(2);
+    expect(getJudgeScores).toHaveBeenCalledTimes(2);
   });
 });

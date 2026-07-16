@@ -19,8 +19,8 @@ Current boundaries:
   audit logs, and administration.
 
 This guide records current behavior and marks future work explicitly. Staff
-ring assignment and scoped operator routes are implemented; operator SSE and
-tournament ownership remain future work.
+ring assignment, scoped operator routes, and selected-ring operator SSE are
+implemented; tournament ownership remains future work.
 
 ## 2. Application map
 
@@ -92,7 +92,7 @@ Important transitions:
 | First load | Audience hook starts loading; page shows a loading panel | Do not show empty before the first response |
 | Partial audience failure | Promise.all fails as one reload; existing data is preserved | Keep usable data and expose retry |
 | SSE disconnect | Stream becomes reconnecting; content remains | Never clear last confirmed API data |
-| Event received | Event is parsed and deduplicated, then audience reload runs | No browser refresh |
+| Event received | Event is parsed and deduplicated, then audience or selected-ring staff reload runs | No browser refresh |
 | Duplicate event | Key uses event type, bout id, round, and occurrence time | No duplicate reload |
 | Invalid tournamentId | App normalizes it to 1 | Future validation must retain a usable default |
 | Result pending | Only API-confirmed data is displayed | Never infer a winner from an event payload |
@@ -163,13 +163,32 @@ registers named events and the default message event. Invalid JSON is ignored.
 | SCORE_SUBMITTED | Audience home | useAudienceData.reload | Results update after backend state | Do not show unconfirmed result |
 | RESULT_CONFIRMED | Audience home | useAudienceData.reload | Results, ring, and current/next sections update | Same |
 
+Staff event subscriptions reuse the same event names and REST invalidation
+pattern:
+
+| Staff screen | Subscribed events | Refresh target |
+| --- | --- | --- |
+| Judge | `BOUT_STARTED`, `BOUT_STATUS_CHANGED`, `ROUND_STARTED`, `NEXT_BOUT_READY`, `RESULT_CONFIRMED` | Assigned bouts and selected bout plus own scores |
+| Supervisor | All audience events, including `SCORE_SUBMITTED` | Assigned bouts and selected bout, scores, and penalties |
+| Ring Manager | `BOUT_STARTED`, `BOUT_STATUS_CHANGED`, `ROUND_STARTED`, `NEXT_BOUT_READY`, `RESULT_CONFIRMED` | Assigned bouts and selected ring controls |
+
 Current behavior is a full audience data reload for each recognized event. It
 does not refresh the browser, calculate a winner, or create duplicate timers.
 Cleanup calls EventSource.close().
 
+Staff desks pass `tournamentId`, the selected `ringId`, an event allow-list, and
+an invalidation callback to the same Hook. Judge excludes `SCORE_SUBMITTED`,
+while Supervisor includes it for score review. Ring Manager excludes it because
+score changes do not change its write workspace. Each staff screen owns one
+stream and closes it when the ring changes, the assignment is unavailable, or
+the component unmounts. Events are debounced and coalesced while a REST refresh
+is in flight; payloads are not rendered as final state and no write API is
+called from an event handler.
+
 SSE invariants:
 
 - Keep the last usable data while reconnecting.
+- Keep manual refresh and write actions available while an operator stream reconnects or fails.
 - Re-fetch from the backend instead of trusting event payloads.
 - Make delivery idempotent.
 - Create one stream per audience page and close it on unmount.
@@ -188,7 +207,8 @@ SSE invariants:
 | src/components/ScheduleList.jsx | Schedule list and empty state | Presentation | ScheduleList.test.jsx |
 | src/components/BoutDetailDialog.jsx | Selected bout detail request and dialog | Selected id and request state | BoutDetailDialog.test.jsx |
 | src/hooks/useAudienceData.js | Home, notice, and ring loading | Audience data and reload | Audience page coverage |
-| src/hooks/useBoutEventStream.js | EventSource, parsing, dedupe, cleanup | connected, reconnecting, offline | useBoutEventStream.test.js |
+| src/hooks/useBoutEventStream.js | Audience/staff EventSource, ring scoping, parsing, filtering, dedupe, cleanup | connected, reconnecting, offline | useBoutEventStream.test.js |
+| src/hooks/useEventRefresh.js | Debounce and in-flight coalescing for event invalidation refreshes | Queued refresh without write side effects | useEventRefresh.test.js |
 | src/api/client.js | URL, headers, JSON parsing, bearer token, errors | Shared transport | API page coverage |
 | src/api/audience.js | Audience endpoints and stream URL | Endpoint contract | Audience/bracket coverage |
 | src/pages/AudienceHome.jsx | Compose public home | Hook data, selected bout, stream status | Audience page tests |
@@ -276,9 +296,9 @@ The current frontend baseline is 19 test files and 47 passing tests.
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
 | Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
-| Realtime hook | hooks/useBoutEventStream.test.js | Event registration, parsing, dedupe, state, cleanup | Reconnection timing and multi-event reload |
+| Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
 | Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Composition, loading/error, live status, list/search/selection | Stale data and invalid query |
-| Role pages | pages/JudgePage.test.jsx, SupervisorPage.test.jsx, RingManagerPage.test.jsx | Session guard, workflows, API feedback | Expired token and duplicate submit |
+| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, API feedback, live refresh | Expired token, duplicate submit, and browser-level stream failure |
 | Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error | Responsive table and live status checks |
 | Administration | pages/AdminTournamentPage.test.jsx, AdminRingPage.test.jsx, AdminAthletePage.test.jsx, AdminNoticePage.test.jsx, AdminSchedulePage.test.jsx, AdminBoutPage.test.jsx, AdminAccountPage.test.jsx | CRUD, filters, import, role restrictions, errors | Field validation and retry-after-failure |
 | Utilities | utils.test.js | Shared formatting and utility behavior | Add coverage with each normalization change |
