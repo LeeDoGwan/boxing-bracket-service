@@ -54,13 +54,12 @@ public class JudgeScoreService {
     public RoundScoreResponse submitRoundScore(Long boutId, Integer roundNo, RoundScoreSubmitRequest request) {
         validatePathVariables(boutId, roundNo);
         validateRequest(request);
+        validateScoreValues(request);
 
         Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
         Long judgeId = resolveJudgeId(request, boutId);
-        if (bout.isCompleted()) {
-            throw new WorkflowConflictException("INVALID_BOUT_STATE");
-        }
+        bout.validateScoreSubmission(roundNo);
 
         RoundScore roundScore = roundScoreRepository
                 .findByBoutIdAndRoundNoAndJudgeId(boutId, roundNo, judgeId)
@@ -86,7 +85,7 @@ public class JudgeScoreService {
             throw new IllegalArgumentException("roundNo is required");
         }
         if (roundNo < 1) {
-            throw new IllegalArgumentException("roundNo must be greater than or equal to 1");
+            throw new IllegalArgumentException("INVALID_ROUND_NUMBER");
         }
     }
 
@@ -108,6 +107,12 @@ public class JudgeScoreService {
         }
         if (request.getBlueScore() == null) {
             throw new IllegalArgumentException("blueScore is required");
+        }
+    }
+
+    private void validateScoreValues(RoundScoreSubmitRequest request) {
+        if (request.getRedScore() < 0 || request.getBlueScore() < 0) {
+            throw new IllegalArgumentException("INVALID_SCORE_VALUE");
         }
     }
 

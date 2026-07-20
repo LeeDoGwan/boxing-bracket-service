@@ -34,6 +34,17 @@ class RoundScoreTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    void submitAcceptsZeroScores() {
+        RoundScore roundScore = createRoundScore();
+
+        roundScore.submit(0, 0);
+
+        assertThat(roundScore.getRedScore()).isZero();
+        assertThat(roundScore.getBlueScore()).isZero();
+        assertThat(roundScore.getStatus()).isEqualTo(RoundScoreStatus.SUBMITTED);
+    }
+
     private RoundScore createRoundScore() {
         return RoundScore.builder()
                 .boutId(1L)

@@ -43,8 +43,8 @@ public class Penalty extends BaseTimeEntity {
 
     @Builder
     private Penalty(Long boutId, BoutSide targetSide, Integer penaltyPoint, String reason, Long createdBy) {
-        if (penaltyPoint != null && penaltyPoint < 0) {
-            throw new IllegalArgumentException("Penalty point must be greater than or equal to 0");
+        if (penaltyPoint == null || penaltyPoint < 1) {
+            throw new IllegalArgumentException("INVALID_PENALTY_VALUE");
         }
         this.boutId = boutId;
         this.targetSide = targetSide;

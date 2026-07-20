@@ -4,6 +4,9 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
+import com.boxing.bracket.auth.domain.AuthSession;
+import com.boxing.bracket.auth.domain.AuthSessionContext;
+import com.boxing.bracket.auth.exception.AccessDeniedException;
 import com.boxing.bracket.bout.repository.BoutRepository;
 import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.event.dto.BoutEventResponse;
@@ -17,7 +20,10 @@ import com.boxing.bracket.scoring.dto.BoutResultResponse;
 import com.boxing.bracket.scoring.repository.BoutResultRepository;
 import com.boxing.bracket.scoring.repository.PenaltyRepository;
 import com.boxing.bracket.scoring.repository.RoundScoreRepository;
+import com.boxing.bracket.user.domain.Account;
+import com.boxing.bracket.user.domain.UserRole;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -26,6 +32,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,6 +42,11 @@ import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class SupervisorResultServiceTest {
+
+    @AfterEach
+    void clearSession() {
+        AuthSessionContext.clear();
+    }
 
     @Mock
     private BoutRepository boutRepository;
@@ -146,15 +158,119 @@ class SupervisorResultServiceTest {
                 .hasMessage("winnerSide is required");
     }
 
+    @Test
+    void confirmResultRejectsMissingSubmittedScores() {
+        BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 20L);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(BoutStatus.IN_PROGRESS)));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.empty());
+        given(roundScoreRepository.findByBoutId(1L)).willReturn(List.of(createDraftRoundScore()));
+
+        assertThatThrownBy(() -> supervisorResultService.confirmResult(1L, request))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("SCORES_NOT_READY");
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void confirmResultRejectsUnknownDecision() {
+        BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.UNKNOWN, 20L);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(BoutStatus.IN_PROGRESS)));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.empty());
+        given(roundScoreRepository.findByBoutId(1L)).willReturn(List.of(createSubmittedRoundScore(1L, 1, 10L, 10, 9)));
+
+        assertThatThrownBy(() -> supervisorResultService.confirmResult(1L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("INVALID_RESULT_DECISION");
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void confirmResultRejectsDrawForNonPointsDecision() {
+        BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.DRAW, DecisionType.KO, 20L);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(BoutStatus.IN_PROGRESS)));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.empty());
+        given(roundScoreRepository.findByBoutId(1L)).willReturn(List.of(createSubmittedRoundScore(1L, 1, 10L, 10, 9)));
+
+        assertThatThrownBy(() -> supervisorResultService.confirmResult(1L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("INVALID_WINNER_SELECTION");
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void confirmResultRejectsBoutBeforeStart() {
+        BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 20L);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(BoutStatus.READY)));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> supervisorResultService.confirmResult(1L, request))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("BOUT_NOT_STARTED");
+        then(boutEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void confirmResultUsesAuthenticatedSupervisorWhenRequestActorIsOmitted() {
+        AuthSessionContext.set(new AuthSession(
+                "token", account(20L), LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusHours(1)
+        ));
+        BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(BoutStatus.IN_PROGRESS)));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.empty());
+        given(roundScoreRepository.findByBoutId(1L)).willReturn(List.of(createSubmittedRoundScore(1L, 1, 10L, 10, 9)));
+        given(penaltyRepository.findByBoutId(1L)).willReturn(List.of());
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
+        given(boutResultRepository.save(any(BoutResult.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        BoutResultResponse response = supervisorResultService.confirmResult(1L, request);
+
+        assertThat(response.getConfirmedBy()).isEqualTo(20L);
+    }
+
+    @Test
+    void confirmResultRejectsForgedRequestActor() {
+        AuthSessionContext.set(new AuthSession(
+                "token", account(20L), LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusHours(1)
+        ));
+        BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 99L);
+
+        assertThatThrownBy(() -> supervisorResultService.confirmResult(1L, request))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage("ACTOR_ID_MISMATCH");
+    }
+
     private Bout createBout() {
+        return createBout(BoutStatus.IN_PROGRESS);
+    }
+
+    private Bout createBout(BoutStatus status) {
         return Bout.builder()
                 .tournamentId(1L)
                 .ringId(1L)
                 .boutNumber(1)
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
-                .status(BoutStatus.IN_PROGRESS)
+                .status(status)
                 .build();
+    }
+
+    private RoundScore createDraftRoundScore() {
+        return RoundScore.builder()
+                .boutId(1L)
+                .roundNo(1)
+                .judgeId(10L)
+                .build();
+    }
+
+    private Account account(Long id) {
+        Account account = Account.builder()
+                .loginId("supervisor-" + id)
+                .passwordHash("hash")
+                .name("Supervisor " + id)
+                .role(UserRole.SUPERVISOR)
+                .build();
+        ReflectionTestUtils.setField(account, "id", id);
+        return account;
     }
 
     private RoundScore createSubmittedRoundScore(Long boutId, Integer roundNo, Long judgeId, int redScore, int blueScore) {

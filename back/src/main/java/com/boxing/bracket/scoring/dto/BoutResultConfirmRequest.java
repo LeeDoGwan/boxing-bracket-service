@@ -13,7 +13,6 @@ public class BoutResultConfirmRequest {
     @NotNull(message = "decisionType is required")
     private DecisionType decisionType;
 
-    @NotNull(message = "confirmedBy is required")
     private Long confirmedBy;
 
     protected BoutResultConfirmRequest() {
@@ -23,6 +22,10 @@ public class BoutResultConfirmRequest {
         this.winnerSide = winnerSide;
         this.decisionType = decisionType;
         this.confirmedBy = confirmedBy;
+    }
+
+    public BoutResultConfirmRequest(BoutSide winnerSide, DecisionType decisionType) {
+        this(winnerSide, decisionType, null);
     }
 
     public BoutSide getWinnerSide() {

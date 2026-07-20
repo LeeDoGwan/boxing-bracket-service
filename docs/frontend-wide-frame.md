@@ -1,6 +1,6 @@
 # Frontend Wide-Frame Architecture Guide
 
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 
 This is the implementation-oriented wide frame for the frontend in front/.
 It connects screens, state, API calls, components, realtime events, tests,
@@ -56,7 +56,7 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 | Bracket | /bracket | Audience | List, search, highlight, and inspect bracket status/result | /api/bouts, /api/bouts/search | BracketPage, StatePanel | Loading, error, empty, search, selected row |
 | Bout detail | Home dialog | Audience | Inspect a selected audience bout | /api/bouts/{boutId} | BoutDetailDialog, StatePanel | Loading, error, empty detail |
 | Judge | /judge | Judge | Select assigned ring, enter round scores | Assigned ring/bout APIs, Judge score APIs | JudgeAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
-| Supervisor | /supervisor | Supervisor | Select assigned ring, review scores/penalties, confirm result | Assigned ring/bout APIs, Supervisor APIs | SupervisorAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
+| Supervisor | /supervisor | Supervisor | Select assigned ring, review score readiness/penalties, confirm result | Assigned ring/bout APIs, Supervisor APIs | SupervisorAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, score readiness, confirmation review/cancel, locked result, action feedback |
 | Ring manager | /ring-manager | Ring Manager | Select assigned ring and operate bouts | Assigned ring/bout APIs, Ring Manager APIs | RingManagerAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
 | Operations | /operations | Game Manager, Service Manager | Monitor tournament operations | /api/admin/operations/status | OperationsPage, StatePanel | Session/role guard, loading, error |
 | Audit logs | /audit-logs | Game Manager, Service Manager | Search operational audit records | /api/admin/audit-logs | AuditLogPage, StatePanel | Session/role guard, loading, error, empty |
@@ -128,7 +128,7 @@ the source of truth.
 | Screen | Read APIs | Write APIs | Session and role |
 | --- | --- | --- | --- |
 | Judge | `/api/staff/assignments/rings`, assigned ring bouts, `/api/judge/bouts/{boutId}/scores` | `/api/judge/bouts/{boutId}/rounds/{roundNo}/scores` without `judgeId` | boxing.judge.session, JUDGE |
-| Supervisor | assigned ring bouts, `/api/supervisor/bouts/{id}/scores`, `/penalties` | `/penalties`, `/result` | boxing.supervisor.session, SUPERVISOR |
+| Supervisor | `/api/staff/assignments/rings`, `/api/staff/assignments/rings/{ringId}/bouts`, `/api/supervisor/bouts/{id}/scores`, `/penalties` | `/penalties` and `/result` without client actor IDs | boxing.supervisor.session, SUPERVISOR |
 | Ring manager | assigned ring bouts | start, status, round start, next-bout actions | boxing.ring-manager.session, RING_MANAGER |
 | Operations | /api/admin/operations/status?tournamentId= | None in current page | boxing.operations.session, GAME_MANAGER or SERVICE_MANAGER |
 | Audit logs | /api/admin/audit-logs with filters | None in current page | boxing.operations.session, GAME_MANAGER or SERVICE_MANAGER |
@@ -291,14 +291,14 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 19 test files and 47 passing tests.
+The current frontend baseline is 24 test files and 71 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
 | Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
 | Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
 | Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Composition, loading/error, live status, list/search/selection | Stale data and invalid query |
-| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, API feedback, live refresh | Expired token, duplicate submit, and browser-level stream failure |
+| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, score validation/confirmation, Supervisor result readiness/penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
 | Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error | Responsive table and live status checks |
 | Administration | pages/AdminTournamentPage.test.jsx, AdminRingPage.test.jsx, AdminAthletePage.test.jsx, AdminNoticePage.test.jsx, AdminSchedulePage.test.jsx, AdminBoutPage.test.jsx, AdminAccountPage.test.jsx | CRUD, filters, import, role restrictions, errors | Field validation and retry-after-failure |
 | Utilities | utils.test.js | Shared formatting and utility behavior | Add coverage with each normalization change |
@@ -360,8 +360,8 @@ Minimum post-deploy smoke:
 
 | Role | Route or scope | Reuse | New work required |
 | --- | --- | --- | --- |
-| Judge | /judge | Judge session, score API, StatePanel | Assignment selection, score validation, conflicts |
-| Supervisor | /supervisor | Session, score/penalty/result APIs | Result policy and audit feedback |
+| Judge | /judge | Judge session, score API, StatePanel, scoring policy | Venue-specific score limits, association rules, and browser-level stream failure |
+| Supervisor | /supervisor | Session, assigned-ring APIs, score/penalty/result APIs, result confirmation policy | Browser-level stream failure and venue-specific result correction workflow |
 | Ring Manager | /ring-manager | Ring session and action APIs | Ring assignment and transition safeguards |
 | Game Manager | Operations and admin routes | Operations session, admin modules, header | Tournament workflow and permissions |
 | Service Manager | Account/admin routes | Session and CRUD patterns | Account lifecycle and elevated audit visibility |
@@ -376,6 +376,6 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 19 frontend test files and 47 tests unless coverage
+- Preserve the baseline of 24 frontend test files and 64 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.

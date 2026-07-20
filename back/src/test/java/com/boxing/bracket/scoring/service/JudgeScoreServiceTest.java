@@ -114,19 +114,71 @@ class JudgeScoreServiceTest {
 
         assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 0, request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("roundNo must be greater than or equal to 1");
+                .hasMessage("INVALID_ROUND_NUMBER");
     }
 
     @Test
     void submitRoundScoreRejectsNegativeScore() {
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, -1, 9);
-        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(1L)));
-        given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
-                .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 1, request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Score must be greater than or equal to 0");
+                .hasMessage("INVALID_SCORE_VALUE");
+    }
+
+    @Test
+    void submitRoundScoreAllowsPreviouslyUnsubmittedRound() {
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
+        Bout bout = createBout(1L, 2, 3);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(bout));
+        given(roundScoreRepository.findByBoutIdAndRoundNoAndJudgeId(1L, 1, 10L))
+                .willReturn(Optional.empty());
+        given(roundScoreRepository.save(any(RoundScore.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        RoundScoreResponse response = judgeScoreService.submitRoundScore(1L, 1, request);
+
+        assertThat(response.getRoundNo()).isEqualTo(1);
+    }
+
+    @Test
+    void submitRoundScoreRejectsFutureRound() {
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(1L, 1, 3)));
+
+        assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 2, request))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("ROUND_NOT_STARTED");
+        then(roundScoreRepository).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void submitRoundScoreRejectsBoutBeforeStart() {
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
+        Bout bout = Bout.builder()
+                .tournamentId(1L)
+                .ringId(1L)
+                .boutNumber(1)
+                .redAthleteId(10L)
+                .blueAthleteId(11L)
+                .status(BoutStatus.READY)
+                .totalRounds(3)
+                .build();
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 1, request))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("BOUT_NOT_STARTED");
+    }
+
+    @Test
+    void submitRoundScoreRejectsRoundOutsideBoutRange() {
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(createBout(1L, 1, 1)));
+
+        assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 2, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("INVALID_ROUND_NUMBER");
     }
 
     @Test
@@ -183,6 +235,10 @@ class JudgeScoreServiceTest {
     }
 
     private Bout createBout(Long id) {
+        return createBout(id, 1, 3);
+    }
+
+    private Bout createBout(Long id, int currentRound, int totalRounds) {
         Bout bout = Bout.builder()
                 .tournamentId(1L)
                 .ringId(1L)
@@ -190,6 +246,8 @@ class JudgeScoreServiceTest {
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
                 .status(BoutStatus.IN_PROGRESS)
+                .currentRound(currentRound)
+                .totalRounds(totalRounds)
                 .build();
         ReflectionTestUtils.setField(bout, "id", id);
         return bout;

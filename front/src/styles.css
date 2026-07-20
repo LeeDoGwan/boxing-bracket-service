@@ -150,6 +150,11 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .versus { color: #78909a; font-size: 12px; font-weight: 700; }
 .judge-score-list { display: grid; gap: 12px; }
 .judge-score-card { display: grid; gap: 16px; border: 1px solid #d9e3e6; padding: 18px; background: #f8fafb; }
+.judge-score-card.current-round { border-color: #0f7582; box-shadow: inset 4px 0 0 #0f7582; }
+.judge-score-card .round-status { margin: -8px 0 0; color: #52636a; font-size: 12px; font-weight: 700; }
+.score-confirmation { display: grid; gap: 12px; border-top: 1px solid #d9e3e6; padding-top: 14px; }
+.score-confirmation p { margin: 0; color: #18242b; font-weight: 700; }
+.score-confirmation div { display: flex; flex-wrap: wrap; gap: 8px; }
 .judge-score-card.submitted { border-color: #8dc7bd; background: #f2fbf8; }
 .judge-score-card h3 { font-size: 18px; }
 .score-status { color: #906400; font-size: 12px; font-weight: 700; }
