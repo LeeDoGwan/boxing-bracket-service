@@ -9,6 +9,8 @@ public class PenaltyCreateRequest {
     @NotNull(message = "targetSide is required")
     private BoutSide targetSide;
 
+    private Integer roundNo;
+
     @NotNull(message = "penaltyPoint is required")
     private Integer penaltyPoint;
 
@@ -20,7 +22,12 @@ public class PenaltyCreateRequest {
     }
 
     public PenaltyCreateRequest(BoutSide targetSide, Integer penaltyPoint, String reason, Long createdBy) {
+        this(targetSide, null, penaltyPoint, reason, createdBy);
+    }
+
+    public PenaltyCreateRequest(BoutSide targetSide, Integer roundNo, Integer penaltyPoint, String reason, Long createdBy) {
         this.targetSide = targetSide;
+        this.roundNo = roundNo;
         this.penaltyPoint = penaltyPoint;
         this.reason = reason;
         this.createdBy = createdBy;
@@ -32,6 +39,10 @@ public class PenaltyCreateRequest {
 
     public Integer getPenaltyPoint() {
         return penaltyPoint;
+    }
+
+    public Integer getRoundNo() {
+        return roundNo;
     }
 
     public String getReason() {

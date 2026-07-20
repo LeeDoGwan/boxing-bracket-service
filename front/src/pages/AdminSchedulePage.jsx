@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { login, logout } from '../api/auth';
 import { createSchedule, deleteSchedule, getSchedules, updateSchedule } from '../api/adminSchedules';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
 const SESSION_KEY = 'boxing.operations.session';
@@ -94,6 +95,7 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
   const [listError, setListError] = useState('');
   const [actionError, setActionError] = useState('');
   const [message, setMessage] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const loadSchedules = useCallback(async () => {
     setLoading(true);
@@ -177,6 +179,7 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
       setSchedules(remaining);
       setSelectedId(remaining[0]?.scheduleId || null);
       setMessage('일정을 삭제했습니다.');
+      setConfirmingDelete(false);
     } catch (requestError) {
       setActionError(requestError.message || '일정 삭제에 실패했습니다.');
     } finally {
@@ -214,11 +217,12 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
                 <label>링 ID<input min="1" onChange={(event) => updateField('ringId', event.target.value)} type="number" value={form.ringId} /></label>
                 <label>연결 경기 ID<input min="1" onChange={(event) => updateField('relatedBoutId', event.target.value)} type="number" value={form.relatedBoutId} /></label>
               </div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '일정 저장' : '일정 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={handleDelete} type="button">일정 삭제</button> : null}</div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '일정 저장' : '일정 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">일정 삭제</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 일정을 삭제합니다. 이 작업은 되돌릴 수 없습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="일정 삭제 확인" /> : null}
     </main>
   );
 }

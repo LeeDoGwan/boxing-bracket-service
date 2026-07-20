@@ -2,6 +2,7 @@ package com.boxing.bracket.scoring.dto;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Max;
 
 public class RoundScoreSubmitRequest {
 
@@ -9,10 +10,12 @@ public class RoundScoreSubmitRequest {
 
     @NotNull(message = "redScore is required")
     @Min(value = 0, message = "redScore must be greater than or equal to 0")
+    @Max(value = 10, message = "redScore must be less than or equal to 10")
     private Integer redScore;
 
     @NotNull(message = "blueScore is required")
     @Min(value = 0, message = "blueScore must be greater than or equal to 0")
+    @Max(value = 10, message = "blueScore must be less than or equal to 10")
     private Integer blueScore;
 
     protected RoundScoreSubmitRequest() {

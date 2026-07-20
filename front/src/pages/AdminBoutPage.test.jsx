@@ -115,6 +115,7 @@ describe('AdminBoutPage', () => {
     await waitFor(() => expect(updateBout).toHaveBeenCalledWith(12, expect.objectContaining({ boutNumber: 3, matchType: 'Semi Final' }), 'admin-token'));
 
     fireEvent.click(screen.getByRole('button', { name: '경기 삭제' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(deleteBout).toHaveBeenCalledWith(12, 'admin-token'));
     expect(await screen.findByText('경기를 삭제했습니다.')).toBeInTheDocument();
   });

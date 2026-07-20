@@ -51,7 +51,7 @@ class SupervisorPenaltyServiceTest {
 
     @Test
     void createPenaltySavesPenalty() {
-        PenaltyCreateRequest request = new PenaltyCreateRequest(BoutSide.RED, 1, "warning", 20L);
+        PenaltyCreateRequest request = new PenaltyCreateRequest(BoutSide.RED, 2, 1, "warning", 20L);
         given(boutRepository.findById(1L)).willReturn(Optional.of(createBout(BoutStatus.IN_PROGRESS)));
         given(penaltyRepository.save(any(Penalty.class))).willAnswer(invocation -> {
             Penalty penalty = invocation.getArgument(0);
@@ -64,6 +64,7 @@ class SupervisorPenaltyServiceTest {
         assertThat(response.getPenaltyId()).isEqualTo(100L);
         assertThat(response.getBoutId()).isEqualTo(1L);
         assertThat(response.getTargetSide()).isEqualTo(BoutSide.RED);
+        assertThat(response.getRoundNo()).isEqualTo(2);
         assertThat(response.getPenaltyPoint()).isEqualTo(1);
         assertThat(response.getReason()).isEqualTo("warning");
         assertThat(response.getCreatedBy()).isEqualTo(20L);
@@ -104,6 +105,16 @@ class SupervisorPenaltyServiceTest {
         assertThatThrownBy(() -> supervisorPenaltyService.createPenalty(1L, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("INVALID_PENALTY_VALUE");
+    }
+
+    @Test
+    void createPenaltyRejectsRoundOutsideBoutRange() {
+        PenaltyCreateRequest request = new PenaltyCreateRequest(BoutSide.RED, 4, 1, "warning", 20L);
+        given(boutRepository.findById(1L)).willReturn(Optional.of(createBout(BoutStatus.IN_PROGRESS, 3)));
+
+        assertThatThrownBy(() -> supervisorPenaltyService.createPenalty(1L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("INVALID_ROUND_NUMBER");
     }
 
     @Test
@@ -177,6 +188,10 @@ class SupervisorPenaltyServiceTest {
     }
 
     private Bout createBout(BoutStatus status) {
+        return createBout(status, null);
+    }
+
+    private Bout createBout(BoutStatus status, Integer totalRounds) {
         return Bout.builder()
                 .tournamentId(1L)
                 .ringId(1L)
@@ -184,6 +199,7 @@ class SupervisorPenaltyServiceTest {
                 .redAthleteId(10L)
                 .blueAthleteId(11L)
                 .status(status)
+                .totalRounds(totalRounds)
                 .build();
     }
 

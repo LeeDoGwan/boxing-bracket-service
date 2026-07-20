@@ -97,7 +97,7 @@ describe('SupervisorAssignedPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add penalty' }));
     await waitFor(() => expect(createPenalty).toHaveBeenCalledWith(
       12,
-      { penaltyPoint: 1, reason: 'hold', targetSide: 'RED' },
+      { penaltyPoint: 1, reason: 'hold', roundNo: 1, targetSide: 'RED' },
       'supervisor-token',
     ));
 

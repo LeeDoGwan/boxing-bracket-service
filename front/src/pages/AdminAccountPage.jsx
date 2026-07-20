@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { login, logout } from '../api/auth';
 import { createAccount, deleteAccount, getAccounts, updateAccount } from '../api/adminAccounts';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
 const SESSION_KEY = 'boxing.operations.session';
@@ -18,7 +19,7 @@ function readSession() {
 }
 
 function blankForm() {
-  return { loginId: '', name: '', password: '', role: 'JUDGE', status: 'ACTIVE' };
+  return { loginId: '', name: '', passwordHash: '', role: 'JUDGE', status: 'ACTIVE' };
 }
 
 function blankFilters() {
@@ -26,7 +27,7 @@ function blankFilters() {
 }
 
 function formFromAccount(account) {
-  return { loginId: account.loginId || '', name: account.name || '', password: '', role: account.role || 'JUDGE', status: account.status || 'ACTIVE' };
+  return { loginId: account.loginId || '', name: account.name || '', passwordHash: '', role: account.role || 'JUDGE', status: account.status || 'ACTIVE' };
 }
 
 function LoginForm({ onLogin }) {
@@ -81,6 +82,7 @@ function AccountWorkspace({ onLogout, session }) {
   const [listError, setListError] = useState('');
   const [actionError, setActionError] = useState('');
   const [message, setMessage] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
@@ -160,6 +162,7 @@ function AccountWorkspace({ onLogout, session }) {
       setAccounts(remaining);
       setSelectedId(remaining[0]?.accountId || null);
       setMessage('계정을 삭제했습니다.');
+      setConfirmingDelete(false);
     } catch (requestError) {
       setActionError(requestError.message || '계정 삭제에 실패했습니다.');
     } finally {
@@ -193,10 +196,11 @@ function AccountWorkspace({ onLogout, session }) {
           </aside>
           <section className="admin-form-panel">
             <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `ACCOUNT ${selectedId}` : 'NEW ACCOUNT'}</p><h3>{selectedId ? '계정 정보 수정' : '계정 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
-            <form onSubmit={handleSubmit}><div className="admin-form-grid"><label>로그인 ID<input autoComplete="username" onChange={(event) => updateField('loginId', event.target.value)} required value={form.loginId} /></label><label>이름<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>비밀번호<input autoComplete="new-password" onChange={(event) => updateField('password', event.target.value)} required type="password" value={form.password} /></label><label>역할<select onChange={(event) => updateField('role', event.target.value)} value={form.role}>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div><div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '계정 저장' : '계정 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={handleDelete} type="button">계정 삭제</button> : null}</div></form>
+            <form onSubmit={handleSubmit}><div className="admin-form-grid"><label>로그인 ID<input autoComplete="username" onChange={(event) => updateField('loginId', event.target.value)} required value={form.loginId} /></label><label>이름<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>비밀번호<input autoComplete="new-password" onChange={(event) => updateField('passwordHash', event.target.value)} required type="password" value={form.passwordHash} /></label><label>역할<select onChange={(event) => updateField('role', event.target.value)} value={form.role}>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div><div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '계정 저장' : '계정 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">계정 삭제</button> : null}</div></form>
           </section>
         </div>
       ) : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 계정을 삭제합니다. 이 작업은 되돌릴 수 없습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="계정 삭제 확인" /> : null}
     </main>
   );
 }

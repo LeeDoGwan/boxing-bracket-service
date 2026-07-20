@@ -32,6 +32,7 @@ function requestMessage(error, fallback) {
     ACTOR_ID_MISMATCH: 'The authenticated account must submit this action.',
     BOUT_NOT_STARTED: 'The bout must start before this action.',
     INVALID_BOUT_STATE: 'This bout no longer accepts the action.',
+    INVALID_ROUND_NUMBER: 'Select a round within this bout.',
     INVALID_PENALTY_VALUE: 'Penalty points must be a positive whole number.',
     INVALID_RESULT_DECISION: 'Select a valid result decision.',
     INVALID_WINNER_SELECTION: 'Select a valid winner.',
@@ -77,7 +78,7 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
-  const [penalty, setPenalty] = useState({ penaltyPoint: '', reason: '', targetSide: 'RED' });
+  const [penalty, setPenalty] = useState({ penaltyPoint: '', reason: '', roundNo: '1', targetSide: 'RED' });
   const [resultForm, setResultForm] = useState({ decisionType: 'POINTS', winnerSide: 'RED' });
   const [confirmingResult, setConfirmingResult] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -99,6 +100,9 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
   const canConfirm = !confirmed && boutStarted && scoreReady;
   const adjustedRed = scoreTotals.red - penaltyTotals.red;
   const adjustedBlue = scoreTotals.blue - penaltyTotals.blue;
+  const penaltyRounds = useMemo(() => bout
+    ? Array.from({ length: Math.max(1, bout.totalRounds || bout.currentRound || 1) }, (_, index) => index + 1)
+    : [], [bout]);
   const expectedWinner = adjustedRed === adjustedBlue ? 'DRAW' : adjustedRed > adjustedBlue ? 'RED' : 'BLUE';
   const winnerMismatch = resultForm.decisionType === 'POINTS'
     && expectedWinner !== 'DRAW'
@@ -169,7 +173,7 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
   useEffect(() => { loadRings(); }, [loadRings]);
   useEffect(() => { loadBouts(); }, [loadBouts]);
   useEffect(() => {
-    setPenalty({ penaltyPoint: '', reason: '', targetSide: 'RED' });
+    setPenalty({ penaltyPoint: '', reason: '', roundNo: '1', targetSide: 'RED' });
     setResultForm({ decisionType: 'POINTS', winnerSide: 'RED' });
     setConfirmingResult(false);
     setActionError('');
@@ -193,6 +197,11 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
   async function addPenalty(event) {
     event.preventDefault();
     const penaltyPoint = Number(penalty.penaltyPoint);
+    const roundNo = Number(penalty.roundNo);
+    if (!Number.isInteger(roundNo) || roundNo < 1 || (bout?.totalRounds && roundNo > bout.totalRounds)) {
+      setActionError('패널티를 적용할 라운드를 선택해 주세요.');
+      return;
+    }
     if (!Number.isInteger(penaltyPoint) || penaltyPoint < 1) {
       setActionError('Penalty points must be a positive whole number.');
       return;
@@ -202,7 +211,7 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
     setBusy(true);
     setActionError('');
     try {
-      const saved = await createPenalty(boutId, { ...penalty, penaltyPoint }, session.accessToken);
+      const saved = await createPenalty(boutId, { ...penalty, penaltyPoint, roundNo }, session.accessToken);
       setPenalties((current) => [...current, saved]);
       setPenalty((current) => ({ ...current, penaltyPoint: '', reason: '' }));
     } catch (requestError) {
@@ -268,8 +277,9 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
           <p aria-live="polite" className="score-readiness">Submitted {submittedScores.length} · Draft {draftScores.length}</p>
           <ScoreReview scores={scores} />
           <h4>Penalties</h4>
-          <ul>{penalties.map((item) => <li key={item.penaltyId}>{item.targetSide}: -{item.penaltyPoint} {item.reason}</li>)}</ul>
+          <ul>{penalties.map((item) => <li key={item.penaltyId}>R{item.roundNo || '?'} · {item.targetSide}: -{item.penaltyPoint} {item.reason}</li>)}</ul>
           <form noValidate onSubmit={addPenalty}>
+            <label>Round<select disabled={busy || confirmed} onChange={(event) => setPenalty({ ...penalty, roundNo: event.target.value })} required value={penalty.roundNo}>{penaltyRounds.map((roundNo) => <option key={roundNo} value={roundNo}>{roundNo}라운드</option>)}</select></label>
             <label>Side<select disabled={busy || confirmed} onChange={(event) => setPenalty({ ...penalty, targetSide: event.target.value })} value={penalty.targetSide}><option value="RED">Red</option><option value="BLUE">Blue</option></select></label>
             <label>Points<input disabled={busy || confirmed} inputMode="numeric" min="1" onChange={(event) => setPenalty({ ...penalty, penaltyPoint: event.target.value })} required type="number" value={penalty.penaltyPoint} /></label>
             <label>Reason<input disabled={busy || confirmed} onChange={(event) => setPenalty({ ...penalty, reason: event.target.value })} value={penalty.reason} /></label>

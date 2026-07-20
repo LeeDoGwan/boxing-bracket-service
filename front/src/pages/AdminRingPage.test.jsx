@@ -70,6 +70,7 @@ describe('AdminRingPage', () => {
     await waitFor(() => expect(updateRing).toHaveBeenCalledWith(1, { name: 'Main Ring', status: 'IN_PROGRESS', tournamentId: 1 }, 'admin-token'));
 
     fireEvent.click(screen.getByRole('button', { name: '링 삭제' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(deleteRing).toHaveBeenCalledWith(1, 'admin-token'));
     expect(await screen.findByText('링을 삭제했습니다.')).toBeInTheDocument();
   });

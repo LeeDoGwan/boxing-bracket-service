@@ -1,38 +1,58 @@
 import { NavLink } from 'react-router-dom';
+import { STAFF_ROLE_LABELS, useStaffAuth } from '../auth/StaffAuthContext';
 
-export function AppHeader({ tournamentId, onTournamentChange }) {
+export function AppHeader({ tournamentId }) {
+  const { session, signOut } = useStaffAuth();
+  const publicLinks = [
+    ['/', '현황'],
+    ['/bracket', '대진표'],
+  ];
+  const staffLinks = {
+    JUDGE: [['/judge', '심판 작업실']],
+    SUPERVISOR: [['/supervisor', '감독관 작업실']],
+    RING_MANAGER: [['/ring-manager', '링 운영']],
+    GAME_MANAGER: [
+      ['/operations', '운영 현황'], ['/audit-logs', '감사 로그'],
+      ['/admin/tournaments', '대회 관리'], ['/admin/rings', '링 관리'],
+      ['/admin/athletes', '선수 관리'], ['/admin/notices', '공지 관리'],
+      ['/admin/schedules', '일정 관리'], ['/admin/bouts', '대진 관리'],
+      ['/admin/assignments', '배정 관리'],
+    ],
+    SERVICE_MANAGER: [
+      ['/operations', '운영 현황'], ['/audit-logs', '감사 로그'],
+      ['/admin/tournaments', '대회 관리'], ['/admin/rings', '링 관리'],
+      ['/admin/athletes', '선수 관리'], ['/admin/notices', '공지 관리'],
+      ['/admin/schedules', '일정 관리'], ['/admin/bouts', '대진 관리'],
+      ['/admin/accounts', '계정 관리'], ['/admin/assignments', '배정 관리'],
+    ],
+  };
+  const operationLinks = session ? staffLinks[session.account.role] || [] : [];
   return (
-    <header className="app-header">
+    <header className={`app-header${session ? ' is-staff' : ' is-public'}`}>
       <div className="brand-block">
-        <p className="eyebrow">LIVE TOURNAMENT</p>
-        <h1>복싱 대회 현황</h1>
+        <div className="brand-lockup">
+          <span aria-hidden="true" className="brand-mark">BX</span>
+          <div>
+            <p className="eyebrow">LIVE TOURNAMENT</p>
+            <h1>복싱 대회 현황</h1>
+          </div>
+        </div>
       </div>
-      <nav aria-label="전체 메뉴" className="main-nav">
-        <NavLink end to={`/?tournamentId=${tournamentId}`}>현황</NavLink>
-        <NavLink to={`/bracket?tournamentId=${tournamentId}`}>대진표</NavLink>
-        <NavLink to={`/judge?tournamentId=${tournamentId}`}>심판</NavLink>
-        <NavLink to={`/supervisor?tournamentId=${tournamentId}`}>감독</NavLink>
-        <NavLink to={`/ring-manager?tournamentId=${tournamentId}`}>링 운영</NavLink>
-        <NavLink to={`/operations?tournamentId=${tournamentId}`}>운영 현황</NavLink>
-        <NavLink to={`/audit-logs?tournamentId=${tournamentId}`}>감사 로그</NavLink>
-        <NavLink to={`/admin/tournaments?tournamentId=${tournamentId}`}>대회 관리</NavLink>
-        <NavLink to={`/admin/rings?tournamentId=${tournamentId}`}>링 관리</NavLink>
-        <NavLink to={`/admin/athletes?tournamentId=${tournamentId}`}>선수 관리</NavLink>
-        <NavLink to={`/admin/notices?tournamentId=${tournamentId}`}>공지 관리</NavLink>
-        <NavLink to={`/admin/schedules?tournamentId=${tournamentId}`}>일정 관리</NavLink>
-        <NavLink to={`/admin/bouts?tournamentId=${tournamentId}`}>대진 관리</NavLink>
-        <NavLink to={`/admin/accounts?tournamentId=${tournamentId}`}>계정 관리</NavLink>
-        <NavLink to={`/admin/assignments?tournamentId=${tournamentId}`}>배정 관리</NavLink>
+      <nav aria-label="공개 메뉴" className="main-nav">
+        {publicLinks.map(([path, label]) => (
+          <NavLink end={path === '/'} key={path} to={`${path}?tournamentId=${tournamentId}`}>{label}</NavLink>
+        ))}
       </nav>
-      <label className="tournament-input">
-        <span>대회 ID</span>
-        <input
-          min="1"
-          type="number"
-          value={tournamentId}
-          onChange={(event) => onTournamentChange(event.target.value)}
-        />
-      </label>
+      {session && <details className="operations-menu">
+        <summary>운영 메뉴</summary>
+        <nav aria-label="운영 메뉴" className="operations-menu-panel">
+          {operationLinks.map(([path, label]) => <NavLink key={path} to={`${path}?tournamentId=${tournamentId}`}>{label}</NavLink>)}
+        </nav>
+      </details>}
+      {session && <div className="staff-session">
+        <span><b>{session.account.name}</b><small>{STAFF_ROLE_LABELS[session.account.role]} · 대회 {tournamentId}</small></span>
+        <button aria-label="로그아웃" className="header-logout" onClick={signOut} type="button">로그아웃</button>
+      </div>}
     </header>
   );
 }

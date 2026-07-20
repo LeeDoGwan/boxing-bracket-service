@@ -74,6 +74,7 @@ describe('AdminAthletePage', () => {
     await waitFor(() => expect(updateAthlete).toHaveBeenCalledWith(10, { affiliation: 'Main Gym', name: 'Main Boxer' }, 'admin-token'));
 
     fireEvent.click(screen.getByRole('button', { name: '선수 삭제' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(deleteAthlete).toHaveBeenCalledWith(10, 'admin-token'));
     expect(await screen.findByText('선수를 삭제했습니다.')).toBeInTheDocument();
   });

@@ -42,6 +42,10 @@ function formatJudgeIds(ids) {
   return ids.length ? ids.map((id) => `#${id}`).join(', ') : '없음';
 }
 
+function formatUpdatedAt(value) {
+  return value ? new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(value) : '아직 갱신되지 않음';
+}
+
 function LoginForm({ onLogin }) {
   const [form, setForm] = useState({ loginId: '', password: '' });
   const [error, setError] = useState('');
@@ -140,12 +144,14 @@ function OperationsWorkspace({ onLogout, session, tournamentId }) {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   const loadStatus = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       setStatus(await getOperationStatus(tournamentId, session.accessToken));
+      setLastUpdatedAt(new Date());
     } catch {
       setError('운영 현황을 불러오지 못했습니다. 대회 ID와 권한을 확인해 주세요.');
     } finally {
@@ -155,6 +161,11 @@ function OperationsWorkspace({ onLogout, session, tournamentId }) {
 
   useEffect(() => {
     loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    const refreshTimer = window.setInterval(loadStatus, 15000);
+    return () => window.clearInterval(refreshTimer);
   }, [loadStatus]);
 
   const statusMetrics = useMemo(() => STATUS_ORDER.map((statusKey) => ({ label: statusLabel(statusKey), count: status?.boutStatusCounts?.[statusKey] || 0, statusKey })), [status]);
@@ -167,12 +178,13 @@ function OperationsWorkspace({ onLogout, session, tournamentId }) {
         <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadStatus} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
       </div>
 
-      {loading ? <StatePanel title="운영 현황을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
-      {error && !loading ? <StatePanel action={<button className="command-button" onClick={loadStatus} type="button">다시 시도</button>} title="운영 현황을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
-      {!loading && !error && status ? (
+      {loading && !status ? <StatePanel title="운영 현황을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
+      {error && !loading && !status ? <StatePanel action={<button className="command-button" onClick={loadStatus} type="button">다시 시도</button>} title="운영 현황을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
+      {error && status ? <div className="stale-banner" role="alert"><span>최신 운영 현황을 갱신하지 못했습니다. 마지막 확정 데이터가 표시되고 있습니다.</span><button className="secondary-button" onClick={loadStatus} type="button">다시 시도</button></div> : null}
+      {status ? (
         <>
           <section className="operation-panel operation-summary-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">TOURNAMENT {status.tournamentId}</p><h3>경기 진행 요약</h3></div><span>전체 {status.totalBoutCount}건</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">TOURNAMENT {status.tournamentId}</p><h3>경기 진행 요약</h3></div><span className="operation-refresh-state" aria-live="polite">자동 갱신 · {formatUpdatedAt(lastUpdatedAt)}{loading ? ' · 갱신 중' : ''}</span></div>
             <div className="operation-stat-grid">{statusMetrics.map((metric) => <Metric key={metric.statusKey} label={metric.label} tone={metric.statusKey === 'IN_PROGRESS' ? 'active' : ''} value={metric.count} />)}</div>
           </section>
 

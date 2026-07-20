@@ -3,6 +3,7 @@
 Source: ChatGPT project `복싱 대회 어드바이스 서비스`, `기능.txt`-based analysis on 2026-07-07.
 
 Reviewed against the MVP implementation on 2026-07-14. See [System design](design.md) for the implementation architecture and known boundaries.
+Product decisions confirmed on 2026-07-17 are recorded in [Product decisions](product-decisions.md).
 
 ## Goal
 
@@ -233,23 +234,21 @@ The first working loop is:
 - `createdAt`
 - `updatedAt`
 
-## Open Questions
+## Remaining Open Questions
 
-- How many rings can one tournament have?
-- Are judges assigned per bout or per ring?
-- Can judges edit submitted scores before supervisor confirmation?
-- Are penalties per round or per bout?
-- Does the supervisor manually confirm the winner, or should the system auto-calculate and allow override?
-- Which result types are required beyond red win and blue win, such as draw, withdrawal, disqualification, or injury stoppage?
-- Can the audience pages be public without login?
-- Should judge screens target phones, tablets, or both?
-- Should score input use buttons or numeric inputs?
-- What refresh strategy should the audience home use first: polling, SSE, or WebSocket?
-- Is offline or poor-network support required at tournament venues?
-- Should athletes be managed per tournament or as reusable master data?
-- Should bout numbers be generated automatically or entered manually?
-- Can confirmed results be modified, and who can approve changes?
-- Which account-to-tournament assignment rule should restrict game-manager audit access?
+The following details still require a venue or association decision before the
+corresponding validation and screens are finalized:
+
+- What is the complete decision-type catalog for wins, draws, withdrawals,
+  disqualifications, injury stoppages, and other exceptional outcomes?
+- What exact odd Judge count is required for a bout, and can a bout proceed
+  with a missing Judge submission?
+- Which association scoring rules apply beyond the confirmed maximum of 10,
+  including the ten-point-must rule and tied-round handling?
+- How is a confirmed result corrected, who approves it, and what reason is
+  required in the audit record?
+- What tournament-level access rule applies if the service later manages more
+  than one tournament?
 
 ## Current Implementation Alignment
 

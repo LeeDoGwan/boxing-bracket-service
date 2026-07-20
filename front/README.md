@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-The Vite development server proxies `/api` requests to `http://localhost:8080` by default. Set `VITE_DEV_PROXY_TARGET` in `.env.local` when the backend runs elsewhere. Set `VITE_API_BASE_URL` when the frontend must call an absolute API origin instead of the Vite proxy.
+The Vite development server proxies `/api` requests to `http://localhost:8080` by default. Set `VITE_DEV_PROXY_TARGET` in `.env.local` when the backend runs elsewhere. Set `VITE_API_BASE_URL` when the frontend must call an absolute API origin instead of the Vite proxy. Set `VITE_DEFAULT_TOURNAMENT_ID` to choose the fallback tournament when the URL has no valid `tournamentId`.
 
 ## Routes
 
@@ -48,8 +48,8 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 
 ## API Mapping
 
-- Home: `/api/home`, `/api/notices`, `/api/schedules`, `/api/rings/status`
-- Bracket: `/api/bouts`, `/api/bouts/search`, `/api/bouts/{boutId}`
+- Home: `/api/home`, `/api/bouts`, `/api/bouts/{boutId}`
+- Bracket: `/api/bouts`, `/api/bouts/search`, `/api/bouts/{boutId}`, `/api/events/stream`
 - Auth: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`
 - Judge: `/api/judge/bouts/{boutId}/scores`, `/api/judge/bouts/{boutId}/rounds/{roundNo}/scores`
 - Supervisor: `/api/supervisor/bouts/{boutId}/scores`, `/api/supervisor/bouts/{boutId}/penalties`, `/api/supervisor/bouts/{boutId}/result` (see [result confirmation policy](../docs/result-confirmation-policy.md))
@@ -64,9 +64,9 @@ The Vite development server proxies `/api` requests to `http://localhost:8080` b
 - Bout Admin: `/api/admin/bouts?tournamentId={id}`, `/api/admin/bouts`, `/api/admin/bouts/import`, `/api/admin/bouts/{boutId}`
 - Account Admin: `/api/admin/accounts?keyword=&role=&status=`, `/api/admin/accounts/{accountId}`
 - Staff assignments: `/api/staff/assignments/rings?tournamentId={id}`, `/api/staff/assignments/rings/{ringId}/bouts`, `/api/admin/assignments`
-- Live updates: `/api/events/stream?tournamentId={id}`
+- Live updates: `/api/events/stream?tournamentId={id}`; audience home and bracket invalidate their REST data after recognized events.
 
-Audience APIs are public. Judge, Supervisor, and Ring Manager desks load active assigned rings first and use the assigned-ring bout API. The backend checks the bearer account and active assignment on every scoped request; Judge score submission does not send `judgeId`, and Supervisor writes do not send `createdBy` or `confirmedBy`. Ring Manager uses the assigned ring's server-owned `currentBoutId`, state-specific commands, confirmation steps, and server-selected next-bout operation. Current score validation and venue-dependent decisions are documented in [Judge scoring policy](../docs/scoring-policy.md); result confirmation is documented in [Supervisor result confirmation policy](../docs/result-confirmation-policy.md); bout lifecycle rules are documented in [Bout state transition policy](../docs/bout-state-transition-policy.md).
+Audience APIs are public. `/api/home` is the audience aggregate response and supplies notices, ring statuses, schedules, and confirmed results; `/api/bouts` supplies the later-bout preview and official bracket list. Confirmed bout detail displays the result totals exposed by the public DTO. Round-by-round public score rows are not exposed by the current backend contract and remain a backend follow-up. Judge, Supervisor, and Ring Manager desks load active assigned rings first and use the assigned-ring bout API. The backend checks the bearer account and active assignment on every scoped request; Judge score submission does not send `judgeId`, and Supervisor writes do not send `createdBy` or `confirmedBy`. Ring Manager uses the assigned ring's server-owned `currentBoutId`, state-specific commands, confirmation steps, and server-selected next-bout operation. Current score validation and venue-dependent decisions are documented in [Judge scoring policy](../docs/scoring-policy.md); result confirmation is documented in [Supervisor result confirmation policy](../docs/result-confirmation-policy.md); bout lifecycle rules are documented in [Bout state transition policy](../docs/bout-state-transition-policy.md).
 Operations status requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.
 Audit log queries require a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session and retain the server's masked before/after snapshots.
 Tournament management requires a `GAME_MANAGER` or `SERVICE_MANAGER` bearer session.

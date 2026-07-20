@@ -34,4 +34,7 @@ The current account schema has no tournament-assignment relationship. Consequent
 
 ## Database
 
-Apply [database-migration-audit-log.sql](database-migration-audit-log.sql) to MariaDB before deployment. Audit records intentionally have no foreign-key cascades so historical records remain available after a target account, notice, schedule, or bout is deleted.
+The audit table and indexes are created by the V1 Flyway migration documented
+in [Database migration policy](database-migration.md). Audit records
+intentionally have no foreign-key cascades so historical records remain
+available after a target account, notice, schedule, or bout is deleted.

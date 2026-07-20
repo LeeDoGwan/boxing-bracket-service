@@ -62,7 +62,17 @@ describe('JudgeAssignedPage', () => {
     fireEvent.change(screen.getByLabelText('Red score'), { target: { value: '-1' } });
     fireEvent.change(screen.getByLabelText('Blue score'), { target: { value: '9.5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Submit round' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Scores must be non-negative whole numbers.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Scores must be whole numbers from 0 to 10.');
+    expect(submitRoundScore).not.toHaveBeenCalled();
+  });
+
+  it('rejects scores above the confirmed maximum of 10', async () => {
+    render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Red score'), { target: { value: '11' } });
+    fireEvent.change(screen.getByLabelText('Blue score'), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit round' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Scores must be whole numbers from 0 to 10.');
     expect(submitRoundScore).not.toHaveBeenCalled();
   });
 

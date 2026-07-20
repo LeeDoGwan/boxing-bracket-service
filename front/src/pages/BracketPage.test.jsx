@@ -22,12 +22,12 @@ describe('BracketPage', () => {
     render(<BracketPage tournamentId={1} />);
 
     expect(await screen.findByText('1개 경기')).toBeInTheDocument();
-    expect(getBouts).toHaveBeenCalledWith(1);
+    expect(getBouts).toHaveBeenCalledWith(1, expect.objectContaining({ signal: expect.any(AbortSignal) }));
     fireEvent.change(screen.getByLabelText(/선수/), { target: { value: 'Blue' } });
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: '검색' }));
       await Promise.resolve();
     });
-    expect(searchBouts).toHaveBeenCalledWith(1, 'Blue');
+    expect(searchBouts).toHaveBeenCalledWith(1, 'Blue', expect.objectContaining({ signal: expect.any(AbortSignal) }));
   });
 });

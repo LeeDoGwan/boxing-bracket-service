@@ -73,6 +73,7 @@ describe('AdminNoticePage', () => {
     await waitFor(() => expect(updateNotice).toHaveBeenCalledWith(20, { active: false, content: 'Updated content.', displayOrder: 1, title: 'Updated notice', tournamentId: 1 }, 'admin-token'));
 
     fireEvent.click(screen.getByRole('button', { name: '공지 삭제' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(deleteNotice).toHaveBeenCalledWith(20, 'admin-token'));
     expect(await screen.findByText('공지를 삭제했습니다.')).toBeInTheDocument();
   });

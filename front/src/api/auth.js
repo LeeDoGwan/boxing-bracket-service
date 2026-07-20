@@ -9,5 +9,6 @@ export function getCurrentAccount(token) {
 }
 
 export function logout(token) {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('boxing:staff-logout'));
   return postApi('/api/auth/logout', null, { token });
 }

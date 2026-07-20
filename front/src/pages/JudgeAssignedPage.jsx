@@ -8,12 +8,13 @@ import { useBoutEventStream } from '../hooks/useBoutEventStream';
 import { useEventRefresh } from '../hooks/useEventRefresh';
 
 const JUDGE_EVENT_TYPES = ['BOUT_STARTED', 'BOUT_STATUS_CHANGED', 'ROUND_STARTED', 'NEXT_BOUT_READY', 'RESULT_CONFIRMED'];
+const MAX_SCORE = 10;
 const SCORE_ERROR_MESSAGES = {
   BOUT_ACCESS_DENIED: 'You are not assigned to this bout.',
   BOUT_NOT_STARTED: 'The bout must be started before scores can be submitted.',
   INVALID_BOUT_STATE: 'Scores cannot be submitted for this bout.',
   INVALID_ROUND_NUMBER: 'This round is outside the bout round range.',
-  INVALID_SCORE_VALUE: 'Scores must be non-negative whole numbers.',
+  INVALID_SCORE_VALUE: 'Scores must be whole numbers from 0 to 10.',
   RING_ACCESS_DENIED: 'Your ring assignment is no longer active.',
   ROUND_NOT_STARTED: 'This round has not started yet.',
   SCORE_ALREADY_SUBMITTED: 'This round score was already submitted.',
@@ -211,8 +212,9 @@ function ScoreCard({ bout, busy, onSubmit, roundNo, score }) {
       setValidationError('Both scores are required.');
       return;
     }
-    if (!/^\d+$/.test(String(redScore)) || !/^\d+$/.test(String(blueScore))) {
-      setValidationError('Scores must be non-negative whole numbers.');
+    if (!/^\d+$/.test(String(redScore)) || !/^\d+$/.test(String(blueScore))
+      || Number(redScore) > MAX_SCORE || Number(blueScore) > MAX_SCORE) {
+      setValidationError('Scores must be whole numbers from 0 to 10.');
       return;
     }
     setValidationError('');
@@ -230,8 +232,8 @@ function ScoreCard({ bout, busy, onSubmit, roundNo, score }) {
   }
   return <form className={`judge-score-card${roundNo === currentRound ? ' current-round' : ''}`} noValidate onSubmit={submit}>
     <h4>Round {roundNo}</h4><p className="round-status">{roundStatus}</p>
-    <label>Red score<input aria-describedby={validationError ? `round-${roundNo}-error` : undefined} disabled={busy || submitted || closed || futureRound} inputMode="numeric" min="0" pattern="[0-9]*" required type="number" value={redScore} onChange={(event) => { setDirty(true); setValidationError(''); setRedScore(event.target.value); }} /></label>
-    <label>Blue score<input aria-describedby={validationError ? `round-${roundNo}-error` : undefined} disabled={busy || submitted || closed || futureRound} inputMode="numeric" min="0" pattern="[0-9]*" required type="number" value={blueScore} onChange={(event) => { setDirty(true); setValidationError(''); setBlueScore(event.target.value); }} /></label>
+    <label><span>Red score <small className="score-range-hint">0~10점</small></span><input aria-describedby={validationError ? `round-${roundNo}-error` : undefined} aria-label="Red score" disabled={busy || submitted || closed || futureRound} inputMode="numeric" max={MAX_SCORE} min="0" pattern="[0-9]*" required type="number" value={redScore} onChange={(event) => { setDirty(true); setValidationError(''); setRedScore(event.target.value); }} /></label>
+    <label><span>Blue score <small className="score-range-hint">0~10점</small></span><input aria-describedby={validationError ? `round-${roundNo}-error` : undefined} aria-label="Blue score" disabled={busy || submitted || closed || futureRound} inputMode="numeric" max={MAX_SCORE} min="0" pattern="[0-9]*" required type="number" value={blueScore} onChange={(event) => { setDirty(true); setValidationError(''); setBlueScore(event.target.value); }} /></label>
     {validationError && <p className="form-error" id={`round-${roundNo}-error`} role="alert">{validationError}</p>}
     {!submitted && !closed && <button className="command-button" disabled={!canSubmit} type="submit">Submit round</button>}
     {confirming && <div aria-label={`Confirm round ${roundNo} score`} className="score-confirmation" role="dialog"><p>Round {roundNo}: Red {redScore}, Blue {blueScore}</p><div><button className="command-button" disabled={busy} onClick={confirmSubmission} type="button">Confirm score</button><button className="secondary-button" onClick={() => setConfirming(false)} type="button">Cancel</button></div></div>}

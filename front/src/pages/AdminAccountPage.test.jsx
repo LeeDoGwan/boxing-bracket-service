@@ -77,7 +77,7 @@ describe('AdminAccountPage', () => {
     fireEvent.change(screen.getByLabelText('역할'), { target: { value: 'RING_MANAGER' } });
     fireEvent.click(screen.getByRole('button', { name: '계정 생성' }));
 
-    await waitFor(() => expect(createAccount).toHaveBeenCalledWith({ loginId: 'ring01', name: 'Ring One', password: 'secret', role: 'RING_MANAGER', status: 'ACTIVE' }, 'service-token'));
+    await waitFor(() => expect(createAccount).toHaveBeenCalledWith({ loginId: 'ring01', name: 'Ring One', passwordHash: 'secret', role: 'RING_MANAGER', status: 'ACTIVE' }, 'service-token'));
     expect(await screen.findByText('계정을 생성했습니다.')).toBeInTheDocument();
   });
 
@@ -90,9 +90,10 @@ describe('AdminAccountPage', () => {
     fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'new-secret' } });
     fireEvent.change(screen.getByLabelText('상태'), { target: { value: 'INACTIVE' } });
     fireEvent.click(screen.getByRole('button', { name: '계정 저장' }));
-    await waitFor(() => expect(updateAccount).toHaveBeenCalledWith(40, { loginId: 'judge01', name: 'Judge Updated', password: 'new-secret', role: 'JUDGE', status: 'INACTIVE' }, 'service-token'));
+    await waitFor(() => expect(updateAccount).toHaveBeenCalledWith(40, { loginId: 'judge01', name: 'Judge Updated', passwordHash: 'new-secret', role: 'JUDGE', status: 'INACTIVE' }, 'service-token'));
 
     fireEvent.click(screen.getByRole('button', { name: '계정 삭제' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(deleteAccount).toHaveBeenCalledWith(40, 'service-token'));
     expect(await screen.findByText('계정을 삭제했습니다.')).toBeInTheDocument();
   });

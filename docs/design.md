@@ -1,6 +1,6 @@
 # Boxing Bracket Service Design
 
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 ## 1. Purpose
 
@@ -33,11 +33,12 @@ Known MVP boundaries:
 - Judge, supervisor, and ring-manager ring assignments are enforced server-side. The assignment unit and API details are in [Staff ring assignment](staff-assignment.md).
 - Assigned Judge, Supervisor, and Ring Manager screens subscribe to one selected-ring SSE stream and refetch API state after relevant events.
 - Ring Manager state transitions use the existing lifecycle endpoints and the [bout state transition policy](bout-state-transition-policy.md); the server chooses the next official bout and the screen exposes state-specific commands only.
-- Judge score submission enforces non-negative whole-number input, started-bout/current-round checks, configured round bounds, and idempotent retry behavior. The provisional policy is in [Judge scoring policy](scoring-policy.md).
-- Supervisor result confirmation uses the active assigned-ring scope, authenticated session actor, submitted-score readiness, bout lifecycle, decision, and penalty validation. The contract is in [Supervisor result confirmation policy](result-confirmation-policy.md).
+- Judge score submission enforces whole-number input from 0 through 10, started-bout/current-round checks, configured round bounds, and idempotent retry behavior. The provisional policy is in [Judge scoring policy](scoring-policy.md).
+- Supervisor result confirmation uses the active assigned-ring scope, authenticated session actor, submitted-score readiness, bout lifecycle, decision, penalty validation, and optional penalty round bounds. The contract is in [Supervisor result confirmation policy](result-confirmation-policy.md).
+- Public screens remain login-free. Staff use one `/staff/login` entry point; the shared frontend session provider and route guard expose only role-appropriate operational navigation.
 - Sessions are process-local. A shared session store is required for multiple backend instances.
 - Schedule mutations do not publish a dedicated schedule SSE event. Audience clients see schedule changes on a full reload.
-- Audience tournament discovery is not implemented. The frontend currently accepts a positive `tournamentId` query parameter.
+- Audience tournament discovery is not implemented. The one-tournament MVP uses a configured default and accepts a positive `tournamentId` query parameter for the current public context.
 - Server log viewing, advanced statistics, offline support, and Game Manager tournament ownership rules remain deferred.
 
 ## 3. System Context
@@ -62,7 +63,7 @@ flowchart LR
     audit --> db
 ```
 
-The frontend and backend can be deployed separately. During local development, Vite proxies `/api` to `http://localhost:8080`; production deployment should provide an equivalent reverse-proxy or configure `VITE_API_BASE_URL`.
+The frontend and backend can be deployed separately. During local development, Vite proxies `/api` to `http://localhost:8080`; production deployment should provide an equivalent reverse-proxy or configure `VITE_API_BASE_URL`. Product and UX decisions are recorded in [Product decisions](product-decisions.md).
 
 ## 4. Backend Architecture
 
@@ -124,7 +125,7 @@ App
 `-- shared components, API clients, hooks, and styles
 ```
 
-Each authenticated desk owns its login/session validation and limits the UI by role before making protected API calls. API clients share `requestApi`, which adds JSON headers, optional bearer authorization, parses the common response envelope, and turns server failures into JavaScript errors.
+The frontend uses one `/staff/login` entry point and a shared `StaffAuthProvider`. `StaffRoute` redirects unauthenticated users while preserving the return path and denies roles that are not allowed for the target route. `AppHeader` exposes public links to everyone and role-appropriate operational links only after login; legacy role session keys remain synchronized for page-level compatibility. API clients share `requestApi`, which adds JSON headers, optional bearer authorization, parses the common response envelope, and turns server failures into JavaScript errors.
 
 The public home aggregates notices, ring status, confirmed results, and schedules from `/api/home`. It opens bout details through the public bout detail API. SSE reconnects trigger a fresh audience data load, so the stream is an invalidation signal rather than the source of truth.
 
@@ -285,7 +286,7 @@ Workflow rules:
 5. Database uniqueness protects one score per judge/bout/round and one result per bout.
 6. SSE dispatch is registered after transaction commit, so rolled-back state is not broadcast.
 7. Judge score validation is performed before persistence; failed validation does not publish a score event.
-8. Supervisor result and penalty validation is performed before persistence; failed mutations do not publish scoring events.
+8. Supervisor result and penalty validation is performed before persistence, including `roundNo` range checks when a round reference is supplied; failed mutations do not publish scoring events.
 9. Ring Manager lifecycle validation is performed in the bout domain before persistence; failed transitions do not publish bout events.
 
 ## 9. API Contract
@@ -307,7 +308,7 @@ API groups:
 | Group | Main endpoints | Access |
 | --- | --- | --- |
 | Auth | `/api/auth/login`, `/logout`, `/me` | Login public; logout/me authenticated |
-| Audience home | `/api/home`, `/api/notices`, `/api/schedules`, `/api/rings/status`, `/api/bouts` | Public |
+| Audience home | `/api/home`, `/api/bouts`, `/api/bouts/{boutId}`, `/api/events/stream` | Public |
 | Live events | `/api/events/stream?tournamentId=&ringId=` | Public |
 | Judge | `/api/judge/bouts/{boutId}/scores`, score submit endpoint | `JUDGE` |
 | Supervisor | scores, penalties, result endpoints | `SUPERVISOR` |
@@ -323,22 +324,35 @@ The detailed endpoint list remains in [Sprint 1 scope](sprint-1.md). Frontend-sp
 
 ## 10. Persistence and Deployment
 
-The local profile expects MariaDB at `boxing_bracket` with `ddl-auto: none`. The service therefore assumes that the base schema and migrations have already been applied.
+The local profile expects MariaDB at `boxing_bracket`, runs Flyway from
+`back/src/main/resources/db/migration/`, and uses `ddl-auto: validate`. Flyway
+is the schema owner; Hibernate validates the resulting schema and never creates
+or alters tables at application startup. The policy and operator procedures are
+in [Database migration policy](database-migration.md).
 
-Migration documents currently cover:
+The current migration head is `V2__add_penalty_round_reference.sql`. `V1__create_initial_schema.sql`
+contains the initially mapped tables, optimistic-lock columns, workflow
+uniqueness constraints, schedule and staff-assignment indexes, and audit-log
+indexes. V2 adds the nullable `penalties.round_no` column used to retain the
+round reference while penalty totals remain bout-level.
+Entity references are scalar IDs, so this baseline intentionally does not add
+foreign keys that the current model does not declare.
 
-1. `database-migration-concurrency.sql`: version columns and workflow uniqueness constraints.
-2. `database-migration-audit-log.sql`: immutable audit storage and indexes.
-3. `database-migration-schedule.sql`: tournament schedule storage and indexes.
-4. `database-migration-staff-assignment.sql`: staff ring assignments and uniqueness/indexes.
+The repository contains no evidence of a deployed shared database. New
+installations therefore apply V1 and then V2. An existing database must be inspected,
+backed up, and explicitly baselined only after its schema is proven equivalent;
+`baseline-on-migrate` is disabled so an unknown schema cannot start silently.
 
-The test profile uses an H2 in-memory database with `ddl-auto: create-drop`; it discovers the JPA model directly and does not apply the MariaDB migration files.
+The test profile uses H2 in MySQL compatibility mode, applies the same Flyway
+V1 and V2 migrations, and then validates the JPA mapping. A migration
+integration test checks both applied versions, idempotent startup, tables,
+version columns, the penalty round column, and operational unique constraints.
 
 Operational prerequisites:
 
 - Java 11, Maven 3.9.x, Node.js 24.x, and npm.
 - No Maven Wrapper is tracked; local and CI backend verification use the available Maven 3.9.x command.
-- MariaDB schema migration execution before local-profile startup.
+- MariaDB database and account setup before local-profile startup; Flyway applies pending migrations automatically.
 - Active role accounts and tournament reference data for authenticated end-to-end testing.
 - A shared session store and external event delivery strategy before running multiple backend instances.
 - Source verification runs through separate [Backend CI](../.github/workflows/backend-ci.yml) and [Frontend CI](../.github/workflows/frontend-ci.yml) workflows. CI uses Temurin Java 11, Node.js 24, Maven/npm dependency caches, read-only repository permissions, and no deployment secrets.
@@ -355,8 +369,8 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 71 test classes, 380 test cases, zero failures, errors, or skips.
-- Frontend: 24 test files, 78 test cases, ESLint passed, and Vite production build passed.
+- Backend: 72 test classes, 385 test cases, zero failures, errors, or skips.
+- Frontend: 25 test files, 83 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.
@@ -371,6 +385,6 @@ The following decisions should be made before expanding beyond the MVP:
 - Event model: whether schedule, notice, and ring-status changes should use SSE in addition to bout updates.
 - Result policy: allowed decision types, confirmed-result correction workflow, and approval requirements; current implementation is documented in [Supervisor result confirmation policy](result-confirmation-policy.md).
 - Ring Manager lifecycle: current status transitions, round sequencing, next-bout ordering, and cancellation semantics are documented in [Bout state transition policy](bout-state-transition-policy.md); cancellation and exceptional-bout behavior remain venue decisions.
-- Boxing scoring policy: maximum score, ten-point rule, tied-round handling, deduction interaction, and exceptional-bout timing require venue confirmation; see [Judge scoring policy](scoring-policy.md).
+- Boxing scoring policy: the 0-10 maximum is implemented; ten-point rule, tied-round handling, deduction interaction, and exceptional-bout timing require venue confirmation; see [Judge scoring policy](scoring-policy.md).
 - Data ownership: whether athletes remain global master data or become tournament-scoped records.
-- Production migration tooling: repeatable versioned migrations and rollback policy.
+- Production migration operations: backup, approval, rollback/forward-fix policy, and schema ownership for shared databases.

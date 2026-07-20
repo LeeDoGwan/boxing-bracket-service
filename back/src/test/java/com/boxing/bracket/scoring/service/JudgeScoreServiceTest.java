@@ -127,6 +127,15 @@ class JudgeScoreServiceTest {
     }
 
     @Test
+    void submitRoundScoreRejectsScoreAboveTen() {
+        RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 11, 9);
+
+        assertThatThrownBy(() -> judgeScoreService.submitRoundScore(1L, 1, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("INVALID_SCORE_VALUE");
+    }
+
+    @Test
     void submitRoundScoreAllowsPreviouslyUnsubmittedRound() {
         RoundScoreSubmitRequest request = new RoundScoreSubmitRequest(10L, 10, 9);
         Bout bout = createBout(1L, 2, 3);

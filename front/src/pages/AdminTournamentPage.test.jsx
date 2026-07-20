@@ -77,6 +77,7 @@ describe('AdminTournamentPage', () => {
     await waitFor(() => expect(updateTournament).toHaveBeenCalledWith(1, expect.objectContaining({ location: 'Busan Gym' }), 'admin-token'));
 
     fireEvent.click(screen.getByRole('button', { name: '대회 삭제' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(deleteTournament).toHaveBeenCalledWith(1, 'admin-token'));
     expect(await screen.findByText('대회를 삭제했습니다.')).toBeInTheDocument();
   });
