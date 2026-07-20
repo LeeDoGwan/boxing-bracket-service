@@ -95,7 +95,11 @@ Supervisor write services resolve `createdBy` and `confirmedBy` from the
 authenticated session; compatibility request fields are not a permission
 source.
 
-Ring Manager uses the same assigned-ring selector and keeps existing controls.
+Ring Manager uses the same assigned-ring selector. The assigned-ring response
+also exposes the server-owned `currentBoutId`; the routed page uses it to
+disable commands for a different selected bout. State-specific commands,
+confirmation steps, round sequencing, and next-bout ordering are defined in
+[Bout state transition policy](bout-state-transition-policy.md).
 Judge, Supervisor, and Ring Manager screens subscribe to
 `GET /api/events/stream?tournamentId={tournamentId}&ringId={selectedRingId}`
 when an active ring is selected. The stream is an invalidation signal only:

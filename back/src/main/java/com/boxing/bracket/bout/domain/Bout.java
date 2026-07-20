@@ -129,6 +129,20 @@ public class Bout extends BaseTimeEntity {
         return true;
     }
 
+    public boolean startForRingManager() {
+        if (this.status == BoutStatus.IN_PROGRESS) {
+            return false;
+        }
+        if (this.status != BoutStatus.READY) {
+            throw new WorkflowConflictException("INVALID_BOUT_TRANSITION");
+        }
+        this.status = BoutStatus.IN_PROGRESS;
+        if (this.startedAt == null) {
+            this.startedAt = LocalDateTime.now();
+        }
+        return true;
+    }
+
     public void finish(BoutSide winnerSide) {
         if (this.resultConfirmed) {
             throw new WorkflowConflictException("RESULT_ALREADY_CONFIRMED");
@@ -166,6 +180,36 @@ public class Bout extends BaseTimeEntity {
         return true;
     }
 
+    public boolean transitionForRingManager(BoutStatus nextStatus) {
+        if (nextStatus == null) {
+            throw new IllegalArgumentException("status is required");
+        }
+        if (nextStatus == BoutStatus.FINISHED) {
+            throw new WorkflowConflictException("BOUT_RESULT_REQUIRED");
+        }
+        if (this.status == nextStatus) {
+            return false;
+        }
+        if (isCompleted()) {
+            throw new WorkflowConflictException("INVALID_BOUT_STATE");
+        }
+
+        if (nextStatus == BoutStatus.SCORING
+                && (currentRound == null || currentRound < 1
+                || (totalRounds != null && currentRound < totalRounds))) {
+            throw new WorkflowConflictException("INVALID_BOUT_TRANSITION");
+        }
+
+        boolean allowed = (this.status == BoutStatus.SCHEDULED
+                && (nextStatus == BoutStatus.READY || nextStatus == BoutStatus.CANCELED))
+                || (this.status == BoutStatus.READY && nextStatus == BoutStatus.CANCELED)
+                || (this.status == BoutStatus.IN_PROGRESS && nextStatus == BoutStatus.SCORING);
+        if (!allowed) {
+            throw new WorkflowConflictException("INVALID_BOUT_TRANSITION");
+        }
+        return changeStatus(nextStatus);
+    }
+
     public boolean startRound(Integer roundNo) {
         if (roundNo == null) {
             throw new IllegalArgumentException("roundNo is required");
@@ -190,8 +234,32 @@ public class Bout extends BaseTimeEntity {
         return true;
     }
 
+    public boolean startRoundForRingManager(Integer roundNo) {
+        if (roundNo == null || roundNo < 1) {
+            throw new IllegalArgumentException("INVALID_ROUND_NUMBER");
+        }
+        if (totalRounds != null && roundNo > totalRounds) {
+            throw new IllegalArgumentException("ROUND_OUT_OF_RANGE");
+        }
+        if (isCompleted() || this.status != BoutStatus.IN_PROGRESS) {
+            throw new WorkflowConflictException("INVALID_BOUT_STATE");
+        }
+
+        int nextRound = currentRound == null ? 1 : currentRound + 1;
+        if (currentRound != null && currentRound > 0 && roundNo.equals(currentRound)) {
+            return false;
+        }
+        if (roundNo != nextRound) {
+            throw new WorkflowConflictException("ROUND_SEQUENCE_INVALID");
+        }
+        this.currentRound = roundNo;
+        return true;
+    }
+
     public boolean isCompleted() {
-        return this.resultConfirmed || this.status == BoutStatus.FINISHED;
+        return this.resultConfirmed
+                || this.status == BoutStatus.FINISHED
+                || this.status == BoutStatus.CANCELED;
     }
 
     public void validateScoreSubmission(Integer roundNo) {

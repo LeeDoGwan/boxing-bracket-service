@@ -129,12 +129,12 @@ class RingManagerControllerTest {
     @Test
     void startRoundReturnsBadRequestForInvalidRoundNo() throws Exception {
         given(ringManagerService.startRound(10L, 0))
-                .willThrow(new IllegalArgumentException("roundNo must be greater than or equal to 1"));
+                .willThrow(new IllegalArgumentException("INVALID_ROUND_NUMBER"));
 
         mockMvc.perform(post("/api/ring-manager/bouts/{boutId}/rounds/{roundNo}/start", 10L, 0))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("roundNo must be greater than or equal to 1"));
+                .andExpect(jsonPath("$.message").value("INVALID_ROUND_NUMBER"));
     }
 
     private Bout createBout(Long id) {
