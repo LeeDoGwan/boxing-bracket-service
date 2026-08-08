@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getBoutDetail } from '../api/audience';
-import { athleteLabel, statusLabel, winnerText } from '../utils';
+import { athleteLabel, decisionLabel, effectiveResultScores, statusLabel, winnerText } from '../utils';
 
 export function BoutDetailDialog({ boutId, onClose }) {
   const [state, setState] = useState({ loading: false, detail: null, error: null });
@@ -56,6 +56,7 @@ export function BoutDetailDialog({ boutId, onClose }) {
   }
 
   const { detail, error, loading } = state;
+  const effectiveScores = effectiveResultScores(detail?.result);
   return (
     <div aria-modal="true" className="dialog-backdrop" role="presentation">
       <section aria-labelledby="bout-detail-title" aria-modal="true" className="bout-dialog" role="dialog">
@@ -80,8 +81,8 @@ export function BoutDetailDialog({ boutId, onClose }) {
               <div className="confirmed-result">
                 <p>확정 결과</p>
                 <strong>{winnerText(detail)}</strong>
-                <span className="confirmed-score-summary">총점 {detail.result?.redTotalScore ?? '-'} : {detail.result?.blueTotalScore ?? '-'}</span>
-                <span>{detail.result?.decisionType || '판정'}</span>
+                <span className="confirmed-score-summary">Effective score {effectiveScores?.red ?? '-'} : {effectiveScores?.blue ?? '-'}</span>
+                <span>{decisionLabel(detail.result?.decisionType)}</span>
               </div>
             )}
           </>

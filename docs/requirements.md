@@ -172,6 +172,8 @@ The first working loop is:
 - `blueTotalScore`
 - `redPenaltyTotal`
 - `bluePenaltyTotal`
+- `redEffectiveScore`: `redTotalScore + bluePenaltyTotal`
+- `blueEffectiveScore`: `blueTotalScore + redPenaltyTotal`
 - `winnerSide`: `RED`, `BLUE`, `DRAW`
 - `decisionType`
 - `confirmedBy`

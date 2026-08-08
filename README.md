@@ -81,7 +81,7 @@ npm run lint
 npm run build
 ```
 
-Current documented suite: 74 backend test classes, 406 backend test cases, and 88 frontend test cases.
+Current documented suite: 74 backend test classes, 406 backend test cases, and 91 frontend test cases.
 
 The local backend profile connects to MariaDB and runs Flyway migrations before
 Hibernate validates the schema. Create the `boxing_bracket` database and a

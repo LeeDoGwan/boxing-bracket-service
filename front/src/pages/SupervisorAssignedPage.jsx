@@ -12,7 +12,7 @@ const SUPERVISOR_EVENT_TYPES = ['BOUT_STARTED', 'BOUT_STATUS_CHANGED', 'ROUND_ST
 const DECISION_TYPES = [
   ['POINTS', 'Points'],
   ['KO', 'KO'],
-  ['RSC', 'RSC'],
+  ['RSC', 'TKO'],
   ['ABD', 'Abandoned'],
   ['DSQ', 'Disqualification'],
   ['WALKOVER', 'Walkover'],
@@ -103,12 +103,13 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
   const scoreReady = submittedScores.length > 0 && draftScores.length === 0;
   const boutStarted = bout?.status === 'IN_PROGRESS' || bout?.status === 'SCORING';
   const canConfirm = !confirmed && boutStarted && scoreReady;
-  const adjustedRed = scoreTotals.red - penaltyTotals.red;
-  const adjustedBlue = scoreTotals.blue - penaltyTotals.blue;
+  const effectiveRed = scoreTotals.red + penaltyTotals.blue;
+  const effectiveBlue = scoreTotals.blue + penaltyTotals.red;
   const penaltyRounds = useMemo(() => bout
     ? Array.from({ length: Math.max(1, bout.totalRounds || bout.currentRound || 1) }, (_, index) => index + 1)
     : [], [bout]);
-  const expectedWinner = adjustedRed === adjustedBlue ? 'DRAW' : adjustedRed > adjustedBlue ? 'RED' : 'BLUE';
+  const expectedWinner = effectiveRed === effectiveBlue ? 'DRAW' : effectiveRed > effectiveBlue ? 'RED' : 'BLUE';
+  const totalsTied = effectiveRed === effectiveBlue;
   const winnerMismatch = resultForm.decisionType === 'POINTS'
     && expectedWinner !== 'DRAW'
     && resultForm.winnerSide !== expectedWinner;
@@ -317,8 +318,8 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
           <p>{bout.redAthlete?.name || 'Red'} vs {bout.blueAthlete?.name || 'Blue'}</p>
           <h4>Scores</h4>
           <div className="supervisor-score-summary">
-            <div className="supervisor-total red-total"><span>Red total</span><strong>{scoreTotals.red}</strong><small>Penalty -{penaltyTotals.red} · Adjusted {adjustedRed}</small></div>
-            <div className="supervisor-total blue-total"><span>Blue total</span><strong>{scoreTotals.blue}</strong><small>Penalty -{penaltyTotals.blue} · Adjusted {adjustedBlue}</small></div>
+            <div className="supervisor-total red-total"><span>Red total</span><strong>{scoreTotals.red}</strong><small>Blue penalty +{penaltyTotals.blue} | Effective {effectiveRed}</small></div>
+            <div className="supervisor-total blue-total"><span>Blue total</span><strong>{scoreTotals.blue}</strong><small>Red penalty +{penaltyTotals.red} | Effective {effectiveBlue}</small></div>
           </div>
           <p aria-live="polite" className="score-readiness">Submitted {submittedScores.length} · Draft {draftScores.length}</p>
           <ScoreReview scores={scores} />
@@ -348,8 +349,9 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
           {confirmingResult && !confirmed && <div aria-label="Confirm result" className="score-confirmation" role="dialog">
             <strong>Confirm result</strong>
             <p>Bout {bout.boutNumber}: {bout.redAthlete?.name || 'Red'} vs {bout.blueAthlete?.name || 'Blue'}</p>
-            <p>{resultForm.winnerSide} · {resultForm.decisionType} · scores {scoreTotals.red}-{scoreTotals.blue} · penalties {penaltyTotals.red}-{penaltyTotals.blue}</p>
-            {winnerMismatch && <p className="form-error" role="alert">The selected winner differs from the adjusted score comparison.</p>}
+            <p>{resultForm.winnerSide} | {resultForm.decisionType} | effective scores {effectiveRed}-{effectiveBlue}</p>
+            {totalsTied && <p>Effective totals are tied. Supervisor decides the final winner.</p>}
+            {winnerMismatch && <p className="form-error" role="alert">The selected winner differs from the effective score comparison.</p>}
             <div><button className="command-button" disabled={busy} onClick={submitResult} type="button">Confirm result</button><button className="secondary-button" disabled={busy} onClick={() => setConfirmingResult(false)} type="button">Cancel</button></div>
           </div>}
           {confirmingCorrection && confirmed && <div aria-label="Confirm result correction" className="score-confirmation" role="dialog">

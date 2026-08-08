@@ -40,8 +40,14 @@ enforces the following rules:
 The product decision is that each red or blue athlete score is an integer from
 0 through 10. A submitted score remains immutable. Each tournament configures
 3 or 5 active assigned Judges; Supervisor result confirmation waits for every
-assigned Judge to submit each started round. If adjusted totals tie, the
+assigned Judge to submit each started round. If effective totals tie, the
 Supervisor makes the final winner decision.
+
+For a confirmed bout, a penalty does not reduce the penalized athlete's stored
+score. It adds the penalty points to the opponent's effective total:
+`effectiveRed = redTotalScore + bluePenaltyTotal` and
+`effectiveBlue = blueTotalScore + redPenaltyTotal`. When those effective totals
+are equal, the Supervisor may finalize Red, Blue, or Draw.
 
 ## State Matrix
 

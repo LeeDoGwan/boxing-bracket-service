@@ -60,6 +60,36 @@ describe('SupervisorAssignedPage', () => {
     expect(screen.getByRole('button', { name: 'Review result' })).toBeDisabled();
   });
 
+  it('adds a penalty to the opponent effective total', async () => {
+    getSupervisorScores.mockResolvedValue([
+      { blueScore: 9, judgeId: 10, redScore: 10, roundNo: 1, status: 'SUBMITTED' },
+    ]);
+    getPenalties.mockResolvedValue([
+      { penaltyId: 1, penaltyPoint: 1, targetSide: 'RED' },
+      { penaltyId: 2, penaltyPoint: 2, targetSide: 'BLUE' },
+    ]);
+
+    render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+
+    expect(await screen.findByText('Blue penalty +2 | Effective 12')).toBeInTheDocument();
+    expect(screen.getByText('Red penalty +1 | Effective 10')).toBeInTheDocument();
+  });
+
+  it('leaves a tied effective total for the Supervisor to decide', async () => {
+    getSupervisorScores.mockResolvedValue([
+      { blueScore: 10, judgeId: 10, redScore: 10, roundNo: 1, status: 'SUBMITTED' },
+    ]);
+
+    render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    await screen.findByText('Red vs Blue');
+
+    fireEvent.change(screen.getByLabelText('Winner'), { target: { value: 'BLUE' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Review result' }));
+
+    expect(screen.getByText('Effective totals are tied. Supervisor decides the final winner.')).toBeInTheDocument();
+    expect(screen.getByText('BLUE | POINTS | effective scores 10-10')).toBeInTheDocument();
+  });
+
   it('blocks zero penalty points without calling the API', async () => {
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     await screen.findByText('Red vs Blue');

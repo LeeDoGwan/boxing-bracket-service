@@ -94,21 +94,26 @@ field instead of a hard-coded number.
 - `NONE` and `UNKNOWN` are rejected for final confirmation.
 - `RED`, `BLUE`, and `DRAW` are accepted as winner selections.
 - `DRAW` is currently accepted only with `POINTS`.
-- A tied adjusted total is a recommendation for `DRAW`; the Supervisor remains
+- A tied effective total is a recommendation for `DRAW`; the Supervisor remains
   the final decision maker.
 - Score totals are displayed as reference data; the server does not force the
   Supervisor's selected winner to match the higher total.
+- A penalty assigned to Red is added to Blue's effective total, and a penalty
+  assigned to Blue is added to Red's effective total. In formulas:
+  `effectiveRed = redTotalScore + bluePenaltyTotal` and
+  `effectiveBlue = blueTotalScore + redPenaltyTotal`.
 - Penalty points are positive integers. Zero and negative values return
   `400 INVALID_PENALTY_VALUE`.
 - Penalties cannot be added after result confirmation.
-- Penalties may be entered with a round reference, while the adjusted total is
+- Penalties may be entered with a round reference, while the effective total is
   calculated across the whole bout.
 - Duplicate penalty reasons are not blocked because the venue policy is not
   yet defined.
 
 The current provisional display/code mapping is `POINTS` (points decision),
-`KO`, `RSC` (referee stoppage), `ABD` (withdrawal), `DSQ` (disqualification),
-and `WALKOVER` (walkover). `UNKNOWN` is storage-only and cannot be confirmed.
+`KO`, `RSC` (displayed as `TKO` for technical knockout), `ABD` (withdrawal),
+`DSQ` (disqualification), and `WALKOVER` (walkover). `UNKNOWN` is storage-only
+and cannot be confirmed.
 The association-specific labels and allowed winner combinations still require
 venue confirmation.
 
@@ -119,7 +124,7 @@ then assigned official bouts. It does not use the public bout list as the
 permission source. The page:
 
 - shows submitted and draft score counts, score totals, penalty totals, and
-  adjusted comparison values;
+  effective comparison values;
 - blocks result review until the bout is started and all existing scores are
   submitted;
 - keeps penalty and result inputs during SSE-driven refetches;

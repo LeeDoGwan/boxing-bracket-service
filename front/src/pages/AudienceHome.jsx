@@ -6,7 +6,7 @@ import { ScheduleList } from '../components/ScheduleList';
 import { StatePanel } from '../components/StatePanel';
 import { useAudienceData } from '../hooks/useAudienceData';
 import { useBoutEventStream } from '../hooks/useBoutEventStream';
-import { winnerText } from '../utils';
+import { decisionLabel, winnerText } from '../utils';
 
 export function AudienceHome({ tournamentId }) {
   const { bouts, dataTournamentId, error, home, loading, reload } = useAudienceData(tournamentId);
@@ -104,7 +104,7 @@ export function AudienceHome({ tournamentId }) {
                 <button className="result-row" key={bout.boutId} onClick={() => setSelectedBoutId(bout.boutId)} type="button">
                   <span>경기 {bout.boutNumber}</span>
                   <strong>{winnerText(bout)}</strong>
-                  <span>{bout.result?.decisionType || '결과 확정'}</span>
+                  <span>{decisionLabel(bout.result?.decisionType)}</span>
                 </button>
               ))}
             </div>

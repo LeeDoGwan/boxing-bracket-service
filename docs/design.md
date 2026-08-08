@@ -36,7 +36,7 @@ Known MVP boundaries:
 - Assigned Judge, Supervisor, and Ring Manager screens subscribe to one selected-ring SSE stream and refetch API state after relevant events.
 - Ring Manager state transitions use the existing lifecycle endpoints and the [bout state transition policy](bout-state-transition-policy.md); the server chooses the next official bout and the screen exposes state-specific commands only.
 - Judge score submission enforces whole-number input from 0 through 10, started-bout/current-round checks, configured round bounds, and idempotent retry behavior. The provisional policy is in [Judge scoring policy](scoring-policy.md).
-- Supervisor result confirmation uses the active assigned-ring scope, authenticated session actor, tournament Judge count (`3` or `5`), submitted-score readiness, bout lifecycle, decision, penalty validation, and optional penalty round bounds. Confirmed results can be corrected by a Supervisor with a required reason. The contract is in [Supervisor result confirmation policy](result-confirmation-policy.md).
+- Supervisor result confirmation uses the active assigned-ring scope, authenticated session actor, tournament Judge count (`3` or `5`), submitted-score readiness, bout lifecycle, decision, penalty validation, and optional penalty round bounds. A penalty assigned to one side is added to the opponent's effective result score; tied effective totals remain a Supervisor decision. Confirmed results can be corrected by a Supervisor with a required reason. The contract is in [Supervisor result confirmation policy](result-confirmation-policy.md).
 - Public screens remain login-free. Staff use one `/staff/login` entry point; the shared frontend session provider and route guard expose only role-appropriate operational navigation.
 - Sessions are process-local and each authenticated request revalidates the account's existence, active status, role, identity fields, and update timestamp. A shared session store is still required for multiple backend instances.
 - Schedule mutations do not publish a dedicated schedule SSE event. Audience clients see schedule changes on a full reload.
@@ -406,7 +406,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 The latest documented verification is:
 
 - Backend: 74 local test classes, 406 passed cases, zero failures or errors, and one CI-only MariaDB smoke test skipped locally.
-- Frontend: 26 test files, 88 test cases, ESLint passed, and Vite production build passed.
+- Frontend: 26 test files, 91 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.

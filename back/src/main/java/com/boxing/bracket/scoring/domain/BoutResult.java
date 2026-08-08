@@ -122,9 +122,24 @@ public class BoutResult extends BaseTimeEntity {
         this.confirmedAt = LocalDateTime.now();
     }
 
+    public Integer getRedEffectiveScore() {
+        return effectiveScore(redTotalScore, bluePenaltyTotal);
+    }
+
+    public Integer getBlueEffectiveScore() {
+        return effectiveScore(blueTotalScore, redPenaltyTotal);
+    }
+
     private void validateTotal(Integer total, String fieldName) {
         if (total != null && total < 0) {
             throw new IllegalArgumentException(fieldName + " must be greater than or equal to 0");
         }
+    }
+
+    private Integer effectiveScore(Integer totalScore, Integer opponentPenaltyTotal) {
+        if (totalScore == null) {
+            return null;
+        }
+        return totalScore + (opponentPenaltyTotal == null ? 0 : opponentPenaltyTotal);
     }
 }

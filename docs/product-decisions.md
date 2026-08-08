@@ -16,7 +16,7 @@ specific rule.
 | Judge maximum | Each athlete's round score has a maximum of 10 | Enforce the range in backend and browser validation; show the 0-10 range beside the inputs |
 | Judge count | Each tournament uses either 3 or 5 Judges | Store the count on the tournament; every active assigned Judge must submit each started round before Supervisor confirmation |
 | Score editing | A submitted Judge score cannot be edited | Make score submission final; corrections apply to the confirmed bout result only |
-| Penalties | Penalties may be entered per round but affect the bout total | Store the round reference and show both round history and bout-level adjusted totals |
+| Penalties | Penalties may be entered per round but are added to the opponent's effective bout total | Store the round reference and show both round history and bout-level effective totals |
 | Result authority | Supervisor directly selects the winner; a tie is resolved by Supervisor | Show calculated totals as a recommendation, then require explicit Supervisor confirmation |
 | Result types | A result type records how the bout ended, such as points decision, KO, referee stoppage, withdrawal, disqualification, walkover, or draw | Keep the code catalog extensible; the association-specific final labels remain a policy item |
 | Device priority | Staff screens are tablet-first and also usable on mobile | Use large touch targets, compact two-column tablet layouts, and one-column mobile fallbacks |
@@ -55,6 +55,12 @@ The following confirmed targets are implemented in the current baseline:
 - Maximum score `10` is enforced by backend validation and browser validation.
 - Penalties accept an optional round reference, while totals remain bout-level;
   the frontend sends the selected round for new entries.
+- A penalty assigned to one side is added to the opponent's effective total.
+  The result API exposes `redEffectiveScore` and `blueEffectiveScore`.
+- When effective totals tie, the Supervisor chooses the final Red win, Blue win,
+  or Draw outcome.
+- The stored `RSC` decision code is displayed as `TKO` in all user-facing
+  result labels.
 - Role-specific entry points are consolidated into `/staff/login`, with a
   shared session, protected routes, role-aware navigation, and logout cleanup.
 - The public header no longer exposes a raw tournament ID control; the current

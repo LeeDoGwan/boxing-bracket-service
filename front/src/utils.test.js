@@ -1,4 +1,4 @@
-import { athleteLabel, statusLabel, winnerLabel, winnerText } from './utils';
+import { athleteLabel, decisionLabel, effectiveResultScores, statusLabel, winnerLabel, winnerText } from './utils';
 
 describe('display helpers', () => {
   it('formats athlete affiliation and fallback values', () => {
@@ -11,6 +11,12 @@ describe('display helpers', () => {
     expect(statusLabel('IN_PROGRESS')).toBe('진행 중');
     expect(statusLabel('UNKNOWN')).toBe('UNKNOWN');
     expect(statusLabel(null)).toBe('정보 없음');
+  });
+
+  it('displays RSC as TKO and adds each penalty to the opponent score', () => {
+    expect(decisionLabel('RSC')).toBe('TKO');
+    expect(effectiveResultScores({ bluePenaltyTotal: 2, blueTotalScore: 19, redPenaltyTotal: 1, redTotalScore: 19 }))
+      .toEqual({ blue: 20, red: 21 });
   });
 
   it('returns the confirmed winner only', () => {

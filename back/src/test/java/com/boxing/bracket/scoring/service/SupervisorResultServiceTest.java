@@ -98,6 +98,8 @@ class SupervisorResultServiceTest {
         assertThat(response.getBlueTotalScore()).isEqualTo(19);
         assertThat(response.getRedPenaltyTotal()).isEqualTo(1);
         assertThat(response.getBluePenaltyTotal()).isEqualTo(2);
+        assertThat(response.getRedEffectiveScore()).isEqualTo(21);
+        assertThat(response.getBlueEffectiveScore()).isEqualTo(20);
         assertThat(response.getWinnerSide()).isEqualTo(BoutSide.RED);
         assertThat(response.getDecisionType()).isEqualTo(DecisionType.POINTS);
         assertThat(response.getConfirmedBy()).isEqualTo(20L);
