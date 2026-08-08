@@ -15,6 +15,7 @@ import com.boxing.bracket.ringmanager.dto.BoutStatusUpdateRequest;
 import com.boxing.bracket.ringmanager.dto.RingManagerBoutResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +52,7 @@ class RingManagerServiceTest {
     void startBoutStartsBoutAndAssignsRingCurrentBout() {
         Bout bout = createBout(10L);
         Ring ring = createRing(1L);
+        given(boutRepository.findRingIdById(10L)).willReturn(Optional.of(1L));
         given(ringRepository.findWithLockById(1L)).willReturn(Optional.of(ring));
         given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
         given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -62,12 +65,16 @@ class RingManagerServiceTest {
         assertThat(response.getStartedAt()).isNotNull();
         assertThat(ring.getCurrentBoutId()).isEqualTo(10L);
         assertThat(ring.getStatus()).isEqualTo(RingStatus.IN_PROGRESS);
+        InOrder order = inOrder(boutRepository, ringRepository);
+        order.verify(boutRepository).findRingIdById(10L);
+        order.verify(ringRepository).findWithLockById(1L);
+        order.verify(boutRepository).findWithLockById(10L);
         then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
     @Test
     void startBoutRejectsMissingBout() {
-        given(boutRepository.findWithLockById(99L)).willReturn(Optional.empty());
+        given(boutRepository.findRingIdById(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> ringManagerService.startBout(99L))
                 .isInstanceOf(BoutNotFoundException.class)
@@ -77,7 +84,7 @@ class RingManagerServiceTest {
     @Test
     void startBoutRejectsMissingRing() {
         Bout bout = createBout(10L);
-        given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
+        given(boutRepository.findRingIdById(10L)).willReturn(Optional.of(1L));
         given(ringRepository.findWithLockById(1L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> ringManagerService.startBout(10L))
@@ -134,6 +141,7 @@ class RingManagerServiceTest {
         given(ringRepository.findWithLockById(1L)).willReturn(Optional.of(ring));
         given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L))
                 .willReturn(List.of(currentBout, nextBout));
+        given(boutRepository.findWithLockById(11L)).willReturn(Optional.of(nextBout));
         given(ringRepository.save(any(Ring.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         RingManagerBoutResponse response = ringManagerService.moveToNextBout(1L);
@@ -142,6 +150,9 @@ class RingManagerServiceTest {
         assertThat(response.getStatus()).isEqualTo(BoutStatus.READY);
         assertThat(ring.getCurrentBoutId()).isEqualTo(11L);
         assertThat(ring.getStatus()).isEqualTo(RingStatus.READY);
+        InOrder order = inOrder(ringRepository, boutRepository);
+        order.verify(ringRepository).findWithLockById(1L);
+        order.verify(boutRepository).findWithLockById(11L);
         then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
     }
 
@@ -243,6 +254,7 @@ class RingManagerServiceTest {
     void startBoutReturnsCurrentStateForDuplicateRequestWithoutPublishingAgain() {
         Bout bout = createBout(10L);
         Ring ring = createRing(1L);
+        given(boutRepository.findRingIdById(10L)).willReturn(Optional.of(1L));
         given(ringRepository.findWithLockById(1L)).willReturn(Optional.of(ring));
         given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
         given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -267,6 +279,7 @@ class RingManagerServiceTest {
         given(ringRepository.findWithLockById(1L)).willReturn(Optional.of(ring));
         given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L))
                 .willReturn(List.of(currentBout, nextBout));
+        given(boutRepository.findWithLockById(11L)).willReturn(Optional.of(nextBout));
         given(ringRepository.save(any(Ring.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         ringManagerService.moveToNextBout(1L);
@@ -310,6 +323,7 @@ class RingManagerServiceTest {
     void startBoutRejectsScheduledBoutUntilItIsPrepared() {
         Bout bout = createBout(10L, 1, BoutStatus.SCHEDULED);
         Ring ring = createRing(1L);
+        given(boutRepository.findRingIdById(10L)).willReturn(Optional.of(1L));
         given(ringRepository.findWithLockById(1L)).willReturn(Optional.of(ring));
         given(boutRepository.findWithLockById(10L)).willReturn(Optional.of(bout));
 
@@ -402,6 +416,7 @@ class RingManagerServiceTest {
         given(ringRepository.findWithLockById(1L)).willReturn(Optional.of(ring));
         given(boutRepository.findByRingIdOrderByScheduledOrderAsc(1L))
                 .willReturn(List.of(currentBout, canceledBout, nextBout));
+        given(boutRepository.findWithLockById(12L)).willReturn(Optional.of(nextBout));
         given(ringRepository.save(any(Ring.class))).willAnswer(invocation -> invocation.getArgument(0));
         given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
 

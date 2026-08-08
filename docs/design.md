@@ -304,6 +304,9 @@ Workflow rules:
 11. Admin schedule edits and deletes apply lifecycle and reference checks before
     persistence so operational history and ring current-bout pointers are not
     orphaned.
+12. Ring-manager operations acquire the ring lock before any bout lock. A scalar
+    ring-id lookup identifies the ring without placing a stale bout entity in the
+    persistence context before the lock is acquired.
 
 ## 9. API Contract
 
