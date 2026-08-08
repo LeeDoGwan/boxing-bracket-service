@@ -131,6 +131,40 @@ class AuthServiceTest {
     }
 
     @Test
+    void meRejectsSessionAfterAccountIsDeleted() {
+        AuthService authService = authService();
+        Account account = account(UserRole.JUDGE);
+        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account));
+        given(accountRepository.findById(1L)).willReturn(Optional.of(account));
+        LoginResponse loginResponse = authService.login(new LoginRequest("judge01", "password1"));
+        given(accountRepository.findById(1L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.me("Bearer " + loginResponse.getAccessToken()))
+                .isInstanceOf(AuthenticationRequiredException.class)
+                .hasMessage("Authentication required");
+    }
+
+    @Test
+    void meRejectsSessionAfterAccountIdentityChanges() {
+        AuthService authService = authService();
+        Account account = account(UserRole.JUDGE);
+        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account));
+        given(accountRepository.findById(1L)).willReturn(Optional.of(account));
+        LoginResponse loginResponse = authService.login(new LoginRequest("judge01", "password1"));
+        account.updateInfo(
+                "judge02",
+                passwordEncoder.encode("password1"),
+                "Judge Two",
+                UserRole.JUDGE,
+                AccountStatus.ACTIVE
+        );
+
+        assertThatThrownBy(() -> authService.me("Bearer " + loginResponse.getAccessToken()))
+                .isInstanceOf(AuthenticationRequiredException.class)
+                .hasMessage("Authentication required");
+    }
+
+    @Test
     void logoutExpiresSession() {
         AuthService authService = authService();
         Account account = account(UserRole.JUDGE);

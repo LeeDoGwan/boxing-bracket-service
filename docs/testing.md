@@ -7,7 +7,7 @@ Last updated: 2026-08-08
 - Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-08-08
-- Result: 398 passed, 0 failed, 0 errors, 0 skipped
+- Result: 400 passed, 0 failed, 0 errors, 0 skipped
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
 - Test classes: 72
 - Runtime profile: `test`
@@ -50,7 +50,7 @@ Last updated: 2026-08-08
 - Ring-manager lock-order tests verify ring-before-bout acquisition for start and next-bout transitions.
 - Scalar-reference guard tests verify tournament, ring, athlete, account, and bout deletes reject orphan-producing mutations.
 - Import tests verify the required idempotency key, persistent key/row mapping, and repeated-key response reuse.
-- Auth tests verify sessions are rejected after account deactivation or role changes.
+- Auth tests verify sessions are rejected after account deletion, deactivation, identity changes, or role changes.
 - Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
@@ -71,7 +71,7 @@ map is maintained in the
 | --- | --- | ---: |
 | Auth | `AuthControllerTest` | 6 |
 | Auth | `AuthProtectedApiControllerTest` | 2 |
-| Auth | `AuthServiceTest` | 9 |
+| Auth | `AuthServiceTest` | 11 |
 | Auth | `AuthInterceptorTest` | 4 |
 | Auth | `RoleAccessPolicyTest` | 6 |
 | Audit | `AuditActionResolverTest` | 2 |
