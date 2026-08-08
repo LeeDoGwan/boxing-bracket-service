@@ -16,6 +16,7 @@ import com.boxing.bracket.ring.repository.RingRepository;
 import com.boxing.bracket.scoring.repository.BoutResultRepository;
 import com.boxing.bracket.scoring.repository.PenaltyRepository;
 import com.boxing.bracket.scoring.repository.RoundScoreRepository;
+import com.boxing.bracket.schedule.repository.ScheduleItemRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.domain.Tournament;
 import com.boxing.bracket.tournament.domain.TournamentStatus;
@@ -69,6 +70,9 @@ class AdminBoutServiceTest {
 
     @Mock
     private BoutResultRepository boutResultRepository;
+
+    @Mock
+    private ScheduleItemRepository scheduleItemRepository;
 
     @InjectMocks
     private AdminBoutService adminBoutService;
@@ -327,6 +331,16 @@ class AdminBoutServiceTest {
         ring.prepareCurrentBout(20L);
         given(boutRepository.findById(20L)).willReturn(Optional.of(bout));
         given(ringRepository.findById(1L)).willReturn(Optional.of(ring));
+
+        assertThatThrownBy(() -> adminBoutService.deleteBout(20L))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("BOUT_DELETE_NOT_ALLOWED");
+    }
+
+    @Test
+    void deleteBoutRejectsScheduledBoutReference() {
+        given(boutRepository.findById(20L)).willReturn(Optional.of(createBout(20L)));
+        given(scheduleItemRepository.existsByRelatedBoutId(20L)).willReturn(true);
 
         assertThatThrownBy(() -> adminBoutService.deleteBout(20L))
                 .isInstanceOf(WorkflowConflictException.class)

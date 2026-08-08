@@ -307,6 +307,11 @@ Workflow rules:
 12. Ring-manager operations acquire the ring lock before any bout lock. A scalar
     ring-id lookup identifies the ring without placing a stale bout entity in the
     persistence context before the lock is acquired.
+13. Scalar cross-aggregate references are protected at service boundaries:
+    tournament, ring, athlete, and account deletes fail while owned records
+    remain; bout deletes also check schedule references; and ring tournament
+    ownership cannot be changed after creation. Audit rows remain independent
+    so historical identifiers survive business-record deletion.
 
 ## 9. API Contract
 
@@ -356,7 +361,9 @@ indexes. V2 adds the nullable `penalties.round_no` column used to retain the
 round reference while penalty totals remain bout-level. V3 adds the
 per-tournament bout-number uniqueness constraint.
 Entity references are scalar IDs, so this baseline intentionally does not add
-foreign keys that the current model does not declare.
+foreign keys that the current model does not declare. Service-level delete and
+ownership guards preserve the referential rules described in the workflow
+section while keeping audit history independent.
 
 The repository contains no evidence of a deployed shared database. New
 installations therefore apply V1, V2, and then V3. An existing database must be inspected,
@@ -390,7 +397,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 72 test classes, 389 test cases, zero failures, errors, or skips.
+- Backend: 72 test classes, 395 test cases, zero failures, errors, or skips.
 - Frontend: 25 test files, 83 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 

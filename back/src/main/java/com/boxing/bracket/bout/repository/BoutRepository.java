@@ -14,9 +14,15 @@ import java.util.Optional;
 
 public interface BoutRepository extends JpaRepository<Bout, Long> {
 
+    boolean existsByTournamentId(Long tournamentId);
+
     List<Bout> findByTournamentIdOrderByScheduledOrderAsc(Long tournamentId);
 
     List<Bout> findByRingIdOrderByScheduledOrderAsc(Long ringId);
+
+    boolean existsByRingId(Long ringId);
+
+    boolean existsByRedAthleteIdOrBlueAthleteId(Long redAthleteId, Long blueAthleteId);
 
     Optional<Bout> findFirstByRingIdAndStatusOrderByScheduledOrderAsc(Long ringId, BoutStatus status);
 

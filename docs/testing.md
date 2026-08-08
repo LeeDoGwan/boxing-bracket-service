@@ -7,7 +7,7 @@ Last updated: 2026-08-08
 - Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-08-08
-- Result: 389 passed, 0 failed, 0 errors, 0 skipped
+- Result: 395 passed, 0 failed, 0 errors, 0 skipped
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
 - Test classes: 72
 - Runtime profile: `test`
@@ -48,6 +48,7 @@ Last updated: 2026-08-08
 - Ring Manager transition tests for assigned-ring scope, start idempotency, scheduled-bout preparation boundaries, exact round sequencing and range, scoring readiness, next-bout candidate filtering, completion ownership, conflict responses, and event suppression on failed transitions.
 - Concurrency tests verify duplicate bout creation receives distinct per-tournament numbers under the tournament-row lock.
 - Ring-manager lock-order tests verify ring-before-bout acquisition for start and next-bout transitions.
+- Scalar-reference guard tests verify tournament, ring, athlete, account, and bout deletes reject orphan-producing mutations.
 - Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
@@ -79,9 +80,9 @@ map is maintained in the
 | Athlete | `AdminAthleteControllerTest` | 10 |
 | Athlete | `AthleteTest` | 2 |
 | Athlete | `AthleteRepositoryTest` | 1 |
-| Athlete | `AdminAthleteServiceTest` | 12 |
+| Athlete | `AdminAthleteServiceTest` | 13 |
 | Bout | `AdminBoutControllerTest` | 12 |
-| Bout | `AdminBoutServiceTest` | 22 |
+| Bout | `AdminBoutServiceTest` | 23 |
 | Bout | `BoutControllerTest` | 7 |
 | Bout | `BoutTest` | 7 |
 | Bout | `BoutRepositoryTest` | 1 |
@@ -108,7 +109,7 @@ map is maintained in the
 | Schedule | `AdminScheduleControllerTest` | 4 |
 | Schedule | `AdminScheduleServiceTest` | 5 |
 | Ring | `AdminRingControllerTest` | 11 |
-| Ring | `AdminRingServiceTest` | 12 |
+| Ring | `AdminRingServiceTest` | 14 |
 | Ring | `RingControllerTest` | 4 |
 | Ring | `RingTest` | 5 |
 | Ring | `RingRepositoryTest` | 1 |
@@ -128,11 +129,11 @@ map is maintained in the
 | Scoring | `SupervisorPenaltyServiceTest` | 10 |
 | Scoring | `SupervisorResultServiceTest` | 11 |
 | Tournament | `AdminTournamentControllerTest` | 9 |
-| Tournament | `AdminTournamentServiceTest` | 11 |
+| Tournament | `AdminTournamentServiceTest` | 12 |
 | Tournament | `TournamentTest` | 2 |
 | Tournament | `TournamentRepositoryTest` | 1 |
 | User | `AdminAccountControllerTest` | 10 |
-| User | `AdminAccountServiceTest` | 12 |
+| User | `AdminAccountServiceTest` | 13 |
 | User | `AccountTest` | 2 |
 | User | `AccountRepositoryTest` | 1 |
 | Workflow | `WorkflowConcurrencyIntegrationTest` | 4 |

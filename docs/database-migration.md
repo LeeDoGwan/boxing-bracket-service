@@ -26,6 +26,12 @@ declare JPA associations. V1 therefore does not add foreign keys that the
 application does not currently own. Audit rows also remain independent so
 history survives deletion of a referenced business record.
 
+The application preserves scalar-reference integrity at service boundaries:
+tournament, ring, athlete, and account deletes are rejected while owned records
+remain; bout deletes reject scoring, active-ring, and schedule references; and a
+ring cannot move to another tournament after creation. Audit rows are the
+explicit exception because they intentionally preserve historical identifiers.
+
 ## Runtime Rules
 
 - Local MariaDB and test H2 profiles enable Flyway and validate on migrate.

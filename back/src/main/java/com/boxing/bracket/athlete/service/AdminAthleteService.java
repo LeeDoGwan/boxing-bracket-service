@@ -5,6 +5,8 @@ import com.boxing.bracket.athlete.dto.AthleteRequest;
 import com.boxing.bracket.athlete.dto.AthleteResponse;
 import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.athlete.repository.AthleteRepository;
+import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -19,9 +21,11 @@ import java.util.stream.Collectors;
 public class AdminAthleteService {
 
     private final AthleteRepository athleteRepository;
+    private final BoutRepository boutRepository;
 
-    public AdminAthleteService(AthleteRepository athleteRepository) {
+    public AdminAthleteService(AthleteRepository athleteRepository, BoutRepository boutRepository) {
         this.athleteRepository = athleteRepository;
+        this.boutRepository = boutRepository;
     }
 
     @Transactional(readOnly = true)
@@ -75,6 +79,9 @@ public class AdminAthleteService {
         validateAthleteId(athleteId);
         if (!athleteRepository.existsById(athleteId)) {
             throw new AthleteNotFoundException();
+        }
+        if (boutRepository.existsByRedAthleteIdOrBlueAthleteId(athleteId, athleteId)) {
+            throw new WorkflowConflictException("ATHLETE_DELETE_NOT_ALLOWED");
         }
 
         athleteRepository.deleteById(athleteId);

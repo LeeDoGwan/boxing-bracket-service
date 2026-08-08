@@ -16,6 +16,7 @@ import com.boxing.bracket.ring.repository.RingRepository;
 import com.boxing.bracket.scoring.repository.BoutResultRepository;
 import com.boxing.bracket.scoring.repository.PenaltyRepository;
 import com.boxing.bracket.scoring.repository.RoundScoreRepository;
+import com.boxing.bracket.schedule.repository.ScheduleItemRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.apache.poi.ss.usermodel.Cell;
@@ -69,6 +70,7 @@ public class AdminBoutService {
     private final RoundScoreRepository roundScoreRepository;
     private final PenaltyRepository penaltyRepository;
     private final BoutResultRepository boutResultRepository;
+    private final ScheduleItemRepository scheduleItemRepository;
 
     public AdminBoutService(
             BoutRepository boutRepository,
@@ -77,7 +79,8 @@ public class AdminBoutService {
             AthleteRepository athleteRepository,
             RoundScoreRepository roundScoreRepository,
             PenaltyRepository penaltyRepository,
-            BoutResultRepository boutResultRepository
+            BoutResultRepository boutResultRepository,
+            ScheduleItemRepository scheduleItemRepository
     ) {
         this.boutRepository = boutRepository;
         this.tournamentRepository = tournamentRepository;
@@ -86,6 +89,7 @@ public class AdminBoutService {
         this.roundScoreRepository = roundScoreRepository;
         this.penaltyRepository = penaltyRepository;
         this.boutResultRepository = boutResultRepository;
+        this.scheduleItemRepository = scheduleItemRepository;
     }
 
     @Transactional(readOnly = true)
@@ -238,7 +242,8 @@ public class AdminBoutService {
                 || bout.isCompleted()
                 || roundScoreRepository.existsByBoutId(bout.getId())
                 || penaltyRepository.existsByBoutId(bout.getId())
-                || boutResultRepository.existsByBoutId(bout.getId())) {
+                || boutResultRepository.existsByBoutId(bout.getId())
+                || scheduleItemRepository.existsByRelatedBoutId(bout.getId())) {
             throw new WorkflowConflictException("BOUT_DELETE_NOT_ALLOWED");
         }
 

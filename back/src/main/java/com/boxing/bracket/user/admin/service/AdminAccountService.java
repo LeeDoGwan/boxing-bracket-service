@@ -1,5 +1,7 @@
 package com.boxing.bracket.user.admin.service;
 
+import com.boxing.bracket.assignment.repository.StaffAssignmentRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.user.admin.dto.AdminAccountRequest;
 import com.boxing.bracket.user.admin.dto.AdminAccountResponse;
 import com.boxing.bracket.user.domain.Account;
@@ -24,10 +26,16 @@ public class AdminAccountService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StaffAssignmentRepository assignmentRepository;
 
-    public AdminAccountService(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
+    public AdminAccountService(
+            AccountRepository accountRepository,
+            PasswordEncoder passwordEncoder,
+            StaffAssignmentRepository assignmentRepository
+    ) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
+        this.assignmentRepository = assignmentRepository;
     }
 
     @Transactional(readOnly = true)
@@ -97,6 +105,9 @@ public class AdminAccountService {
         validateAccountId(accountId);
         if (!accountRepository.existsById(accountId)) {
             throw new AccountNotFoundException();
+        }
+        if (assignmentRepository.existsByAccountId(accountId)) {
+            throw new WorkflowConflictException("ACCOUNT_DELETE_NOT_ALLOWED");
         }
 
         accountRepository.deleteById(accountId);

@@ -1,11 +1,15 @@
 package com.boxing.bracket.ring.admin.service;
 
+import com.boxing.bracket.assignment.repository.StaffAssignmentRepository;
+import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.ring.admin.dto.AdminRingRequest;
 import com.boxing.bracket.ring.admin.dto.AdminRingResponse;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.schedule.repository.ScheduleItemRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.junit.jupiter.api.Test;
@@ -32,6 +36,15 @@ class AdminRingServiceTest {
 
     @Mock
     private TournamentRepository tournamentRepository;
+
+    @Mock
+    private BoutRepository boutRepository;
+
+    @Mock
+    private StaffAssignmentRepository assignmentRepository;
+
+    @Mock
+    private ScheduleItemRepository scheduleItemRepository;
 
     @InjectMocks
     private AdminRingService adminRingService;
@@ -146,6 +159,17 @@ class AdminRingServiceTest {
     }
 
     @Test
+    void updateRingRejectsTournamentChange() {
+        AdminRingRequest request = new AdminRingRequest(2L, "Main Ring", RingStatus.READY);
+        given(tournamentRepository.existsById(2L)).willReturn(true);
+        given(ringRepository.findById(10L)).willReturn(Optional.of(createRing(10L)));
+
+        assertThatThrownBy(() -> adminRingService.updateRing(10L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ring tournament cannot be changed");
+    }
+
+    @Test
     void deleteRingDeletesExistingRing() {
         given(ringRepository.existsById(10L)).willReturn(true);
 
@@ -161,6 +185,16 @@ class AdminRingServiceTest {
         assertThatThrownBy(() -> adminRingService.deleteRing(99L))
                 .isInstanceOf(RingNotFoundException.class)
                 .hasMessage("Ring not found");
+    }
+
+    @Test
+    void deleteRingRejectsReferencedRing() {
+        given(ringRepository.existsById(10L)).willReturn(true);
+        given(boutRepository.existsByRingId(10L)).willReturn(true);
+
+        assertThatThrownBy(() -> adminRingService.deleteRing(10L))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("RING_DELETE_NOT_ALLOWED");
     }
 
     private Ring createRing(Long id) {

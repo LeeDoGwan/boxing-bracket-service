@@ -1,5 +1,7 @@
 package com.boxing.bracket.user.admin.service;
 
+import com.boxing.bracket.assignment.repository.StaffAssignmentRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.user.admin.dto.AdminAccountRequest;
 import com.boxing.bracket.user.admin.dto.AdminAccountResponse;
 import com.boxing.bracket.user.domain.Account;
@@ -35,11 +37,14 @@ class AdminAccountServiceTest {
     @Mock
     private AccountRepository accountRepository;
 
+    @Mock
+    private StaffAssignmentRepository assignmentRepository;
+
     private AdminAccountService adminAccountService;
 
     @BeforeEach
     void setUp() {
-        adminAccountService = new AdminAccountService(accountRepository, passwordEncoder);
+        adminAccountService = new AdminAccountService(accountRepository, passwordEncoder, assignmentRepository);
     }
 
     @Test
@@ -189,6 +194,16 @@ class AdminAccountServiceTest {
         assertThatThrownBy(() -> adminAccountService.deleteAccount(99L))
                 .isInstanceOf(AccountNotFoundException.class)
                 .hasMessage("Account not found");
+    }
+
+    @Test
+    void deleteAccountRejectsAssignedAccount() {
+        given(accountRepository.existsById(1L)).willReturn(true);
+        given(assignmentRepository.existsByAccountId(1L)).willReturn(true);
+
+        assertThatThrownBy(() -> adminAccountService.deleteAccount(1L))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("ACCOUNT_DELETE_NOT_ALLOWED");
     }
 
     private AdminAccountRequest request() {

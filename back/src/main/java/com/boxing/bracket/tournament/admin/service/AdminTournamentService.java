@@ -1,5 +1,11 @@
 package com.boxing.bracket.tournament.admin.service;
 
+import com.boxing.bracket.assignment.repository.StaffAssignmentRepository;
+import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
+import com.boxing.bracket.notice.repository.NoticeRepository;
+import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.schedule.repository.ScheduleItemRepository;
 import com.boxing.bracket.tournament.admin.dto.AdminTournamentRequest;
 import com.boxing.bracket.tournament.admin.dto.AdminTournamentResponse;
 import com.boxing.bracket.tournament.domain.Tournament;
@@ -19,9 +25,26 @@ import java.util.stream.Collectors;
 public class AdminTournamentService {
 
     private final TournamentRepository tournamentRepository;
+    private final RingRepository ringRepository;
+    private final BoutRepository boutRepository;
+    private final StaffAssignmentRepository assignmentRepository;
+    private final NoticeRepository noticeRepository;
+    private final ScheduleItemRepository scheduleItemRepository;
 
-    public AdminTournamentService(TournamentRepository tournamentRepository) {
+    public AdminTournamentService(
+            TournamentRepository tournamentRepository,
+            RingRepository ringRepository,
+            BoutRepository boutRepository,
+            StaffAssignmentRepository assignmentRepository,
+            NoticeRepository noticeRepository,
+            ScheduleItemRepository scheduleItemRepository
+    ) {
         this.tournamentRepository = tournamentRepository;
+        this.ringRepository = ringRepository;
+        this.boutRepository = boutRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.noticeRepository = noticeRepository;
+        this.scheduleItemRepository = scheduleItemRepository;
     }
 
     @Transactional(readOnly = true)
@@ -73,6 +96,13 @@ public class AdminTournamentService {
         validateTournamentId(tournamentId);
         if (!tournamentRepository.existsById(tournamentId)) {
             throw new TournamentNotFoundException();
+        }
+        if (ringRepository.existsByTournamentId(tournamentId)
+                || boutRepository.existsByTournamentId(tournamentId)
+                || assignmentRepository.existsByTournamentId(tournamentId)
+                || noticeRepository.existsByTournamentId(tournamentId)
+                || scheduleItemRepository.existsByTournamentId(tournamentId)) {
+            throw new WorkflowConflictException("TOURNAMENT_DELETE_NOT_ALLOWED");
         }
 
         tournamentRepository.deleteById(tournamentId);
