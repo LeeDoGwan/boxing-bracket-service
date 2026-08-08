@@ -7,7 +7,7 @@ Last updated: 2026-08-08
 - Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-08-08
-- Result: 385 passed, 0 failed, 0 errors, 0 skipped
+- Result: 386 passed, 0 failed, 0 errors, 0 skipped
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
 - Test classes: 72
 - Runtime profile: `test`
@@ -46,6 +46,7 @@ Last updated: 2026-08-08
 - Staff assignment tests for active account/role validation, ring/tournament mismatch, duplicate handling, and immediate unassigned-ring denial.
 - Supervisor result tests for active assignment scope, authenticated actor ownership, score readiness, decision/winner validation, positive penalties, final-state locks, and the assigned-ring bout route.
 - Ring Manager transition tests for assigned-ring scope, start idempotency, scheduled-bout preparation boundaries, exact round sequencing and range, scoring readiness, next-bout candidate filtering, completion ownership, conflict responses, and event suppression on failed transitions.
+- Concurrency tests verify duplicate bout creation receives distinct per-tournament numbers under the tournament-row lock.
 - Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
@@ -133,7 +134,7 @@ map is maintained in the
 | User | `AdminAccountServiceTest` | 12 |
 | User | `AccountTest` | 2 |
 | User | `AccountRepositoryTest` | 1 |
-| Workflow | `WorkflowConcurrencyIntegrationTest` | 3 |
+| Workflow | `WorkflowConcurrencyIntegrationTest` | 4 |
 
 ## Verified User Flows
 

@@ -381,7 +381,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 72 test classes, 385 test cases, zero failures, errors, or skips.
+- Backend: 72 test classes, 386 test cases, zero failures, errors, or skips.
 - Frontend: 25 test files, 83 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 

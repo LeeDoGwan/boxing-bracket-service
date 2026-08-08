@@ -1,5 +1,10 @@
 package com.boxing.bracket.workflow;
 
+import com.boxing.bracket.athlete.domain.Athlete;
+import com.boxing.bracket.athlete.repository.AthleteRepository;
+import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
+import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
+import com.boxing.bracket.bout.admin.service.AdminBoutService;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
@@ -22,6 +27,8 @@ import com.boxing.bracket.scoring.repository.PenaltyRepository;
 import com.boxing.bracket.scoring.repository.RoundScoreRepository;
 import com.boxing.bracket.scoring.service.JudgeScoreService;
 import com.boxing.bracket.scoring.service.SupervisorResultService;
+import com.boxing.bracket.tournament.domain.Tournament;
+import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.then;
@@ -46,6 +54,9 @@ import static org.mockito.Mockito.times;
 @SpringBootTest
 @ActiveProfiles("test")
 class WorkflowConcurrencyIntegrationTest {
+
+    @Autowired
+    private AdminBoutService adminBoutService;
 
     @Autowired
     private RingManagerService ringManagerService;
@@ -60,7 +71,13 @@ class WorkflowConcurrencyIntegrationTest {
     private RingRepository ringRepository;
 
     @Autowired
+    private AthleteRepository athleteRepository;
+
+    @Autowired
     private BoutRepository boutRepository;
+
+    @Autowired
+    private TournamentRepository tournamentRepository;
 
     @Autowired
     private RoundScoreRepository roundScoreRepository;
@@ -137,6 +154,64 @@ class WorkflowConcurrencyIntegrationTest {
         then(boutEventPublisher).should(times(1)).publish(org.mockito.ArgumentMatchers.any(BoutEventResponse.class));
     }
 
+    @Test
+    void concurrentCreateRequestsAssignDifferentBoutNumbersPerTournament() throws Exception {
+        Tournament tournament = tournamentRepository.saveAndFlush(Tournament.builder()
+                .name("Seoul Boxing Cup")
+                .build());
+        Ring ring = ringRepository.saveAndFlush(Ring.builder()
+                .tournamentId(tournament.getId())
+                .name("Ring A")
+                .status(RingStatus.READY)
+                .build());
+        Athlete redAthlete = athleteRepository.saveAndFlush(Athlete.builder()
+                .name("Red Athlete")
+                .build());
+        Athlete blueAthlete = athleteRepository.saveAndFlush(Athlete.builder()
+                .name("Blue Athlete")
+                .build());
+        Athlete secondRedAthlete = athleteRepository.saveAndFlush(Athlete.builder()
+                .name("Second Red Athlete")
+                .build());
+        Athlete secondBlueAthlete = athleteRepository.saveAndFlush(Athlete.builder()
+                .name("Second Blue Athlete")
+                .build());
+        List<AdminBoutRequest> requests = List.of(
+                new AdminBoutRequest(
+                        tournament.getId(),
+                        ring.getId(),
+                        "75",
+                        redAthlete.getId(),
+                        blueAthlete.getId(),
+                        3,
+                        1,
+                        false
+                ),
+                new AdminBoutRequest(
+                        tournament.getId(),
+                        ring.getId(),
+                        "80",
+                        secondRedAthlete.getId(),
+                        secondBlueAthlete.getId(),
+                        3,
+                        2,
+                        false
+                )
+        );
+        AtomicInteger requestIndex = new AtomicInteger();
+
+        List<AdminBoutResponse> responses = executeConcurrently(
+                () -> adminBoutService.createBout(requests.get(requestIndex.getAndIncrement()))
+        );
+
+        assertThat(responses)
+                .extracting(AdminBoutResponse::getBoutNumber)
+                .containsExactlyInAnyOrder(1, 2);
+        assertThat(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(tournament.getId()))
+                .extracting(Bout::getBoutNumber)
+                .containsExactlyInAnyOrder(1, 2);
+    }
+
     private Ring createRing() {
         return ringRepository.saveAndFlush(Ring.builder()
                 .tournamentId(1L)
@@ -194,6 +269,8 @@ class WorkflowConcurrencyIntegrationTest {
         roundScoreRepository.deleteAll();
         boutRepository.deleteAll();
         ringRepository.deleteAll();
+        athleteRepository.deleteAll();
+        tournamentRepository.deleteAll();
     }
 
     @FunctionalInterface
