@@ -20,6 +20,7 @@
 
     <properties>
         <java.version>11</java.version>
+        <flyway.version>9.22.3</flyway.version>
     </properties>
 
     <dependencies>

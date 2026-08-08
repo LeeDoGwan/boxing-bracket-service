@@ -351,7 +351,7 @@ The detailed endpoint list remains in [Sprint 1 scope](sprint-1.md). Frontend-sp
 
 ## 10. Persistence and Deployment
 
-The local profile expects MariaDB at `boxing_bracket`, runs Flyway from
+The local profile expects MariaDB at `boxing_bracket`, runs Flyway 9.22.3 from
 `back/src/main/resources/db/migration/`, and uses `ddl-auto: validate`. Flyway
 is the schema owner; Hibernate validates the resulting schema and never creates
 or alters tables at application startup. The policy and operator procedures are

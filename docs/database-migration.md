@@ -8,8 +8,8 @@ MariaDB schema changes are managed by Flyway. The execution source is
 `back/src/main/resources/db/migration/`; Hibernate only validates the schema.
 No application API or deployment automation is introduced by this policy.
 
-The backend uses the Flyway version supplied by Spring Boot 2.7.18 dependency
-management. The current baseline is:
+The backend pins Flyway `9.22.3` while using Spring Boot 2.7.18. The explicit
+version supports the MariaDB 10.11 CI smoke test. The current baseline is:
 
 | Version | File | Contents |
 | --- | --- | --- |

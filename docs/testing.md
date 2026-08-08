@@ -25,7 +25,7 @@ Last updated: 2026-08-08
 
 ## Database Migration Verification
 
-- Flyway migration files live in `back/src/main/resources/db/migration/` and are applied before Hibernate schema validation.
+- Flyway 9.22.3 migration files live in `back/src/main/resources/db/migration/` and are applied before Hibernate schema validation.
 - `back/src/main/resources/application-local.yml` enables MariaDB migration and sets `ddl-auto: validate`; it does not create or alter tables through Hibernate.
 - `back/src/test/resources/application-test.yml` uses the same migration location with H2 MySQL compatibility mode and `ddl-auto: validate`.
 - `DatabaseMigrationIntegrationTest` verifies V1 through V4 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the `penalties.round_no` column, the per-tournament bout-number unique constraint, import idempotency columns and constraint, and operational unique constraints.
