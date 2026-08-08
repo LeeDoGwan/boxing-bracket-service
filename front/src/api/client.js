@@ -28,6 +28,10 @@ export async function requestApi(path, { body, headers, method = 'GET', params, 
     signal,
   });
 
+  if (response.status === 401 && token && typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('boxing:staff-logout'));
+  }
+
   let payload;
   try {
     payload = await response.json();

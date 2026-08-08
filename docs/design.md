@@ -402,7 +402,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 The latest documented verification is:
 
 - Backend: 72 test classes, 400 test cases, zero failures, errors, or skips.
-- Frontend: 25 test files, 83 test cases, ESLint passed, and Vite production build passed.
+- Frontend: 26 test files, 85 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.
