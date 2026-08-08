@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { logout } from '../api/auth';
+import { getCurrentAccount, logout } from '../api/auth';
 
 export const STAFF_SESSION_KEY = 'boxing.staff.session';
 const LEGACY_SESSION_KEYS = {
@@ -54,23 +54,54 @@ export function clearStaffSession() {
 const StaffAuthContext = createContext(null);
 
 export function StaffAuthProvider({ children }) {
-  const [session, setSession] = useState(readStaffSession);
+  const [session, setSession] = useState(null);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const syncSession = () => setSession(readStaffSession());
+    let active = true;
+    const syncSession = () => {
+      if (active) setSession(readStaffSession());
+    };
     const clearSession = () => {
       clearStaffSession();
-      setSession(null);
+      if (active) setSession(null);
     };
     window.addEventListener('boxing:staff-session-changed', syncSession);
     window.addEventListener('boxing:staff-logout', clearSession);
+
+    async function validateStoredSession() {
+      const storedSession = readStaffSession();
+      if (!storedSession) {
+        if (active) setIsChecking(false);
+        return;
+      }
+      try {
+        const account = await getCurrentAccount(storedSession.accessToken);
+        if (active) {
+          const nextSession = { ...storedSession, account };
+          writeStaffSession(nextSession);
+          setSession(nextSession);
+        }
+      } catch {
+        if (active) {
+          clearStaffSession();
+          setSession(null);
+        }
+      } finally {
+        if (active) setIsChecking(false);
+      }
+    }
+
+    validateStoredSession();
     return () => {
+      active = false;
       window.removeEventListener('boxing:staff-session-changed', syncSession);
       window.removeEventListener('boxing:staff-logout', clearSession);
     };
   }, []);
 
   const value = useMemo(() => ({
+    isChecking,
     session,
     signIn: (nextSession) => {
       writeStaffSession(nextSession);
@@ -82,7 +113,7 @@ export function StaffAuthProvider({ children }) {
       setSession(null);
       if (token) await logout(token).catch(() => undefined);
     },
-  }), [session]);
+  }), [isChecking, session]);
 
   return <StaffAuthContext.Provider value={value}>{children}</StaffAuthContext.Provider>;
 }

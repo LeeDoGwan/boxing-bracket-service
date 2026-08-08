@@ -73,7 +73,10 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 | Assignment admin | /admin/assignments | Game Manager, Service Manager | Create and activate/deactivate staff ring assignments | /api/admin/assignments, account/tournament/ring reference APIs | AdminAssignmentPage, StatePanel | Guard, reference loading, duplicate/error, active state |
 
 Authentication and role checks are performed by the shared staff provider and
-route guard, with role pages retaining their assignment-specific checks.
+route guard, with role pages retaining their assignment-specific checks. A
+stored session is revalidated through `/api/auth/me` at startup; authenticated
+401 responses clear the shared and legacy session keys and hide operations
+navigation.
 Public pages do not require a session.
 
 The public header is audience-only. Staff enter through one shared
@@ -341,7 +344,7 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 26 test files and 85 passing tests.
+The current frontend baseline is 26 test files and 87 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
@@ -349,7 +352,7 @@ The current frontend baseline is 26 test files and 85 passing tests.
 | Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
 | Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Composition, loading/error, live status, list/search/selection, request signal | Stale data and invalid query |
 | Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, 0-10 score validation/confirmation, Supervisor result readiness/round penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
-| Shared staff auth | auth/StaffAuthContext.test.jsx | Shared and legacy session write, recovery, and cleanup | Login route rendering and browser-level token expiry |
+| Shared staff auth | auth/StaffAuthContext.test.jsx, api/client.test.js | Shared and legacy session write, recovery, startup revalidation, 401 cleanup, and logout | Login route rendering and browser-level token expiry |
 | Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error, refresh/retry | Responsive table and browser-level refresh timing |
 | Administration | pages/AdminTournamentPage.test.jsx, AdminRingPage.test.jsx, AdminAthletePage.test.jsx, AdminNoticePage.test.jsx, AdminSchedulePage.test.jsx, AdminBoutPage.test.jsx, AdminAccountPage.test.jsx | CRUD, filters, import, role restrictions, errors | Field validation and retry-after-failure |
 | Utilities | utils.test.js | Shared formatting and utility behavior | Add coverage with each normalization change |
@@ -428,6 +431,6 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 26 frontend test files and 85 tests unless coverage
+- Preserve the baseline of 26 frontend test files and 87 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.

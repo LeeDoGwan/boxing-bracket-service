@@ -130,7 +130,7 @@ App
 `-- shared components, API clients, hooks, and styles
 ```
 
-The frontend uses one `/staff/login` entry point and a shared `StaffAuthProvider`. `StaffRoute` redirects unauthenticated users while preserving the return path and denies roles that are not allowed for the target route. `AppHeader` exposes public links to everyone and role-appropriate operational links only after login; legacy role session keys remain synchronized for page-level compatibility. API clients share `requestApi`, which adds JSON headers, optional bearer authorization, parses the common response envelope, and turns server failures into JavaScript errors.
+The frontend uses one `/staff/login` entry point and a shared `StaffAuthProvider`. At startup it revalidates a stored bearer session through `/api/auth/me`; while that check is pending protected routes wait, and a failed check clears both shared and legacy session keys. `StaffRoute` redirects unauthenticated users while preserving the return path and denies roles that are not allowed for the target route. `AppHeader` exposes public links to everyone and role-appropriate operational links only after login; legacy role session keys remain synchronized for page-level compatibility. API clients share `requestApi`, which adds JSON headers, optional bearer authorization, dispatches session cleanup on authenticated 401 responses, parses the common response envelope, and turns server failures into JavaScript errors.
 
 The public home aggregates notices, ring status, confirmed results, and schedules from `/api/home`. It opens bout details through the public bout detail API. SSE reconnects trigger a fresh audience data load, so the stream is an invalidation signal rather than the source of truth.
 
@@ -402,7 +402,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 The latest documented verification is:
 
 - Backend: 72 test classes, 400 test cases, zero failures, errors, or skips.
-- Frontend: 26 test files, 85 test cases, ESLint passed, and Vite production build passed.
+- Frontend: 26 test files, 87 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.

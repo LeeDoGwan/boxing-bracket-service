@@ -3,8 +3,11 @@ import { useStaffAuth } from '../auth/StaffAuthContext';
 import { StatePanel } from './StatePanel';
 
 export function StaffRoute({ allowedRoles, children }) {
-  const { session } = useStaffAuth();
+  const { isChecking, session } = useStaffAuth();
   const location = useLocation();
+  if (isChecking) {
+    return <main className="page-shell"><StatePanel title="Checking staff session">Please wait.</StatePanel></main>;
+  }
   if (!session) {
     const returnTo = `${location.pathname}${location.search}`;
     return <Navigate replace to={`/staff/login?returnTo=${encodeURIComponent(returnTo)}`} />;
