@@ -13,6 +13,8 @@ import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
+import com.boxing.bracket.tournament.domain.Tournament;
+import com.boxing.bracket.tournament.domain.TournamentStatus;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
@@ -38,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class AdminBoutServiceTest {
@@ -115,6 +118,7 @@ class AdminBoutServiceTest {
         assertThat(response.getRedAthleteId()).isEqualTo(10L);
         assertThat(response.getBlueAthleteId()).isEqualTo(11L);
         assertThat(response.getScheduledOrder()).isEqualTo(1);
+        assertThat(response.getBoutNumber()).isEqualTo(1);
     }
 
     @Test
@@ -160,7 +164,7 @@ class AdminBoutServiceTest {
 
     @Test
     void createBoutRejectsSameAthlete() {
-        AdminBoutRequest request = new AdminBoutRequest(1L, 1L, 1, "75", 10L, 10L, 3, 1, false);
+        AdminBoutRequest request = new AdminBoutRequest(1L, 1L, "75", 10L, 10L, 3, 1, false);
 
         assertThatThrownBy(() -> adminBoutService.createBout(request))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -175,6 +179,8 @@ class AdminBoutServiceTest {
         given(athleteRepository.existsById(11L)).willReturn(true);
         given(athleteRepository.existsById(12L)).willReturn(true);
         given(athleteRepository.existsById(13L)).willReturn(true);
+        given(tournamentRepository.findWithLockById(1L)).willReturn(Optional.of(createTournament(1L)));
+        given(boutRepository.findMaxBoutNumberByTournamentId(1L)).willReturn(0, 1);
         AtomicLong id = new AtomicLong(20L);
         given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> {
             Bout bout = invocation.getArgument(0);
@@ -183,9 +189,9 @@ class AdminBoutServiceTest {
         });
 
         AdminBoutImportResponse response = adminBoutService.importBouts(csvFile(
-                "tournamentId,ringId,boutNumber,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
-                        + "1,1,1,75 - middle school,10,11,3,1,false\n"
-                        + "1,1,2,80 - high school,12,13,3,2,true\n"
+                "tournamentId,ringId,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
+                        + "1,1,75 - middle school,10,11,3,1,false\n"
+                        + "1,1,80 - high school,12,13,3,2,true\n"
         ));
 
         assertThat(response.getImportedCount()).isEqualTo(2);
@@ -195,11 +201,11 @@ class AdminBoutServiceTest {
     @Test
     void importBoutsRejectsMissingRequiredCsvValue() {
         assertThatThrownBy(() -> adminBoutService.importBouts(csvFile(
-                "tournamentId,ringId,boutNumber,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
-                        + "1,1,,75 - middle school,10,11,3,1,false\n"
+                "tournamentId,ringId,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
+                        + "1,,75 - middle school,10,11,3,1,false\n"
         )))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("row 1: boutNumber is required");
+                .hasMessage("row 1: ringId is required");
     }
 
     @Test
@@ -229,7 +235,7 @@ class AdminBoutServiceTest {
     @Test
     void updateBoutChangesBout() {
         Bout bout = createBout(20L);
-        AdminBoutRequest request = new AdminBoutRequest(1L, 1L, 2, "80 - high school", 12L, 13L, 4, 2, true);
+        AdminBoutRequest request = new AdminBoutRequest(1L, 1L, "80 - high school", 12L, 13L, 4, 2, true);
         givenValidReferences(12L, 13L);
         given(boutRepository.findById(20L)).willReturn(Optional.of(bout));
         given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -237,7 +243,7 @@ class AdminBoutServiceTest {
         AdminBoutResponse response = adminBoutService.updateBout(20L, request);
 
         assertThat(response.getBoutId()).isEqualTo(20L);
-        assertThat(response.getBoutNumber()).isEqualTo(2);
+        assertThat(response.getBoutNumber()).isEqualTo(1);
         assertThat(response.getMatchType()).isEqualTo("80 - high school");
         assertThat(response.getRedAthleteId()).isEqualTo(12L);
         assertThat(response.getBlueAthleteId()).isEqualTo(13L);
@@ -285,13 +291,24 @@ class AdminBoutServiceTest {
 
     private void givenValidReferences(Long redAthleteId, Long blueAthleteId) {
         given(tournamentRepository.existsById(1L)).willReturn(true);
+        lenient().when(tournamentRepository.findWithLockById(1L)).thenReturn(Optional.of(createTournament(1L)));
+        lenient().when(boutRepository.findMaxBoutNumberByTournamentId(1L)).thenReturn(0);
         given(ringRepository.findById(1L)).willReturn(Optional.of(createRing(1L, 1L)));
         given(athleteRepository.existsById(redAthleteId)).willReturn(true);
         given(athleteRepository.existsById(blueAthleteId)).willReturn(true);
     }
 
     private AdminBoutRequest request() {
-        return new AdminBoutRequest(1L, 1L, 1, "75 - middle school", 10L, 11L, 3, 1, false);
+        return new AdminBoutRequest(1L, 1L, "75 - middle school", 10L, 11L, 3, 1, false);
+    }
+
+    private Tournament createTournament(Long id) {
+        Tournament tournament = Tournament.builder()
+                .name("Seoul Boxing Cup")
+                .status(TournamentStatus.READY)
+                .build();
+        ReflectionTestUtils.setField(tournament, "id", id);
+        return tournament;
     }
 
     private MockMultipartFile csvFile(String content) {
@@ -307,7 +324,7 @@ class AdminBoutServiceTest {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("bouts");
             String[] headers = {
-                    "tournamentId", "ringId", "boutNumber", "matchType", "redAthleteId",
+                    "tournamentId", "ringId", "matchType", "redAthleteId",
                     "blueAthleteId", "totalRounds", "scheduledOrder", "eventBout"
             };
             Row headerRow = sheet.createRow(0);
@@ -317,13 +334,12 @@ class AdminBoutServiceTest {
             Row row = sheet.createRow(1);
             row.createCell(0).setCellValue(1);
             row.createCell(1).setCellValue(1);
-            row.createCell(2).setCellValue(1);
-            row.createCell(3).setCellValue("75 - middle school");
-            row.createCell(4).setCellValue(10);
-            row.createCell(5).setCellValue(11);
-            row.createCell(6).setCellValue(3);
-            row.createCell(7).setCellValue(1);
-            row.createCell(8).setCellValue(false);
+            row.createCell(2).setCellValue("75 - middle school");
+            row.createCell(3).setCellValue(10);
+            row.createCell(4).setCellValue(11);
+            row.createCell(5).setCellValue(3);
+            row.createCell(6).setCellValue(1);
+            row.createCell(7).setCellValue(false);
             workbook.write(output);
             return new MockMultipartFile(
                     "file",

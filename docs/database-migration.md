@@ -1,6 +1,6 @@
 # Database Migration Policy
 
-Last updated: 2026-07-17
+Last updated: 2026-08-08
 
 ## Scope
 
@@ -15,6 +15,7 @@ management. The current baseline is:
 | --- | --- | --- |
 | `V1` | `V1__create_initial_schema.sql` | Initial JPA tables, optimistic-lock columns, workflow uniqueness constraints, schedule/staff indexes, and audit indexes |
 | `V2` | `V2__add_penalty_round_reference.sql` | Adds nullable `penalties.round_no` for round-level penalty history while totals remain bout-level |
+| `V3` | `V3__add_unique_tournament_bout_number.sql` | Enforces unique bout numbers within each tournament |
 
 The baseline covers `accounts`, `tournaments`, `athletes`, `rings`, `bouts`,
 `round_scores`, `penalties`, `bout_results`, `notices`, `schedule_items`,
@@ -36,7 +37,7 @@ history survives deletion of a referenced business record.
   state before the application context starts.
 - Already applied migration files are immutable. Add a higher version for every
   schema change; never edit an applied file to repair production data.
-- MariaDB is the operational database. H2 runs the same V1 and V2 SQL in
+- MariaDB is the operational database. H2 runs the same V1, V2, and V3 SQL in
   MySQL compatibility mode for fast repository and context tests.
 
 ## New Installation
@@ -45,7 +46,7 @@ history survives deletion of a referenced business record.
    with only the privileges required by Flyway and the service.
 2. Configure the local datasource without committing credentials.
 3. Start the backend from `back/` with `mvn spring-boot:run`.
-4. Confirm the Flyway log reports V2 as the current schema version and the
+4. Confirm the Flyway log reports V3 as the current schema version and the
    health endpoint returns `UP`.
 5. Record the deployed application and schema versions in the environment
    change record.
@@ -56,19 +57,20 @@ connection information.
 ## Existing Database
 
 The repository has no evidence of a deployed shared database. New installations
-apply V1 and V2 in order. Do not assume that an existing database matches either
-version.
+apply V1, V2, and V3 in order. Do not assume that an existing database matches
+any version.
 
 Before first startup against an existing database:
 
 1. Take and verify a database backup.
 2. Inspect table, column, index, unique-constraint, and data-type definitions.
-3. Compare the result with V1 and V2 and resolve duplicate or incompatible legacy
-   data before applying constraints.
-4. If the schema is equivalent to V1 but predates V2, perform the approved
-   baseline operation at V1 and let Flyway apply V2. If it is equivalent to V2,
-   baseline at V2 only through the approved procedure. Then start the application
-   with normal validation settings.
+3. Compare the result with V1, V2, and V3. Before applying V3, find and resolve
+   duplicate `(tournament_id, bout_number)` values.
+4. If the schema is equivalent to V1, perform the approved baseline operation at
+   V1 and let Flyway apply V2 and V3. If it is equivalent to V2, baseline at V2
+   only through the approved procedure and let Flyway apply V3. If it is
+   equivalent to V3, baseline at V3. Then start the application with normal
+   validation settings.
 5. If it is not equivalent, write a reviewed forward migration or a dedicated
    data conversion plan. Do not enable `baseline-on-migrate` to bypass the
    difference.

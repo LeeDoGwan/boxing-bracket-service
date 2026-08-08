@@ -68,12 +68,12 @@ describe('AdminBoutPage', () => {
     expect(screen.getByLabelText('대진 파일')).toHaveAttribute('accept', '.csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     fireEvent.click(screen.getByRole('button', { name: '+ 새 경기' }));
     fireEvent.change(screen.getByLabelText('링'), { target: { value: '1' } });
-    fireEvent.change(screen.getByLabelText('경기 번호'), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText('빨강 선수'), { target: { value: '10' } });
     fireEvent.change(screen.getByLabelText('파랑 선수'), { target: { value: '11' } });
     fireEvent.change(screen.getByLabelText('진행 순서'), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: '경기 생성' }));
-    await waitFor(() => expect(createBout).toHaveBeenCalledWith(expect.objectContaining({ boutNumber: 2, ringId: 1, tournamentId: 1 }), 'admin-token'));
+    await waitFor(() => expect(createBout).toHaveBeenCalledWith(expect.objectContaining({ ringId: 1, tournamentId: 1 }), 'admin-token'));
+    expect(createBout.mock.calls[0][0]).not.toHaveProperty('boutNumber');
 
     const csv = new File(['tournamentId,ringId'], 'bouts.csv', { type: 'text/csv' });
     fireEvent.change(screen.getByLabelText('대진 파일'), { target: { files: [csv] } });
@@ -109,10 +109,10 @@ describe('AdminBoutPage', () => {
 
     render(<AdminBoutPage tournamentId={1} />);
     expect(await screen.findByText('경기 1 · Final')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('경기 번호'), { target: { value: '3' } });
     fireEvent.change(screen.getByLabelText('경기 유형'), { target: { value: 'Semi Final' } });
     fireEvent.click(screen.getByRole('button', { name: '경기 저장' }));
-    await waitFor(() => expect(updateBout).toHaveBeenCalledWith(12, expect.objectContaining({ boutNumber: 3, matchType: 'Semi Final' }), 'admin-token'));
+    await waitFor(() => expect(updateBout).toHaveBeenCalledWith(12, expect.objectContaining({ matchType: 'Semi Final' }), 'admin-token'));
+    expect(updateBout.mock.calls[0][1]).not.toHaveProperty('boutNumber');
 
     fireEvent.click(screen.getByRole('button', { name: '경기 삭제' }));
     fireEvent.click(screen.getByRole('button', { name: '확인' }));

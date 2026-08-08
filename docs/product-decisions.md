@@ -1,6 +1,6 @@
 # Product Decisions
 
-Last updated: 2026-07-17
+Last updated: 2026-08-08
 
 This document records product and UX decisions confirmed after reviewing the
 requirements for the boxing tournament service. It is the source for frontend
@@ -23,7 +23,7 @@ specific rule.
 | Offline mode | Offline operation is outside the service purpose | Preserve reconnect, stale-data, retry, and conflict feedback; do not build offline writes |
 | Tournament scope | Current target is management of one tournament | Keep the current tournament context simple; defer multi-tournament ownership UX |
 | Athlete scope | Athletes are managed per tournament | Admin forms and search should remain tournament-scoped |
-| Bout numbering | Bout numbers are generated automatically | Admin creation/import should preview the next number and prevent manual collisions |
+| Bout numbering | Bout numbers are generated automatically per tournament | Hide manual number input; the server assigns the next number for create/import and preserves it on update |
 
 ## Operator Login UX
 
@@ -58,6 +58,9 @@ The following confirmed targets are implemented in the current baseline:
   shared session, protected routes, role-aware navigation, and logout cleanup.
 - The public header no longer exposes a raw tournament ID control; the current
   one-tournament context is carried by the public navigation and staff session.
+- Bout creation and CSV/XLS/XLSX import omit `boutNumber`. The server locks the
+  tournament row, assigns the next positive number, and the database enforces
+  uniqueness for `(tournament_id, bout_number)`.
 
 Still open after venue confirmation:
 

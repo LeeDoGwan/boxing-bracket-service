@@ -11,10 +11,6 @@ public class AdminBoutRequest {
     @NotNull(message = "ringId is required")
     private Long ringId;
 
-    @NotNull(message = "boutNumber is required")
-    @Positive(message = "boutNumber must be positive")
-    private Integer boutNumber;
-
     private String matchType;
 
     @NotNull(message = "redAthleteId is required")
@@ -37,7 +33,6 @@ public class AdminBoutRequest {
     public AdminBoutRequest(
             Long tournamentId,
             Long ringId,
-            Integer boutNumber,
             String matchType,
             Long redAthleteId,
             Long blueAthleteId,
@@ -47,7 +42,6 @@ public class AdminBoutRequest {
     ) {
         this.tournamentId = tournamentId;
         this.ringId = ringId;
-        this.boutNumber = boutNumber;
         this.matchType = matchType;
         this.redAthleteId = redAthleteId;
         this.blueAthleteId = blueAthleteId;
@@ -62,10 +56,6 @@ public class AdminBoutRequest {
 
     public Long getRingId() {
         return ringId;
-    }
-
-    public Integer getBoutNumber() {
-        return boutNumber;
     }
 
     public String getMatchType() {

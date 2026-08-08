@@ -20,6 +20,9 @@ public interface BoutRepository extends JpaRepository<Bout, Long> {
 
     Optional<Bout> findFirstByRingIdAndStatusOrderByScheduledOrderAsc(Long ringId, BoutStatus status);
 
+    @Query("select coalesce(max(bout.boutNumber), 0) from Bout bout where bout.tournamentId = :tournamentId")
+    Integer findMaxBoutNumberByTournamentId(@Param("tournamentId") Long tournamentId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select bout from Bout bout where bout.id = :boutId")
     Optional<Bout> findWithLockById(@Param("boutId") Long boutId);

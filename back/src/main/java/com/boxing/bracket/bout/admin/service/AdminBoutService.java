@@ -49,7 +49,6 @@ public class AdminBoutService {
     private static final List<String> IMPORT_HEADERS = List.of(
             "tournamentId",
             "ringId",
-            "boutNumber",
             "matchType",
             "redAthleteId",
             "blueAthleteId",
@@ -97,11 +96,13 @@ public class AdminBoutService {
 
     public AdminBoutResponse createBout(AdminBoutRequest request) {
         validateRequest(request);
+        lockTournament(request.getTournamentId());
+        Integer boutNumber = nextBoutNumber(request.getTournamentId());
 
         Bout bout = Bout.builder()
                 .tournamentId(request.getTournamentId())
                 .ringId(request.getRingId())
-                .boutNumber(request.getBoutNumber())
+                .boutNumber(boutNumber)
                 .matchType(request.getMatchType())
                 .redAthleteId(request.getRedAthleteId())
                 .blueAthleteId(request.getBlueAthleteId())
@@ -185,7 +186,7 @@ public class AdminBoutService {
         bout.updateSchedule(
                 request.getTournamentId(),
                 request.getRingId(),
-                request.getBoutNumber(),
+                bout.getBoutNumber(),
                 request.getMatchType(),
                 request.getRedAthleteId(),
                 request.getBlueAthleteId(),
@@ -234,12 +235,6 @@ public class AdminBoutService {
         validateTournamentId(request.getTournamentId());
         if (request.getRingId() == null) {
             throw new IllegalArgumentException("ringId is required");
-        }
-        if (request.getBoutNumber() == null) {
-            throw new IllegalArgumentException("boutNumber is required");
-        }
-        if (request.getBoutNumber() <= 0) {
-            throw new IllegalArgumentException("boutNumber must be positive");
         }
         if (request.getRedAthleteId() == null) {
             throw new IllegalArgumentException("redAthleteId is required");
@@ -336,7 +331,6 @@ public class AdminBoutService {
             return new AdminBoutRequest(
                     parseLong(values.get("tournamentId"), "tournamentId", true),
                     parseLong(values.get("ringId"), "ringId", true),
-                    parseInteger(values.get("boutNumber"), "boutNumber", true),
                     normalize(values.get("matchType")),
                     parseLong(values.get("redAthleteId"), "redAthleteId", true),
                     parseLong(values.get("blueAthleteId"), "blueAthleteId", true),
@@ -389,5 +383,15 @@ public class AdminBoutService {
             return null;
         }
         return value.trim();
+    }
+
+    private void lockTournament(Long tournamentId) {
+        tournamentRepository.findWithLockById(tournamentId)
+                .orElseThrow(TournamentNotFoundException::new);
+    }
+
+    private int nextBoutNumber(Long tournamentId) {
+        Integer currentNumber = boutRepository.findMaxBoutNumberByTournamentId(tournamentId);
+        return (currentNumber == null ? 0 : currentNumber) + 1;
     }
 }

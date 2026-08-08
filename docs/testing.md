@@ -28,7 +28,7 @@ Last updated: 2026-08-08
 - Flyway migration files live in `back/src/main/resources/db/migration/` and are applied before Hibernate schema validation.
 - `back/src/main/resources/application-local.yml` enables MariaDB migration and sets `ddl-auto: validate`; it does not create or alter tables through Hibernate.
 - `back/src/test/resources/application-test.yml` uses the same migration location with H2 MySQL compatibility mode and `ddl-auto: validate`.
-- `DatabaseMigrationIntegrationTest` verifies V1 and V2 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the `penalties.round_no` column, and operational unique constraints.
+- `DatabaseMigrationIntegrationTest` verifies V1, V2, and V3 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the `penalties.round_no` column, the per-tournament bout-number unique constraint, and operational unique constraints.
 - `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dmariadb.integration=true` and verifies the database product plus the current Flyway version.
 - Existing `docs/database-migration-*.sql` files are historical pointers only. They contain no executable duplicate DDL; the Flyway directory is the single execution source.
 
@@ -39,6 +39,7 @@ Last updated: 2026-08-08
 - Domain behavior tests for account, tournament, ring, athlete, bout, notice, schedule, and scoring models.
 - Repository slice tests for tournament, ring, athlete, bout, notice, account, round score, bout result, and schedule persistence.
 - Service tests for audience home, public bout/ring/notice/schedule queries, judge scoring, supervisor scoring, ring manager workflow, admin management flows, bout CSV/Excel import, schedule reference validation, and tournament operation status aggregation.
+- Admin bout tests verify server-generated numbering for create/import, number preservation on update, and the import template contract without a manual `boutNumber` column.
 - Controller tests for health, audience home, public bout/ring/notice/schedule APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
 - Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.

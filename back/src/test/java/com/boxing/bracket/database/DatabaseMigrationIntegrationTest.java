@@ -23,7 +23,7 @@ class DatabaseMigrationIntegrationTest {
     void appliesAllMigrationsAndLeavesNoPendingChanges() {
         assertThat(flyway.info().applied())
                 .extracting(migration -> migration.getVersion().getVersion())
-                .containsExactly("1", "2");
+                .containsExactly("1", "2", "3");
         assertThat(flyway.info().pending()).isEmpty();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbcTemplate.queryForObject(
@@ -48,6 +48,7 @@ class DatabaseMigrationIntegrationTest {
 
         assertThat(uniqueConstraintExists("round_scores", "uk_round_scores_bout_round_judge")).isTrue();
         assertThat(uniqueConstraintExists("bout_results", "uk_bout_results_bout")).isTrue();
+        assertThat(uniqueConstraintExists("bouts", "uk_bouts_tournament_bout_number")).isTrue();
         assertThat(uniqueConstraintExists("staff_assignments", "uk_staff_assignments_account_tournament_ring")).isTrue();
         assertThat(uniqueConstraintExists("audit_logs", "uk_audit_logs_deduplication_key")).isTrue();
         assertThat(columnExists("bouts", "version")).isTrue();

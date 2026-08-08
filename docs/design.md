@@ -216,6 +216,7 @@ erDiagram
     }
     BOUT {
         bigint id PK
+        int boutNumber
         bigint tournamentId
         bigint ringId
         bigint redAthleteId
@@ -294,6 +295,9 @@ Workflow rules:
 7. Judge score validation is performed before persistence; failed validation does not publish a score event.
 8. Supervisor result and penalty validation is performed before persistence, including `roundNo` range checks when a round reference is supplied; failed mutations do not publish scoring events.
 9. Ring Manager lifecycle validation is performed in the bout domain before persistence; failed transitions do not publish bout events.
+10. Admin bout creation and import lock the tournament row, assign the next positive
+    `boutNumber`, and preserve the existing number on update. The database also
+    enforces uniqueness for `(tournament_id, bout_number)`.
 
 ## 9. API Contract
 
@@ -336,23 +340,25 @@ is the schema owner; Hibernate validates the resulting schema and never creates
 or alters tables at application startup. The policy and operator procedures are
 in [Database migration policy](database-migration.md).
 
-The current migration head is `V2__add_penalty_round_reference.sql`. `V1__create_initial_schema.sql`
+The current migration head is `V3__add_unique_tournament_bout_number.sql`. `V1__create_initial_schema.sql`
 contains the initially mapped tables, optimistic-lock columns, workflow
 uniqueness constraints, schedule and staff-assignment indexes, and audit-log
 indexes. V2 adds the nullable `penalties.round_no` column used to retain the
-round reference while penalty totals remain bout-level.
+round reference while penalty totals remain bout-level. V3 adds the
+per-tournament bout-number uniqueness constraint.
 Entity references are scalar IDs, so this baseline intentionally does not add
 foreign keys that the current model does not declare.
 
 The repository contains no evidence of a deployed shared database. New
-installations therefore apply V1 and then V2. An existing database must be inspected,
+installations therefore apply V1, V2, and then V3. An existing database must be inspected,
 backed up, and explicitly baselined only after its schema is proven equivalent;
 `baseline-on-migrate` is disabled so an unknown schema cannot start silently.
 
 The test profile uses H2 in MySQL compatibility mode, applies the same Flyway
-V1 and V2 migrations, and then validates the JPA mapping. A migration
+V1, V2, and V3 migrations, and then validates the JPA mapping. A migration
 integration test checks both applied versions, idempotent startup, tables,
-version columns, the penalty round column, and operational unique constraints.
+version columns, the penalty round column, per-tournament bout-number uniqueness,
+and operational unique constraints.
 
 Operational prerequisites:
 
