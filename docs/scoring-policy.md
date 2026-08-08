@@ -18,7 +18,7 @@ safety rules from boxing-association rules that still require venue confirmation
 | Maximum score | Implemented as 10 in backend and frontend |
 | Ten-point-must rule | Provisional; validation required from boxing association officials |
 | Tie-round policy | Provisional; validation required from boxing association officials |
-| Deduction interaction with Judge input | Provisional; validation required from boxing association officials |
+| Penalty interaction with final total | Implemented; a penalty is added to the opponent's effective total |
 
 ## Applied Rules
 
@@ -91,7 +91,7 @@ Before enforcing association-specific rules, confirm:
 - minimum per-athlete round scores;
 - whether every round must include a ten-point score;
 - whether tied rounds are valid;
-- whether deductions are entered separately and how they affect final totals;
+- venue-specific penalty limits or exceptional-bout penalty handling;
 - whether late submission of an earlier round is allowed at the venue;
 - whether score entry timing changes for stoppages or exceptional bouts.
 

@@ -421,6 +421,6 @@ The following decisions should be made before expanding beyond the MVP:
 - Event model: whether schedule, notice, and ring-status changes should use SSE in addition to bout updates.
 - Result policy: allowed decision types, confirmed-result correction workflow, and approval requirements; current implementation is documented in [Supervisor result confirmation policy](result-confirmation-policy.md).
 - Ring Manager lifecycle: current status transitions, round sequencing, next-bout ordering, and cancellation semantics are documented in [Bout state transition policy](bout-state-transition-policy.md); cancellation and exceptional-bout behavior remain venue decisions.
-- Boxing scoring policy: the 0-10 maximum is implemented; ten-point rule, tied-round handling, deduction interaction, and exceptional-bout timing require venue confirmation; see [Judge scoring policy](scoring-policy.md).
+- Boxing scoring policy: the 0-10 maximum and opponent-side penalty addition are implemented; ten-point rule, tied-round handling, venue-specific penalty limits, and exceptional-bout timing require venue confirmation; see [Judge scoring policy](scoring-policy.md).
 - Data ownership: whether athletes remain global master data or become tournament-scoped records.
 - Production migration operations: backup, approval, rollback/forward-fix policy, and schema ownership for shared databases.

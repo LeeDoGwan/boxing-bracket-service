@@ -18,10 +18,17 @@ Resolved in the current implementation:
 - Bout CSV/Excel imports now require a persistent `Idempotency-Key`; imported rows retain the key and row number so a retry returns the original rows instead of creating duplicates.
 - Local sessions revalidate account existence, active status, role, identity fields, and update timestamps on each authenticated request; a shared store is still required before horizontal scaling.
 - Flyway 9.22.3 and its `flyway-mysql` support module are pinned so the MariaDB 10.11 migration smoke test uses a supported database version.
+- Confirmed results expose both stored totals and effective totals; a penalty assigned
+  to one side is added to the opponent's effective score.
+- The `RSC` result code remains API-compatible while user-facing labels display
+  `TKO`. Effective-score ties remain an explicit Supervisor decision.
+- The current local verification baseline is 74 backend test classes with 406
+  passed cases and 26 frontend test files with 91 passed cases.
 
 Remaining follow-up risks:
 
-- Process-local sessions need a shared store before horizontal scaling.
+- Process-local sessions need a shared store before horizontal scaling. This is
+  outside the current single-backend-server MVP deployment target.
 
 The historical sections below retain their original evidence and priorities;
 the resolved items above are no longer release blockers.

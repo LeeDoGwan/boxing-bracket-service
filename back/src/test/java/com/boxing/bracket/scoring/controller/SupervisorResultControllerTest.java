@@ -53,6 +53,8 @@ class SupervisorResultControllerTest {
                 .andExpect(jsonPath("$.data.boutId").value(1))
                 .andExpect(jsonPath("$.data.redTotalScore").value(19))
                 .andExpect(jsonPath("$.data.blueTotalScore").value(18))
+                .andExpect(jsonPath("$.data.redEffectiveScore").value(19))
+                .andExpect(jsonPath("$.data.blueEffectiveScore").value(19))
                 .andExpect(jsonPath("$.data.winnerSide").value("RED"))
                 .andExpect(jsonPath("$.data.decisionType").value("POINTS"))
                 .andExpect(jsonPath("$.data.confirmedBy").value(20));
