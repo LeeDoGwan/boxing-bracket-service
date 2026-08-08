@@ -17,7 +17,7 @@ Resolved in the current implementation:
 - Scalar reference mutations now have application-level protection: tournament, ring, athlete, and account deletes fail when owned records remain; bout deletes also check schedule references, and ring tournament ownership is immutable.
 - Bout CSV/Excel imports now require a persistent `Idempotency-Key`; imported rows retain the key and row number so a retry returns the original rows instead of creating duplicates.
 - Local sessions revalidate account existence, active status, role, identity fields, and update timestamps on each authenticated request; a shared store is still required before horizontal scaling.
-- Flyway is pinned to 9.22.3 so the MariaDB 10.11 migration smoke test uses a supported database version.
+- Flyway 9.22.3 and its `flyway-mysql` support module are pinned so the MariaDB 10.11 migration smoke test uses a supported database version.
 
 Remaining follow-up risks:
 
