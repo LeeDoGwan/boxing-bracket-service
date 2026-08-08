@@ -114,7 +114,7 @@ Open `/staff/login` to enter the shared staff login. After authentication, use t
 
 GitHub Actions keeps source verification separate from deployment:
 
-- [Backend CI](.github/workflows/backend-ci.yml) runs Java 11 and `mvn -q test` from `back/`.
+- [Backend CI](.github/workflows/backend-ci.yml) runs Java 11 and `mvn -q test` from `back/`, then runs a MariaDB 10.11 migration smoke test.
 - [Frontend CI](.github/workflows/frontend-ci.yml) runs Node 24, `npm ci`, `npm test`, `npm run lint`, and `npm run build` from `front/`.
 - Each workflow runs on relevant `back/` or `front/` changes, future pull requests, and manual dispatch. Pushes cancel older in-progress runs for the same workflow and ref.
 - CI uses read-only repository permissions and does not deploy, create pull requests, or require secrets.

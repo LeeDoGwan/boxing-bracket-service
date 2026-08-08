@@ -15,7 +15,7 @@ Last updated: 2026-08-08
 
 ## Continuous Integration
 
-- [Backend CI workflow](../.github/workflows/backend-ci.yml): Temurin Java 11, Maven dependency cache, `mvn -q test` from `back/`.
+- [Backend CI workflow](../.github/workflows/backend-ci.yml): Temurin Java 11, Maven dependency cache, `mvn -q test` from `back/`, and a MariaDB 10.11 migration smoke test.
 - [Frontend CI workflow](../.github/workflows/frontend-ci.yml): Node.js 24, npm dependency cache, `npm ci`, `npm test`, `npm run lint`, and `npm run build` from `front/`.
 - The repository has no Maven Wrapper or Node version file; the workflow pins Java 11 and Node.js 24 explicitly, while Maven is supplied by the GitHub-hosted runner.
 - Triggers: relevant `back/` or `front/` branch pushes, future pull requests, and manual dispatch. Documentation-only changes do not trigger these source workflows.
@@ -29,7 +29,7 @@ Last updated: 2026-08-08
 - `back/src/main/resources/application-local.yml` enables MariaDB migration and sets `ddl-auto: validate`; it does not create or alter tables through Hibernate.
 - `back/src/test/resources/application-test.yml` uses the same migration location with H2 MySQL compatibility mode and `ddl-auto: validate`.
 - `DatabaseMigrationIntegrationTest` verifies V1 and V2 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the `penalties.round_no` column, and operational unique constraints.
-- `mvn test` is the migration test command. It does not require MariaDB credentials and does not prove every MariaDB-specific execution detail; a deployment rehearsal must run the same files against an approved MariaDB instance.
+- `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dmariadb.integration=true` and verifies the database product plus the current Flyway version.
 - Existing `docs/database-migration-*.sql` files are historical pointers only. They contain no executable duplicate DDL; the Flyway directory is the single execution source.
 
 ## Test Scope

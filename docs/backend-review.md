@@ -11,6 +11,7 @@ Resolved in the current implementation:
 - Local runtime authentication is enabled; public audience endpoints remain login-free.
 - The local datasource password is read from `BOXING_DB_PASSWORD`.
 - JPA auditing is enabled outside the test profile, and repository coverage verifies `createdAt` and `updatedAt`.
+- Backend CI now runs a MariaDB 10.11 migration smoke test in addition to the H2 suite.
 
 Remaining follow-up risks:
 
@@ -18,7 +19,6 @@ Remaining follow-up risks:
 - Cross-module scalar references need an explicit immutable/delete policy.
 - Workflow lock ordering needs a documented deadlock regression test.
 - Bout create/import flows need batch identity or idempotency keys.
-- CI needs a MariaDB-backed verification job.
 
 The historical sections below retain their original evidence and priorities;
 the resolved items above are no longer release blockers.
