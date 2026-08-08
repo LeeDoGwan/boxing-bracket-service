@@ -12,6 +12,7 @@ Resolved in the current implementation:
 - The local datasource password is read from `BOXING_DB_PASSWORD`.
 - JPA auditing is enabled outside the test profile, and repository coverage verifies `createdAt` and `updatedAt`.
 - Backend CI now runs a MariaDB 10.11 migration smoke test in addition to the H2 suite.
+- Admin bout schedule mutations are blocked after a bout starts or reaches a terminal state. Deletion also checks scoring references and the ring's current-bout pointer.
 
 Remaining follow-up risks:
 

@@ -6,11 +6,16 @@ import com.boxing.bracket.bout.admin.dto.AdminBoutImportResponse;
 import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
 import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
 import com.boxing.bracket.bout.domain.Bout;
+import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.scoring.repository.BoutResultRepository;
+import com.boxing.bracket.scoring.repository.PenaltyRepository;
+import com.boxing.bracket.scoring.repository.RoundScoreRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.apache.poi.ss.usermodel.Cell;
@@ -61,17 +66,26 @@ public class AdminBoutService {
     private final TournamentRepository tournamentRepository;
     private final RingRepository ringRepository;
     private final AthleteRepository athleteRepository;
+    private final RoundScoreRepository roundScoreRepository;
+    private final PenaltyRepository penaltyRepository;
+    private final BoutResultRepository boutResultRepository;
 
     public AdminBoutService(
             BoutRepository boutRepository,
             TournamentRepository tournamentRepository,
             RingRepository ringRepository,
-            AthleteRepository athleteRepository
+            AthleteRepository athleteRepository,
+            RoundScoreRepository roundScoreRepository,
+            PenaltyRepository penaltyRepository,
+            BoutResultRepository boutResultRepository
     ) {
         this.boutRepository = boutRepository;
         this.tournamentRepository = tournamentRepository;
         this.ringRepository = ringRepository;
         this.athleteRepository = athleteRepository;
+        this.roundScoreRepository = roundScoreRepository;
+        this.penaltyRepository = penaltyRepository;
+        this.boutResultRepository = boutResultRepository;
     }
 
     @Transactional(readOnly = true)
@@ -183,6 +197,7 @@ public class AdminBoutService {
 
         Bout bout = boutRepository.findById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
+        validateScheduleMutation(bout, request);
         bout.updateSchedule(
                 request.getTournamentId(),
                 request.getRingId(),
@@ -200,11 +215,39 @@ public class AdminBoutService {
 
     public void deleteBout(Long boutId) {
         validateBoutId(boutId);
-        if (!boutRepository.existsById(boutId)) {
-            throw new BoutNotFoundException();
+        Bout bout = boutRepository.findById(boutId)
+                .orElseThrow(BoutNotFoundException::new);
+        validateDeleteAllowed(bout);
+        boutRepository.deleteById(boutId);
+    }
+
+    private void validateScheduleMutation(Bout bout, AdminBoutRequest request) {
+        if (bout.getStatus() == BoutStatus.IN_PROGRESS
+                || bout.getStatus() == BoutStatus.SCORING
+                || bout.isCompleted()) {
+            throw new WorkflowConflictException("BOUT_SCHEDULE_LOCKED");
+        }
+        if (!bout.getTournamentId().equals(request.getTournamentId())) {
+            throw new IllegalArgumentException("bout tournament cannot be changed");
+        }
+    }
+
+    private void validateDeleteAllowed(Bout bout) {
+        if (bout.getStatus() == BoutStatus.IN_PROGRESS
+                || bout.getStatus() == BoutStatus.SCORING
+                || bout.isCompleted()
+                || roundScoreRepository.existsByBoutId(bout.getId())
+                || penaltyRepository.existsByBoutId(bout.getId())
+                || boutResultRepository.existsByBoutId(bout.getId())) {
+            throw new WorkflowConflictException("BOUT_DELETE_NOT_ALLOWED");
         }
 
-        boutRepository.deleteById(boutId);
+        boolean isCurrentBout = ringRepository.findById(bout.getRingId())
+                .map(ring -> bout.getId().equals(ring.getCurrentBoutId()))
+                .orElse(false);
+        if (isCurrentBout) {
+            throw new WorkflowConflictException("BOUT_DELETE_NOT_ALLOWED");
+        }
     }
 
     private void validateRequest(AdminBoutRequest request) {

@@ -8,10 +8,14 @@ import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.scoring.repository.BoutResultRepository;
+import com.boxing.bracket.scoring.repository.PenaltyRepository;
+import com.boxing.bracket.scoring.repository.RoundScoreRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.domain.Tournament;
 import com.boxing.bracket.tournament.domain.TournamentStatus;
@@ -56,6 +60,15 @@ class AdminBoutServiceTest {
 
     @Mock
     private AthleteRepository athleteRepository;
+
+    @Mock
+    private RoundScoreRepository roundScoreRepository;
+
+    @Mock
+    private PenaltyRepository penaltyRepository;
+
+    @Mock
+    private BoutResultRepository boutResultRepository;
 
     @InjectMocks
     private AdminBoutService adminBoutService;
@@ -268,8 +281,20 @@ class AdminBoutServiceTest {
     }
 
     @Test
+    void updateBoutRejectsStartedBout() {
+        Bout bout = createBout(20L);
+        bout.start();
+        givenValidReferences();
+        given(boutRepository.findById(20L)).willReturn(Optional.of(bout));
+
+        assertThatThrownBy(() -> adminBoutService.updateBout(20L, request()))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("BOUT_SCHEDULE_LOCKED");
+    }
+
+    @Test
     void deleteBoutDeletesExistingBout() {
-        given(boutRepository.existsById(20L)).willReturn(true);
+        given(boutRepository.findById(20L)).willReturn(Optional.of(createBout(20L)));
 
         adminBoutService.deleteBout(20L);
 
@@ -278,11 +303,34 @@ class AdminBoutServiceTest {
 
     @Test
     void deleteBoutRejectsMissingBout() {
-        given(boutRepository.existsById(99L)).willReturn(false);
+        given(boutRepository.findById(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> adminBoutService.deleteBout(99L))
                 .isInstanceOf(BoutNotFoundException.class)
                 .hasMessage("Bout not found");
+    }
+
+    @Test
+    void deleteBoutRejectsBoutWithScores() {
+        given(boutRepository.findById(20L)).willReturn(Optional.of(createBout(20L)));
+        given(roundScoreRepository.existsByBoutId(20L)).willReturn(true);
+
+        assertThatThrownBy(() -> adminBoutService.deleteBout(20L))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("BOUT_DELETE_NOT_ALLOWED");
+    }
+
+    @Test
+    void deleteBoutRejectsCurrentRingBout() {
+        Bout bout = createBout(20L);
+        Ring ring = createRing(1L, 1L);
+        ring.prepareCurrentBout(20L);
+        given(boutRepository.findById(20L)).willReturn(Optional.of(bout));
+        given(ringRepository.findById(1L)).willReturn(Optional.of(ring));
+
+        assertThatThrownBy(() -> adminBoutService.deleteBout(20L))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("BOUT_DELETE_NOT_ALLOWED");
     }
 
     private void givenValidReferences() {

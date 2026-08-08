@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface BoutResultRepository extends JpaRepository<BoutResult, Long> {
 
+    boolean existsByBoutId(Long boutId);
+
     Optional<BoutResult> findByBoutId(Long boutId);
 
     List<BoutResult> findByBoutIdIn(Collection<Long> boutIds);

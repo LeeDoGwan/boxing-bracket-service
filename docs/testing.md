@@ -7,7 +7,7 @@ Last updated: 2026-08-08
 - Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-08-08
-- Result: 386 passed, 0 failed, 0 errors, 0 skipped
+- Result: 389 passed, 0 failed, 0 errors, 0 skipped
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
 - Test classes: 72
 - Runtime profile: `test`
@@ -38,7 +38,7 @@ Last updated: 2026-08-08
 - SSE event stream tests for stream subscription, event payloads, subscriber filtering, and broken subscriber cleanup.
 - Domain behavior tests for account, tournament, ring, athlete, bout, notice, schedule, and scoring models.
 - Repository slice tests for tournament, ring, athlete, bout, notice, account, round score, bout result, and schedule persistence.
-- Service tests for audience home, public bout/ring/notice/schedule queries, judge scoring, supervisor scoring, ring manager workflow, admin management flows, bout CSV/Excel import, schedule reference validation, and tournament operation status aggregation.
+- Service tests for audience home, public bout/ring/notice/schedule queries, judge scoring, supervisor scoring, ring manager workflow, admin management flows, bout CSV/Excel import, schedule reference validation, tournament operation status aggregation, and pre-start bout lifecycle guards.
 - Admin bout tests verify server-generated numbering for create/import, number preservation on update, and the import template contract without a manual `boutNumber` column.
 - Controller tests for health, audience home, public bout/ring/notice/schedule APIs, judge APIs, supervisor APIs, ring manager APIs, admin APIs, tournament operation status queries, and 409 workflow conflicts.
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
@@ -80,7 +80,7 @@ map is maintained in the
 | Athlete | `AthleteRepositoryTest` | 1 |
 | Athlete | `AdminAthleteServiceTest` | 12 |
 | Bout | `AdminBoutControllerTest` | 12 |
-| Bout | `AdminBoutServiceTest` | 19 |
+| Bout | `AdminBoutServiceTest` | 22 |
 | Bout | `BoutControllerTest` | 7 |
 | Bout | `BoutTest` | 7 |
 | Bout | `BoutRepositoryTest` | 1 |
@@ -150,7 +150,7 @@ map is maintained in the
 - Ring managers can list assigned bouts, start only prepared current bouts, start exact next rounds, enter scoring only after configured rounds, cancel eligible pre-start bouts, and advance to a server-selected next bout.
 - Duplicate workflow requests return the prior result without duplicate SSE delivery; conflicting state changes and different resubmissions return HTTP 409.
 - Concurrent bout starts, identical score submissions, and identical result confirmations persist one final record and publish one event.
-- Admin users can manage tournaments, rings, athletes, bouts, notices, and service accounts; account passwords are hashed before storage, and service managers can filter accounts by login/name, role, and status.
+- Admin users can manage tournaments, rings, athletes, bouts, notices, and service accounts; account passwords are hashed before storage, service managers can filter accounts by login/name, role, and status, and bout mutations are blocked after operational or scoring state begins.
 - Game managers can import bout schedules from CSV or Excel files using the admin bout import endpoint.
 - Game managers and service managers can read a tournament's read-only operation summary, including status counts, ring progress, registered judge score submissions, pending results, and bouts in progress for more than 15 minutes.
 - Authorized administrators can filter immutable audit logs for operational, admin, and authentication mutations; sensitive credentials and session material are masked, and idempotent workflow retries retain one audit record.

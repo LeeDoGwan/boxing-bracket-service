@@ -42,6 +42,9 @@ Known MVP boundaries:
 - Schedule mutations do not publish a dedicated schedule SSE event. Audience clients see schedule changes on a full reload.
 - Audience tournament discovery is not implemented. The one-tournament MVP uses a configured default and accepts a positive `tournamentId` query parameter for the current public context.
 - Server log viewing, advanced statistics, offline support, and Game Manager tournament ownership rules remain deferred.
+- Admin bout schedule edits are allowed only before scoring starts. Bout deletion is
+  blocked for active or terminal bouts, bouts with score/penalty/result references,
+  and a bout currently assigned by a ring.
 
 ## 3. System Context
 
@@ -298,6 +301,9 @@ Workflow rules:
 10. Admin bout creation and import lock the tournament row, assign the next positive
     `boutNumber`, and preserve the existing number on update. The database also
     enforces uniqueness for `(tournament_id, bout_number)`.
+11. Admin schedule edits and deletes apply lifecycle and reference checks before
+    persistence so operational history and ring current-bout pointers are not
+    orphaned.
 
 ## 9. API Contract
 
@@ -381,7 +387,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 72 test classes, 386 test cases, zero failures, errors, or skips.
+- Backend: 72 test classes, 389 test cases, zero failures, errors, or skips.
 - Frontend: 25 test files, 83 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
