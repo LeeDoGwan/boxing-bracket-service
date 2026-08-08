@@ -38,7 +38,7 @@ Known MVP boundaries:
 - Judge score submission enforces whole-number input from 0 through 10, started-bout/current-round checks, configured round bounds, and idempotent retry behavior. The provisional policy is in [Judge scoring policy](scoring-policy.md).
 - Supervisor result confirmation uses the active assigned-ring scope, authenticated session actor, submitted-score readiness, bout lifecycle, decision, penalty validation, and optional penalty round bounds. The contract is in [Supervisor result confirmation policy](result-confirmation-policy.md).
 - Public screens remain login-free. Staff use one `/staff/login` entry point; the shared frontend session provider and route guard expose only role-appropriate operational navigation.
-- Sessions are process-local. A shared session store is required for multiple backend instances.
+- Sessions are process-local and each authenticated request revalidates the account's existence, active status, role, identity fields, and update timestamp. A shared session store is still required for multiple backend instances.
 - Schedule mutations do not publish a dedicated schedule SSE event. Audience clients see schedule changes on a full reload.
 - Audience tournament discovery is not implemented. The one-tournament MVP uses a configured default and accepts a positive `tournamentId` query parameter for the current public context.
 - Server log viewing, advanced statistics, offline support, and Game Manager tournament ownership rules remain deferred.
@@ -401,7 +401,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 72 test classes, 395 test cases, zero failures, errors, or skips.
+- Backend: 72 test classes, 398 test cases, zero failures, errors, or skips.
 - Frontend: 25 test files, 83 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 

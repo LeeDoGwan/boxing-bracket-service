@@ -79,7 +79,9 @@ class AuthServiceTest {
     @Test
     void meReturnsCurrentAccount() {
         AuthService authService = authService();
-        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account(UserRole.JUDGE)));
+        Account account = account(UserRole.JUDGE);
+        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account));
+        given(accountRepository.findById(1L)).willReturn(Optional.of(account));
         LoginResponse loginResponse = authService.login(new LoginRequest("judge01", "password1"));
 
         AuthAccountResponse response = authService.me("Bearer " + loginResponse.getAccessToken());
@@ -89,9 +91,51 @@ class AuthServiceTest {
     }
 
     @Test
+    void meRejectsSessionAfterAccountBecomesInactive() {
+        AuthService authService = authService();
+        Account account = account(UserRole.JUDGE);
+        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account));
+        given(accountRepository.findById(1L)).willReturn(Optional.of(account));
+        LoginResponse loginResponse = authService.login(new LoginRequest("judge01", "password1"));
+        account.updateInfo(
+                "judge01",
+                passwordEncoder.encode("password1"),
+                "Judge One",
+                UserRole.JUDGE,
+                AccountStatus.INACTIVE
+        );
+
+        assertThatThrownBy(() -> authService.me("Bearer " + loginResponse.getAccessToken()))
+                .isInstanceOf(AuthenticationRequiredException.class)
+                .hasMessage("Authentication required");
+    }
+
+    @Test
+    void meRejectsSessionAfterAccountRoleChanges() {
+        AuthService authService = authService();
+        Account account = account(UserRole.JUDGE);
+        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account));
+        given(accountRepository.findById(1L)).willReturn(Optional.of(account));
+        LoginResponse loginResponse = authService.login(new LoginRequest("judge01", "password1"));
+        account.updateInfo(
+                "judge01",
+                passwordEncoder.encode("password1"),
+                "Judge One",
+                UserRole.SUPERVISOR,
+                AccountStatus.ACTIVE
+        );
+
+        assertThatThrownBy(() -> authService.me("Bearer " + loginResponse.getAccessToken()))
+                .isInstanceOf(AuthenticationRequiredException.class)
+                .hasMessage("Authentication required");
+    }
+
+    @Test
     void logoutExpiresSession() {
         AuthService authService = authService();
-        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account(UserRole.JUDGE)));
+        Account account = account(UserRole.JUDGE);
+        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account));
+        given(accountRepository.findById(1L)).willReturn(Optional.of(account));
         LoginResponse loginResponse = authService.login(new LoginRequest("judge01", "password1"));
 
         authService.logout("Bearer " + loginResponse.getAccessToken());
@@ -104,7 +148,9 @@ class AuthServiceTest {
     @Test
     void requireRoleRejectsDifferentRole() {
         AuthService authService = authService();
-        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account(UserRole.JUDGE)));
+        Account account = account(UserRole.JUDGE);
+        given(accountRepository.findByLoginId("judge01")).willReturn(Optional.of(account));
+        given(accountRepository.findById(1L)).willReturn(Optional.of(account));
         LoginResponse loginResponse = authService.login(new LoginRequest("judge01", "password1"));
 
         assertThatThrownBy(() -> authService.requireRole(

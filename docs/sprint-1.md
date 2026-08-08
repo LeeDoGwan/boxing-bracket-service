@@ -22,7 +22,7 @@ One ring can run one bout end to end:
 
 - Test documentation: [Testing](testing.md)
 - Design documentation: [System design](design.md)
-- Latest `mvn test` result: 396 passed, 0 failed, 0 errors, 0 skipped.
+- Latest `mvn test` result: 398 passed, 0 failed, 0 errors, 0 skipped.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, schedules, audience home, bracket, bout CSV/Excel import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
 - Historical Sprint 1 baseline: 47 frontend tests passed across 19 test files, ESLint passed, and the Vite production build passed. The current verification baseline is maintained in [Testing](testing.md).
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, ring-before-bout lock ordering, idempotent retries, DB unique constraints, and post-commit SSE delivery.

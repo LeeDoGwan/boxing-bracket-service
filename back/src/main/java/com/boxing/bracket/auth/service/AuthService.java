@@ -97,7 +97,25 @@ public class AuthService {
         if (session == null || !session.isAvailable(now())) {
             throw new AuthenticationRequiredException();
         }
+        Account account = accountRepository.findById(session.getAccountId()).orElse(null);
+        if (!isSessionAccountAvailable(session, account)) {
+            session.expire();
+            sessions.remove(token);
+            throw new AuthenticationRequiredException();
+        }
         return session;
+    }
+
+    private boolean isSessionAccountAvailable(AuthSession session, Account account) {
+        if (account == null
+                || account.getStatus() != AccountStatus.ACTIVE
+                || !session.getRole().equals(account.getRole())
+                || !session.getLoginId().equals(account.getLoginId())
+                || !session.getName().equals(account.getName())) {
+            return false;
+        }
+        return account.getUpdatedAt() == null
+                || !account.getUpdatedAt().isAfter(session.getIssuedAt());
     }
 
     private String extractBearerToken(String authorizationHeader) {

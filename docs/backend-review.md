@@ -16,6 +16,7 @@ Resolved in the current implementation:
 - Ring-manager operations now acquire the ring lock before any bout lock. A scalar ring-id lookup avoids loading a stale bout entity before the lock, and unit/concurrency tests cover the ordering.
 - Scalar reference mutations now have application-level protection: tournament, ring, athlete, and account deletes fail when owned records remain; bout deletes also check schedule references, and ring tournament ownership is immutable.
 - Bout CSV/Excel imports now require a persistent `Idempotency-Key`; imported rows retain the key and row number so a retry returns the original rows instead of creating duplicates.
+- Local sessions revalidate account existence, active status, role, identity fields, and update timestamps on each authenticated request; a shared store is still required before horizontal scaling.
 
 Remaining follow-up risks:
 
