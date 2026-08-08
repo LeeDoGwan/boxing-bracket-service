@@ -1,5 +1,28 @@
 # Backend Review
 
+Review date: 2026-08-08
+
+## Current Status
+
+This status section supersedes the historical findings below.
+
+Resolved in the current implementation:
+
+- Local runtime authentication is enabled; public audience endpoints remain login-free.
+- The local datasource password is read from `BOXING_DB_PASSWORD`.
+- JPA auditing is enabled outside the test profile, and repository coverage verifies `createdAt` and `updatedAt`.
+
+Remaining follow-up risks:
+
+- Process-local sessions need a shared store before horizontal scaling.
+- Cross-module scalar references need an explicit immutable/delete policy.
+- Workflow lock ordering needs a documented deadlock regression test.
+- Bout create/import flows need batch identity or idempotency keys.
+- CI needs a MariaDB-backed verification job.
+
+The historical sections below retain their original evidence and priorities;
+the resolved items above are no longer release blockers.
+
 검토일: 2026-07-16
 대상 커밋: `feaf0da8894741b922d41912319a7f51b3a273df`
 대상 범위: `back/` 전체 소스, 설계 문서, Flyway 스키마, 백엔드 테스트 및 CI

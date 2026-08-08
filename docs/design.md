@@ -1,6 +1,6 @@
 # Boxing Bracket Service Design
 
-Last updated: 2026-07-17
+Last updated: 2026-08-08
 
 ## 1. Purpose
 
@@ -23,6 +23,8 @@ Implemented MVP capabilities:
 - Spring Boot MVC backend with JPA repositories and MariaDB runtime configuration.
 - React/Vite single-page frontend with public, judge, supervisor, ring-manager, operations, audit, and admin routes.
 - In-memory bearer sessions with a 12-hour lifetime and BCrypt password verification.
+- Local runtime authentication is enabled, and the local datasource password is supplied by `BOXING_DB_PASSWORD`.
+- JPA auditing populates `createdAt` and `updatedAt` outside the test profile; JPA slice tests opt in explicitly.
 - Tournament, ring, athlete, bout, notice, schedule, account, scoring, operation-status, and audit-log modules.
 - CSV and Excel bout import with a matching CSV template download.
 - Audience and operator ring-filtered SSE bout-update events, transaction-safe dispatch, reconnect handling, and duplicate event protection.
@@ -138,6 +140,10 @@ leaves write actions usable and preserves the last API-confirmed state.
 ## 6. Authentication and Authorization
 
 Authentication is enabled by the local profile and disabled by the test profile.
+The local profile does not store a database password in the repository; set
+`BOXING_DB_PASSWORD` before starting the backend. Public audience APIs remain
+login-free, while staff and administration APIs use the shared staff login and
+role policy.
 
 ```mermaid
 sequenceDiagram

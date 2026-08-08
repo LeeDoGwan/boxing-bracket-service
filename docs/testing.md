@@ -1,13 +1,14 @@
 # Testing
 
-Last updated: 2026-07-17
+Last updated: 2026-08-08
 
 ## Latest Verification
 
 - Backend working directory: `back`
 - Command: `mvn test`
-- Verified at: 2026-07-17
+- Verified at: 2026-08-08
 - Result: 385 passed, 0 failed, 0 errors, 0 skipped
+- `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
 - Test classes: 72
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `back/src/test/resources/application-test.yml`

@@ -81,12 +81,15 @@ npm run lint
 npm run build
 ```
 
-Current documented suite: 72 backend test classes, 382 backend test cases, and 78 frontend test cases.
+Current documented suite: 72 backend test classes, 385 backend test cases, and 83 frontend test cases.
 
 The local backend profile connects to MariaDB and runs Flyway migrations before
 Hibernate validates the schema. Create the `boxing_bracket` database and a
-least-privilege application account before starting the backend; schema changes
-are versioned under `back/src/main/resources/db/migration/`.
+least-privilege application account before starting the backend, then set
+`BOXING_DB_PASSWORD` in the shell before starting the backend. Local API
+authentication is enabled; public audience APIs remain login-free and staff
+routes redirect to the shared `/staff/login` screen. Schema changes are
+versioned under `back/src/main/resources/db/migration/`.
 
 ### Run application
 
@@ -105,7 +108,7 @@ npm install
 npm run dev
 ```
 
-Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, `/audit-logs?tournamentId=1` for the audit log desk, `/admin/tournaments?tournamentId=1` for tournament management, `/admin/rings?tournamentId=1` for ring management, `/admin/athletes?tournamentId=1` for athlete management, `/admin/notices?tournamentId=1` for notice management, `/admin/schedules?tournamentId=1` for schedule management, `/admin/bouts?tournamentId=1` for bout management, or `/admin/accounts?tournamentId=1` for account management. These APIs require the matching role account; Judge, Supervisor, and Ring Manager desks load active assigned rings before scoped operations.
+Open `/staff/login` to enter the shared staff login. After authentication, use the role-aware operations menu for the Judge, Supervisor, Ring Manager, Operations, Audit Log, and admin desks. These APIs require the matching role account; Judge, Supervisor, and Ring Manager desks load active assigned rings before scoped operations.
 
 ## Continuous Integration
 
