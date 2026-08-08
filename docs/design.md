@@ -36,7 +36,7 @@ Known MVP boundaries:
 - Assigned Judge, Supervisor, and Ring Manager screens subscribe to one selected-ring SSE stream and refetch API state after relevant events.
 - Ring Manager state transitions use the existing lifecycle endpoints and the [bout state transition policy](bout-state-transition-policy.md); the server chooses the next official bout and the screen exposes state-specific commands only.
 - Judge score submission enforces whole-number input from 0 through 10, started-bout/current-round checks, configured round bounds, and idempotent retry behavior. The provisional policy is in [Judge scoring policy](scoring-policy.md).
-- Supervisor result confirmation uses the active assigned-ring scope, authenticated session actor, submitted-score readiness, bout lifecycle, decision, penalty validation, and optional penalty round bounds. The contract is in [Supervisor result confirmation policy](result-confirmation-policy.md).
+- Supervisor result confirmation uses the active assigned-ring scope, authenticated session actor, tournament Judge count (`3` or `5`), submitted-score readiness, bout lifecycle, decision, penalty validation, and optional penalty round bounds. Confirmed results can be corrected by a Supervisor with a required reason. The contract is in [Supervisor result confirmation policy](result-confirmation-policy.md).
 - Public screens remain login-free. Staff use one `/staff/login` entry point; the shared frontend session provider and route guard expose only role-appropriate operational navigation.
 - Sessions are process-local and each authenticated request revalidates the account's existence, active status, role, identity fields, and update timestamp. A shared session store is still required for multiple backend instances.
 - Schedule mutations do not publish a dedicated schedule SSE event. Audience clients see schedule changes on a full reload.
@@ -294,7 +294,8 @@ Workflow rules:
 3. Bout, ring, score, and result aggregates use optimistic versions.
 4. Mutating bout and ring operations use transaction-scoped pessimistic locks.
 5. Database uniqueness protects one score per judge/bout/round and one result per bout.
-6. SSE dispatch is registered after transaction commit, so rolled-back state is not broadcast.
+6. Result corrections update the existing confirmed result, persist the authenticated Supervisor as approver, and expose the reason through the audit record.
+7. SSE dispatch is registered after transaction commit, so rolled-back state is not broadcast.
 7. Judge score validation is performed before persistence; failed validation does not publish a score event.
 8. Supervisor result and penalty validation is performed before persistence, including `roundNo` range checks when a round reference is supplied; failed mutations do not publish scoring events.
 9. Ring Manager lifecycle validation is performed in the bout domain before persistence; failed transitions do not publish bout events.
@@ -338,7 +339,7 @@ API groups:
 | Audience home | `/api/home`, `/api/bouts`, `/api/bouts/{boutId}`, `/api/events/stream` | Public |
 | Live events | `/api/events/stream?tournamentId=&ringId=` | Public |
 | Judge | `/api/judge/bouts/{boutId}/scores`, score submit endpoint | `JUDGE` |
-| Supervisor | scores, penalties, result endpoints | `SUPERVISOR` |
+| Supervisor | scores, penalties, result confirmation/correction endpoints | `SUPERVISOR` |
 | Ring manager | ring bout list and lifecycle commands | `RING_MANAGER` |
 | Staff scope | `/api/staff/assignments/rings`, `/api/staff/assignments/rings/{ringId}/bouts` | `JUDGE`, `SUPERVISOR`, `RING_MANAGER` |
 | Operations | `/api/admin/operations/status` | `GAME_MANAGER`, `SERVICE_MANAGER` |
@@ -361,7 +362,8 @@ in [Database migration policy](database-migration.md).
 The current migration head is `V4__add_bout_import_idempotency.sql`. `V1__create_initial_schema.sql`
 contains the initially mapped tables, optimistic-lock columns, workflow
 uniqueness constraints, schedule and staff-assignment indexes, and audit-log
-indexes. V2 adds the nullable `penalties.round_no` column used to retain the
+indexes. It also stores the tournament Judge count (`3` or `5`) and uses
+MariaDB-compatible `LONGTEXT` audit payload columns. V2 adds the nullable `penalties.round_no` column used to retain the
 round reference while penalty totals remain bout-level. V3 adds the
 per-tournament bout-number uniqueness constraint. V4 adds the nullable import
 batch key and source row number used for persistent retry idempotency.
@@ -370,16 +372,17 @@ foreign keys that the current model does not declare. Service-level delete and
 ownership guards preserve the referential rules described in the workflow
 section while keeping audit history independent.
 
-The repository contains no evidence of a deployed shared database. New
-installations therefore apply V1, V2, V3, and then V4. An existing database must be inspected,
+The repository has no deployed shared database at this MVP stage. New
+installations therefore apply V1, V2, V3, and then V4. After first deployment,
+V1 is immutable and future changes require a new migration. An existing database must be inspected,
 backed up, and explicitly baselined only after its schema is proven equivalent;
 `baseline-on-migrate` is disabled so an unknown schema cannot start silently.
 
 The test profile uses H2 in MySQL compatibility mode, applies the same Flyway
 V1, V2, V3, and V4 migrations, and then validates the JPA mapping. A migration
 integration test checks both applied versions, idempotent startup, tables,
-version columns, the penalty round column, per-tournament bout-number uniqueness,
-and operational unique constraints.
+version columns, the tournament Judge count, the penalty round column,
+per-tournament bout-number uniqueness, and operational unique constraints.
 
 Operational prerequisites:
 
@@ -402,8 +405,8 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 72 local test classes, 400 passed cases, zero failures or errors, and one CI-only MariaDB smoke test skipped locally.
-- Frontend: 26 test files, 87 test cases, ESLint passed, and Vite production build passed.
+- Backend: 74 local test classes, 406 passed cases, zero failures or errors, and one CI-only MariaDB smoke test skipped locally.
+- Frontend: 26 test files, 88 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.

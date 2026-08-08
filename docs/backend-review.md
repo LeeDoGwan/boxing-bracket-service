@@ -137,7 +137,7 @@ the resolved items above are no longer release blockers.
 
 ### P1. CI가 실제 MariaDB를 검증하지 않음
 
-Backend CI는 `mvn test`만 실행하고 MariaDB 서비스를 시작하지 않는다. 테스트 프로필은 H2 MySQL 호환 모드다. 따라서 MariaDB DDL, Boolean/CLOB 매핑, 실제 비관적 락과 트랜잭션 격리 수준은 배포 전에 검증되지 않는다.
+Backend CI는 H2 기반 `mvn test`와 MariaDB 10.11 migration smoke test를 함께 실행한다. H2는 빠른 회귀 검증에 사용하고, MariaDB smoke test는 실제 DDL과 Flyway 지원 모듈을 검증한다. 실제 비관적 락과 트랜잭션 격리 수준은 여전히 운영 환경 검증 범위다.
 
 근거:
 
@@ -145,7 +145,7 @@ Backend CI는 `mvn test`만 실행하고 MariaDB 서비스를 시작하지 않�
 - [`application-test.yml:3`](../back/src/test/resources/application-test.yml#L3)
 - [`application-local.yml:3`](../back/src/main/resources/application-local.yml#L3)
 
-개선 방향: Testcontainers MariaDB 또는 GitHub Actions MariaDB 서비스를 사용해 migration, JPA validate, 워크플로 동시성 테스트를 실제 DB에서 실행한다.
+개선 방향: GitHub Actions MariaDB smoke test를 유지하고, 이후 필요하면 Testcontainers MariaDB로 JPA validate와 워크플로 동시성 테스트까지 확장한다.
 
 ### P2. 조회 성능과 확장성 위험
 
@@ -162,7 +162,7 @@ Backend CI는 `mvn test`만 실행하고 MariaDB 서비스를 시작하지 않�
 
 ## 3. 테스트 결과와 공백
 
-검토 시 `mvn -q test`를 실행했고 72개 테스트 클래스에서 실패·에러·스킵 없이 통과했다.
+검토 시 `mvn -q test`를 실행했고 74개 테스트 클래스에서 실패·에러 없이 통과했다. 로컬에서는 CI 전용 MariaDB smoke test 1개만 스킵된다.
 
 현재 테스트 공백:
 

@@ -43,6 +43,9 @@ public class AuditActionResolver {
         if ("POST".equals(method) && requestUri.startsWith("/api/supervisor/bouts/") && requestUri.endsWith("/result")) {
             return Optional.of(operation(AuditActionType.RESULT_CONFIRMED, AuditTargetType.BOUT_RESULT));
         }
+        if ("PUT".equals(method) && requestUri.startsWith("/api/supervisor/bouts/") && requestUri.endsWith("/result")) {
+            return Optional.of(operation(AuditActionType.RESULT_CORRECTED, AuditTargetType.BOUT_RESULT));
+        }
         if (requestUri.startsWith("/api/admin/bouts")) {
             if ("POST".equals(method) && requestUri.endsWith("/import")) {
                 return Optional.of(operation(AuditActionType.BOUT_IMPORTED, AuditTargetType.BOUT));

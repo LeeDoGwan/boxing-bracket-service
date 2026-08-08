@@ -109,6 +109,19 @@ public class BoutResult extends BaseTimeEntity {
                 && this.confirmedBy.equals(confirmedBy);
     }
 
+    public void correct(BoutSide winnerSide, DecisionType decisionType, Long correctedBy) {
+        if (winnerSide == null || winnerSide == BoutSide.NONE) {
+            throw new IllegalArgumentException("INVALID_WINNER_SELECTION");
+        }
+        if (decisionType == null || decisionType == DecisionType.UNKNOWN) {
+            throw new IllegalArgumentException("INVALID_RESULT_DECISION");
+        }
+        this.winnerSide = winnerSide;
+        this.decisionType = decisionType;
+        this.confirmedBy = correctedBy;
+        this.confirmedAt = LocalDateTime.now();
+    }
+
     private void validateTotal(Integer total, String fieldName) {
         if (total != null && total < 0) {
             throw new IllegalArgumentException(fieldName + " must be greater than or equal to 0");

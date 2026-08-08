@@ -24,6 +24,12 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
             UserRole role
     );
 
+    List<StaffAssignment> findByTournamentIdAndRingIdAndRoleAndActiveTrueOrderByAccountIdAsc(
+            Long tournamentId,
+            Long ringId,
+            UserRole role
+    );
+
     boolean existsByAccountIdAndTournamentIdAndRingId(
             Long accountId,
             Long tournamentId,

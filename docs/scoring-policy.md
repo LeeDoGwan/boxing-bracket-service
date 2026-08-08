@@ -38,9 +38,10 @@ enforces the following rules:
 ## Confirmed Target Rules
 
 The product decision is that each red or blue athlete score is an integer from
-0 through 10. A submitted score remains immutable. The event's Judge count is
-odd, so a tie is expected to be uncommon, but the exact count and any
-association-specific tie handling remain open.
+0 through 10. A submitted score remains immutable. Each tournament configures
+3 or 5 active assigned Judges; Supervisor result confirmation waits for every
+assigned Judge to submit each started round. If adjusted totals tie, the
+Supervisor makes the final winner decision.
 
 ## State Matrix
 

@@ -22,6 +22,7 @@ CREATE TABLE tournaments (
     start_date DATE,
     end_date DATE,
     status VARCHAR(255) NOT NULL,
+    judge_count INTEGER NOT NULL DEFAULT 3,
     created_at DATETIME(6),
     updated_at DATETIME(6),
     PRIMARY KEY (id)
@@ -182,8 +183,8 @@ CREATE TABLE audit_logs (
     ring_id BIGINT,
     bout_id BIGINT,
     deduplication_key VARCHAR(64),
-    before_data CLOB,
-    after_data CLOB,
+    before_data LONGTEXT,
+    after_data LONGTEXT,
     ip_address VARCHAR(255),
     user_agent VARCHAR(512),
     success BOOLEAN NOT NULL,

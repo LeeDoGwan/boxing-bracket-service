@@ -16,6 +16,7 @@ import com.boxing.bracket.scoring.domain.DecisionType;
 import com.boxing.bracket.scoring.domain.Penalty;
 import com.boxing.bracket.scoring.domain.RoundScore;
 import com.boxing.bracket.scoring.dto.BoutResultConfirmRequest;
+import com.boxing.bracket.scoring.dto.BoutResultCorrectionRequest;
 import com.boxing.bracket.scoring.dto.BoutResultResponse;
 import com.boxing.bracket.scoring.repository.BoutResultRepository;
 import com.boxing.bracket.scoring.repository.PenaltyRepository;
@@ -239,6 +240,42 @@ class SupervisorResultServiceTest {
                 .hasMessage("ACTOR_ID_MISMATCH");
     }
 
+    @Test
+    void correctResultRequiresReasonAndUpdatesSupervisorDecision() {
+        Bout bout = createFinishedBout();
+        BoutResult result = BoutResult.builder().boutId(1L).build();
+        result.confirm(19, 19, 0, 0, BoutSide.RED, DecisionType.POINTS, 20L);
+        BoutResultCorrectionRequest request = new BoutResultCorrectionRequest(
+                BoutSide.DRAW,
+                DecisionType.POINTS,
+                "Tie confirmed after supervisor review",
+                20L
+        );
+        given(boutRepository.findWithLockById(1L)).willReturn(Optional.of(bout));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.of(result));
+        given(boutRepository.save(any(Bout.class))).willAnswer(invocation -> invocation.getArgument(0));
+        given(boutResultRepository.save(any(BoutResult.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        BoutResultResponse response = supervisorResultService.correctResult(1L, request);
+
+        assertThat(response.getWinnerSide()).isEqualTo(BoutSide.DRAW);
+        assertThat(response.getDecisionType()).isEqualTo(DecisionType.POINTS);
+        assertThat(response.getConfirmedBy()).isEqualTo(20L);
+        assertThat(bout.getWinnerSide()).isEqualTo(BoutSide.DRAW);
+        then(boutEventPublisher).should().publish(any(BoutEventResponse.class));
+    }
+
+    @Test
+    void correctResultRejectsBlankReason() {
+        BoutResultCorrectionRequest request = new BoutResultCorrectionRequest(
+                BoutSide.RED, DecisionType.POINTS, " ", 20L
+        );
+
+        assertThatThrownBy(() -> supervisorResultService.correctResult(1L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("reason is required");
+    }
+
     private Bout createBout() {
         return createBout(BoutStatus.IN_PROGRESS);
     }
@@ -252,6 +289,13 @@ class SupervisorResultServiceTest {
                 .blueAthleteId(11L)
                 .status(status)
                 .build();
+    }
+
+    private Bout createFinishedBout() {
+        Bout bout = createBout(BoutStatus.FINISHED);
+        ReflectionTestUtils.setField(bout, "resultConfirmed", true);
+        ReflectionTestUtils.setField(bout, "winnerSide", BoutSide.RED);
+        return bout;
     }
 
     private RoundScore createDraftRoundScore() {

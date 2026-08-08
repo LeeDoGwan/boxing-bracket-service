@@ -13,6 +13,7 @@ public class AdminTournamentResponse {
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final TournamentStatus status;
+    private final Integer judgeCount;
 
     private AdminTournamentResponse(
             Long tournamentId,
@@ -20,7 +21,8 @@ public class AdminTournamentResponse {
             String location,
             LocalDate startDate,
             LocalDate endDate,
-            TournamentStatus status
+            TournamentStatus status,
+            Integer judgeCount
     ) {
         this.tournamentId = tournamentId;
         this.name = name;
@@ -28,6 +30,7 @@ public class AdminTournamentResponse {
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status;
+        this.judgeCount = judgeCount;
     }
 
     public static AdminTournamentResponse from(Tournament tournament) {
@@ -37,7 +40,8 @@ public class AdminTournamentResponse {
                 tournament.getLocation(),
                 tournament.getStartDate(),
                 tournament.getEndDate(),
-                tournament.getStatus()
+                tournament.getStatus(),
+                tournament.getJudgeCount()
         );
     }
 
@@ -63,5 +67,9 @@ public class AdminTournamentResponse {
 
     public TournamentStatus getStatus() {
         return status;
+    }
+
+    public Integer getJudgeCount() {
+        return judgeCount;
     }
 }

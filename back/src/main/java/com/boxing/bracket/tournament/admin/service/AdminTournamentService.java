@@ -70,6 +70,7 @@ public class AdminTournamentService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .status(request.getStatus())
+                .judgeCount(request.getJudgeCount())
                 .build();
 
         return AdminTournamentResponse.from(tournamentRepository.save(tournament));
@@ -86,7 +87,8 @@ public class AdminTournamentService {
                 request.getLocation(),
                 request.getStartDate(),
                 request.getEndDate(),
-                request.getStatus()
+                request.getStatus(),
+                request.getJudgeCount()
         );
 
         return AdminTournamentResponse.from(tournamentRepository.save(tournament));

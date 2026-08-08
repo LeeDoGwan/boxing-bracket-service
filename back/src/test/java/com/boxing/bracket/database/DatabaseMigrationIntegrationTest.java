@@ -60,6 +60,7 @@ class DatabaseMigrationIntegrationTest {
         assertThat(columnExists("penalties", "round_no")).isTrue();
         assertThat(columnExists("bouts", "import_batch_key")).isTrue();
         assertThat(columnExists("bouts", "import_row_number")).isTrue();
+        assertThat(columnExists("tournaments", "judge_count")).isTrue();
     }
 
     private boolean tableExists(String tableName) {

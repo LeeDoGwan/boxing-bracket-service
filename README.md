@@ -18,7 +18,7 @@ Implemented core areas:
 - Admin bout CSV and Excel import API
 - Audience React MVP with live bout updates and official bracket search
 - Judge React scoring desk with authenticated login and round score submission
-- Supervisor React review desk with penalty history, creation, and result confirmation
+- Supervisor React review desk with penalty history, result confirmation, and reasoned result correction
 - Audience schedule list for bouts, breaks, meals, performances, and events
 - Ring Manager React operations desk with ring bout control and round transitions
 - Operations React monitoring desk with ring progress and exception tracking
@@ -81,7 +81,7 @@ npm run lint
 npm run build
 ```
 
-Current documented suite: 72 backend test classes, 400 backend test cases, and 87 frontend test cases.
+Current documented suite: 74 backend test classes, 406 backend test cases, and 88 frontend test cases.
 
 The local backend profile connects to MariaDB and runs Flyway migrations before
 Hibernate validates the schema. Create the `boxing_bracket` database and a
@@ -145,6 +145,7 @@ GET http://localhost:8080/api/health
 - `GET /api/supervisor/bouts/{boutId}/penalties`
 - `POST /api/supervisor/bouts/{boutId}/penalties`
 - `POST /api/supervisor/bouts/{boutId}/result`
+- `PUT /api/supervisor/bouts/{boutId}/result` (Supervisor-only correction with reason)
 - `GET /api/ring-manager/rings/{ringId}/bouts`
 - `POST /api/ring-manager/bouts/{boutId}/start`
 - `POST /api/ring-manager/bouts/{boutId}/rounds/{roundNo}/start`

@@ -7,9 +7,9 @@ Last updated: 2026-08-08
 - Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-08-08
-- Result: 400 passed, 0 failed, 0 errors, 1 skipped locally
+- Result: 406 passed, 0 failed, 0 errors, 1 skipped locally
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
-- Test classes: 72 local classes plus the CI-only `MariaDbMigrationSmokeIT`
+- Test classes: 74 local classes plus the CI-only `MariaDbMigrationSmokeIT`
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `back/src/test/resources/application-test.yml`
 
@@ -28,7 +28,7 @@ Last updated: 2026-08-08
 - Flyway 9.22.3 and its `flyway-mysql` support module apply migrations from `back/src/main/resources/db/migration/` before Hibernate schema validation.
 - `back/src/main/resources/application-local.yml` enables MariaDB migration and sets `ddl-auto: validate`; it does not create or alter tables through Hibernate.
 - `back/src/test/resources/application-test.yml` uses the same migration location with H2 MySQL compatibility mode and `ddl-auto: validate`.
-- `DatabaseMigrationIntegrationTest` verifies V1 through V4 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the `penalties.round_no` column, the per-tournament bout-number unique constraint, import idempotency columns and constraint, and operational unique constraints.
+- `DatabaseMigrationIntegrationTest` verifies V1 through V4 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the tournament `judge_count` column, MariaDB-compatible audit payload mapping, the `penalties.round_no` column, the per-tournament bout-number unique constraint, import idempotency columns and constraint, and operational unique constraints.
 - `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dmariadb.integration=true` and verifies the database product plus the current Flyway version.
 - Existing `docs/database-migration-*.sql` files are historical pointers only. They contain no executable duplicate DDL; the Flyway directory is the single execution source.
 
@@ -44,14 +44,14 @@ Last updated: 2026-08-08
 - Concurrency tests for duplicate bout starts, score submissions, and result confirmations using `ExecutorService` and `CountDownLatch`.
 - Audit tests for action resolution, sensitive-data masking, successful and failed controller mutations, query filters, paging, and idempotent operation fingerprints.
 - Staff assignment tests for active account/role validation, ring/tournament mismatch, duplicate handling, and immediate unassigned-ring denial.
-- Supervisor result tests for active assignment scope, authenticated actor ownership, score readiness, decision/winner validation, positive penalties, final-state locks, and the assigned-ring bout route.
+- Supervisor result tests for active assignment scope, authenticated actor ownership, 3/5 Judge readiness, decision/winner validation, positive penalties, confirmed-result correction reasons, final-state locks, and the assigned-ring bout route.
 - Ring Manager transition tests for assigned-ring scope, start idempotency, scheduled-bout preparation boundaries, exact round sequencing and range, scoring readiness, next-bout candidate filtering, completion ownership, conflict responses, and event suppression on failed transitions.
 - Concurrency tests verify duplicate bout creation receives distinct per-tournament numbers under the tournament-row lock.
 - Ring-manager lock-order tests verify ring-before-bout acquisition for start and next-bout transitions.
 - Scalar-reference guard tests verify tournament, ring, athlete, account, and bout deletes reject orphan-producing mutations.
 - Import tests verify the required idempotency key, persistent key/row mapping, and repeated-key response reuse.
 - Auth tests verify sessions are rejected after account deletion, deactivation, identity changes, or role changes.
-- Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
+- Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation and reasoned result correction, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
 
@@ -60,7 +60,7 @@ map is maintained in the
 [frontend wide-frame architecture guide](frontend-wide-frame.md).
 
 - Working directory: `front`
-- `npm test -- --run`: 87 passed across 26 test files
+- `npm test -- --run`: 88 passed across 26 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
 - Automated frontend coverage includes the public home and bracket routes, API failure and empty states, startup account revalidation, authenticated 401 session cleanup, the configured one-tournament context, bracket search, the shared `/staff/login` route, protected-route return paths, invalid-credential handling, and role-aware navigation. Authenticated score submission, result confirmation, ring commands, operator SSE-driven refetch, operations refresh/retry/auto-refresh, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by frontend page and session tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data. Manual browser verification remains a release smoke-test task.
@@ -120,7 +120,7 @@ map is maintained in the
 | Ring Manager | `RingManagerServiceTest` | 26 |
 | Scoring | `JudgeScoreControllerTest` | 7 |
 | Scoring | `SupervisorPenaltyControllerTest` | 4 |
-| Scoring | `SupervisorResultControllerTest` | 3 |
+| Scoring | `SupervisorResultControllerTest` | 4 |
 | Scoring | `SupervisorScoreControllerTest` | 2 |
 | Scoring | `RoundScoreTest` | 4 |
 | Scoring | `RoundScoreRepositoryTest` | 2 |
@@ -129,10 +129,11 @@ map is maintained in the
 | Scoring | `ScoreQueryServiceTest` | 4 |
 | Assignment | `AssignedRingControllerTest` | 1 |
 | Scoring | `SupervisorPenaltyServiceTest` | 10 |
-| Scoring | `SupervisorResultServiceTest` | 11 |
+| Scoring | `SupervisorResultServiceTest` | 13 |
+| Scoring | `SupervisorJudgeReadinessTest` | 1 |
 | Tournament | `AdminTournamentControllerTest` | 9 |
 | Tournament | `AdminTournamentServiceTest` | 12 |
-| Tournament | `TournamentTest` | 2 |
+| Tournament | `TournamentTest` | 3 |
 | Tournament | `TournamentRepositoryTest` | 1 |
 | User | `AdminAccountControllerTest` | 10 |
 | User | `AdminAccountServiceTest` | 13 |
@@ -150,7 +151,7 @@ map is maintained in the
 - Judges can submit round scores and retrieve judge-specific scores.
 - Judge score submission rejects invalid values, unstarted/future/out-of-range rounds, and closed bouts; same-payload retries remain idempotent and successful submissions publish one event.
 - Supervisors can load active assigned rings and official bouts, review score readiness and persisted penalty history, add positive penalties, and confirm results using the authenticated Supervisor actor.
-- Supervisor result confirmation rejects missing/draft scores, invalid decision/winner combinations, forged actor IDs, and post-confirmation penalty mutations; successful confirmation publishes one event and locks the UI.
+- Supervisor result confirmation rejects missing/draft/incomplete Judge scores, invalid decision/winner combinations, forged actor IDs, and post-confirmation penalty mutations; successful confirmation publishes one event. Confirmed-result corrections require a Supervisor reason, update the audit log, publish `RESULT_CORRECTED`, and keep score submissions immutable.
 - Ring managers can list assigned bouts, start only prepared current bouts, start exact next rounds, enter scoring only after configured rounds, cancel eligible pre-start bouts, and advance to a server-selected next bout.
 - Duplicate workflow requests return the prior result without duplicate SSE delivery; conflicting state changes and different resubmissions return HTTP 409.
 - Concurrent bout starts, identical score submissions, and identical result confirmations persist one final record and publish one event.

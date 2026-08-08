@@ -171,6 +171,16 @@ public class Bout extends BaseTimeEntity {
         this.resultConfirmed = true;
     }
 
+    public void correctResult(BoutSide winnerSide) {
+        if (!this.resultConfirmed || this.status != BoutStatus.FINISHED) {
+            throw new WorkflowConflictException("RESULT_NOT_CONFIRMED");
+        }
+        if (winnerSide == null || winnerSide == BoutSide.NONE) {
+            throw new IllegalArgumentException("INVALID_WINNER_SELECTION");
+        }
+        this.winnerSide = winnerSide;
+    }
+
     public boolean changeStatus(BoutStatus status) {
         if (status == null) {
             throw new IllegalArgumentException("status is required");

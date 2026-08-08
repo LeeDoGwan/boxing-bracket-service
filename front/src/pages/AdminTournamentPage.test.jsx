@@ -22,6 +22,7 @@ const session = {
 
 const tournament = {
   endDate: '2026-07-14',
+  judgeCount: 3,
   location: 'Seoul Gym',
   name: 'Summer Boxing Open',
   startDate: '2026-07-12',
@@ -63,7 +64,7 @@ describe('AdminTournamentPage', () => {
     fireEvent.change(screen.getByLabelText('장소'), { target: { value: 'Busan Gym' } });
     fireEvent.click(screen.getByRole('button', { name: '대회 생성' }));
 
-    await waitFor(() => expect(createTournament).toHaveBeenCalledWith({ endDate: null, location: 'Busan Gym', name: 'Winter Boxing Open', startDate: null, status: 'READY' }, 'admin-token'));
+    await waitFor(() => expect(createTournament).toHaveBeenCalledWith({ endDate: null, judgeCount: 3, location: 'Busan Gym', name: 'Winter Boxing Open', startDate: null, status: 'READY' }, 'admin-token'));
     expect(await screen.findByText('대회를 생성했습니다.')).toBeInTheDocument();
   });
 

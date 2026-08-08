@@ -14,7 +14,7 @@ current baseline is:
 
 | Version | File | Contents |
 | --- | --- | --- |
-| `V1` | `V1__create_initial_schema.sql` | Initial JPA tables, optimistic-lock columns, workflow uniqueness constraints, schedule/staff indexes, and audit indexes |
+| `V1` | `V1__create_initial_schema.sql` | Initial JPA tables, tournament `judge_count` (`3` or `5`), MariaDB-compatible `LONGTEXT` audit payloads, optimistic-lock columns, workflow uniqueness constraints, schedule/staff indexes, and audit indexes |
 | `V2` | `V2__add_penalty_round_reference.sql` | Adds nullable `penalties.round_no` for round-level penalty history while totals remain bout-level |
 | `V3` | `V3__add_unique_tournament_bout_number.sql` | Enforces unique bout numbers within each tournament |
 | `V4` | `V4__add_bout_import_idempotency.sql` | Adds persistent import batch/row keys and a unique retry constraint |
@@ -66,9 +66,11 @@ connection information.
 
 ## Existing Database
 
-The repository has no evidence of a deployed shared database. New installations
-apply V1, V2, V3, and V4 in order. Do not assume that an existing database matches
-any version.
+The repository has no deployed shared MariaDB database at this MVP stage. The
+baseline changes in V1 are therefore safe before first deployment; after the
+first deployment, V1 is immutable and all schema changes require a new version.
+New installations apply V1, V2, V3, and V4 in order. Do not assume that an
+existing database matches any version.
 
 Before first startup against an existing database:
 

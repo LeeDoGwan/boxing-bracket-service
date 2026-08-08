@@ -39,15 +39,20 @@ public class Tournament extends BaseTimeEntity {
     @Column(nullable = false)
     private TournamentStatus status = TournamentStatus.READY;
 
+    @Column(nullable = false)
+    private Integer judgeCount = 3;
+
     @Builder
-    private Tournament(String name, String location, LocalDate startDate, LocalDate endDate, TournamentStatus status) {
+    private Tournament(String name, String location, LocalDate startDate, LocalDate endDate, TournamentStatus status, Integer judgeCount) {
         validateName(name);
         validateDateRange(startDate, endDate);
+        validateJudgeCount(judgeCount);
         this.name = name.trim();
         this.location = normalizeText(location);
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status == null ? TournamentStatus.READY : status;
+        this.judgeCount = judgeCount == null ? 3 : judgeCount;
     }
 
     public void updateInfo(
@@ -57,8 +62,20 @@ public class Tournament extends BaseTimeEntity {
             LocalDate endDate,
             TournamentStatus status
     ) {
+        updateInfo(name, location, startDate, endDate, status, this.judgeCount);
+    }
+
+    public void updateInfo(
+            String name,
+            String location,
+            LocalDate startDate,
+            LocalDate endDate,
+            TournamentStatus status,
+            Integer judgeCount
+    ) {
         validateName(name);
         validateDateRange(startDate, endDate);
+        validateJudgeCount(judgeCount);
         this.name = name.trim();
         this.location = normalizeText(location);
         this.startDate = startDate;
@@ -66,6 +83,7 @@ public class Tournament extends BaseTimeEntity {
         if (status != null) {
             this.status = status;
         }
+        this.judgeCount = judgeCount == null ? 3 : judgeCount;
     }
 
     private void validateName(String name) {
@@ -77,6 +95,12 @@ public class Tournament extends BaseTimeEntity {
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("endDate must not be before startDate");
+        }
+    }
+
+    private void validateJudgeCount(Integer judgeCount) {
+        if (judgeCount != null && judgeCount != 3 && judgeCount != 5) {
+            throw new IllegalArgumentException("judgeCount must be 3 or 5");
         }
     }
 

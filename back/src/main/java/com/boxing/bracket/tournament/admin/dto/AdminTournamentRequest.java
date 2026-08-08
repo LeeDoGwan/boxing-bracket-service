@@ -18,6 +18,8 @@ public class AdminTournamentRequest {
 
     private TournamentStatus status;
 
+    private Integer judgeCount;
+
     protected AdminTournamentRequest() {
     }
 
@@ -28,11 +30,23 @@ public class AdminTournamentRequest {
             LocalDate endDate,
             TournamentStatus status
     ) {
+        this(name, location, startDate, endDate, status, null);
+    }
+
+    public AdminTournamentRequest(
+            String name,
+            String location,
+            LocalDate startDate,
+            LocalDate endDate,
+            TournamentStatus status,
+            Integer judgeCount
+    ) {
         this.name = name;
         this.location = location;
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status;
+        this.judgeCount = judgeCount;
     }
 
     public String getName() {
@@ -53,5 +67,9 @@ public class AdminTournamentRequest {
 
     public TournamentStatus getStatus() {
         return status;
+    }
+
+    public Integer getJudgeCount() {
+        return judgeCount;
     }
 }

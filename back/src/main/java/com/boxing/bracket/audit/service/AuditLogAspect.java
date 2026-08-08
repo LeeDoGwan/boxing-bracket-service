@@ -68,6 +68,13 @@ public class AuditLogAspect {
             AuditActor actor = resolveActor(operation, responseNode, requestData);
             AuditIdentifiers identifiers = identify(operation, snapshot, requestData, responseNode);
             String afterData = serializer.serialize(responseData);
+            if (operation.getActionType() == AuditActionType.RESULT_CORRECTED) {
+                afterData = serializer.appendTextField(
+                        afterData,
+                        "reason",
+                        serializer.findText(requestData, "reason")
+                );
+            }
 
             auditLogService.recordSafely(command(
                     operation,

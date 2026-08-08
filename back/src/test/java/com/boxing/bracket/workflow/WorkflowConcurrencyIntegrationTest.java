@@ -2,6 +2,8 @@ package com.boxing.bracket.workflow;
 
 import com.boxing.bracket.athlete.domain.Athlete;
 import com.boxing.bracket.athlete.repository.AthleteRepository;
+import com.boxing.bracket.assignment.domain.StaffAssignment;
+import com.boxing.bracket.assignment.repository.StaffAssignmentRepository;
 import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
 import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
 import com.boxing.bracket.bout.admin.service.AdminBoutService;
@@ -88,6 +90,9 @@ class WorkflowConcurrencyIntegrationTest {
     @Autowired
     private BoutResultRepository boutResultRepository;
 
+    @Autowired
+    private StaffAssignmentRepository staffAssignmentRepository;
+
     @SpyBean
     private BoutEventPublisher boutEventPublisher;
 
@@ -135,13 +140,15 @@ class WorkflowConcurrencyIntegrationTest {
     void concurrentIdenticalResultRequestsPersistOneResultAndPublishOneEvent() throws Exception {
         Ring ring = createRing();
         Bout bout = createBout(ring.getId(), BoutStatus.IN_PROGRESS);
-        RoundScore score = RoundScore.builder()
-                .boutId(bout.getId())
-                .roundNo(1)
-                .judgeId(30L)
-                .build();
-        score.submit(10, 9);
-        roundScoreRepository.saveAndFlush(score);
+        for (long judgeId = 30L; judgeId <= 32L; judgeId++) {
+            RoundScore score = RoundScore.builder()
+                    .boutId(bout.getId())
+                    .roundNo(1)
+                    .judgeId(judgeId)
+                    .build();
+            score.submit(10, 9);
+            roundScoreRepository.saveAndFlush(score);
+        }
         BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 40L);
 
         List<BoutResultResponse> responses = executeConcurrently(
@@ -213,16 +220,29 @@ class WorkflowConcurrencyIntegrationTest {
     }
 
     private Ring createRing() {
-        return ringRepository.saveAndFlush(Ring.builder()
-                .tournamentId(1L)
+        Tournament tournament = tournamentRepository.saveAndFlush(Tournament.builder()
+                .name("Seoul Boxing Cup")
+                .judgeCount(3)
+                .build());
+        Ring ring = ringRepository.saveAndFlush(Ring.builder()
+                .tournamentId(tournament.getId())
                 .name("Ring A")
                 .status(RingStatus.READY)
                 .build());
+        for (long judgeId = 30L; judgeId <= 32L; judgeId++) {
+            staffAssignmentRepository.save(StaffAssignment.builder()
+                    .accountId(judgeId)
+                    .tournamentId(tournament.getId())
+                    .ringId(ring.getId())
+                    .role(com.boxing.bracket.user.domain.UserRole.JUDGE)
+                    .build());
+        }
+        return ring;
     }
 
     private Bout createBout(Long ringId, BoutStatus status) {
         return boutRepository.saveAndFlush(Bout.builder()
-                .tournamentId(1L)
+                .tournamentId(ringRepository.findById(ringId).orElseThrow().getTournamentId())
                 .ringId(ringId)
                 .boutNumber(1)
                 .redAthleteId(10L)
@@ -268,6 +288,7 @@ class WorkflowConcurrencyIntegrationTest {
         penaltyRepository.deleteAll();
         roundScoreRepository.deleteAll();
         boutRepository.deleteAll();
+        staffAssignmentRepository.deleteAll();
         ringRepository.deleteAll();
         athleteRepository.deleteAll();
         tournamentRepository.deleteAll();
