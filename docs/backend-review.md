@@ -15,11 +15,11 @@ Resolved in the current implementation:
 - Admin bout schedule mutations are blocked after a bout starts or reaches a terminal state. Deletion also checks scoring references and the ring's current-bout pointer.
 - Ring-manager operations now acquire the ring lock before any bout lock. A scalar ring-id lookup avoids loading a stale bout entity before the lock, and unit/concurrency tests cover the ordering.
 - Scalar reference mutations now have application-level protection: tournament, ring, athlete, and account deletes fail when owned records remain; bout deletes also check schedule references, and ring tournament ownership is immutable.
+- Bout CSV/Excel imports now require a persistent `Idempotency-Key`; imported rows retain the key and row number so a retry returns the original rows instead of creating duplicates.
 
 Remaining follow-up risks:
 
 - Process-local sessions need a shared store before horizontal scaling.
-- Bout create/import flows need batch identity or idempotency keys.
 
 The historical sections below retain their original evidence and priorities;
 the resolved items above are no longer release blockers.

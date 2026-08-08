@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -113,6 +114,14 @@ public class AdminBoutService {
     }
 
     public AdminBoutResponse createBout(AdminBoutRequest request) {
+        return createBout(request, null, null);
+    }
+
+    private AdminBoutResponse createBout(
+            AdminBoutRequest request,
+            String importBatchKey,
+            Integer importRowNumber
+    ) {
         validateRequest(request);
         lockTournament(request.getTournamentId());
         Integer boutNumber = nextBoutNumber(request.getTournamentId());
@@ -127,17 +136,32 @@ public class AdminBoutService {
                 .totalRounds(request.getTotalRounds())
                 .scheduledOrder(request.getScheduledOrder())
                 .eventBout(request.isEventBout())
+                .importBatchKey(importBatchKey)
+                .importRowNumber(importRowNumber)
                 .build();
 
         return AdminBoutResponse.from(boutRepository.save(bout));
     }
 
     public AdminBoutImportResponse importBouts(MultipartFile file) {
-        validateImportFile(file);
-        return isExcelFile(file) ? importExcelBouts(file) : importCsvBouts(file);
+        return importBouts(file, UUID.randomUUID().toString());
     }
 
-    private AdminBoutImportResponse importCsvBouts(MultipartFile file) {
+    public AdminBoutImportResponse importBouts(MultipartFile file, String idempotencyKey) {
+        validateImportFile(file);
+        String normalizedKey = validateImportKey(idempotencyKey);
+        List<Bout> existingBouts = boutRepository.findByImportBatchKeyOrderByImportRowNumberAsc(normalizedKey);
+        if (!existingBouts.isEmpty()) {
+            return AdminBoutImportResponse.from(existingBouts.stream()
+                    .map(AdminBoutResponse::from)
+                    .collect(Collectors.toList()));
+        }
+        return isExcelFile(file)
+                ? importExcelBouts(file, normalizedKey)
+                : importCsvBouts(file, normalizedKey);
+    }
+
+    private AdminBoutImportResponse importCsvBouts(MultipartFile file, String idempotencyKey) {
 
         List<AdminBoutResponse> importedBouts = new ArrayList<>();
         try (
@@ -151,7 +175,11 @@ public class AdminBoutService {
         ) {
             validateImportHeaders(parser);
             for (CSVRecord record : parser) {
-                importedBouts.add(createBout(toImportRequest(record)));
+                importedBouts.add(createBout(
+                        toImportRequest(record),
+                        idempotencyKey,
+                        Math.toIntExact(record.getRecordNumber())
+                ));
             }
         } catch (IOException exception) {
             throw new IllegalArgumentException("bout import file cannot be read");
@@ -163,7 +191,7 @@ public class AdminBoutService {
         return AdminBoutImportResponse.from(importedBouts);
     }
 
-    private AdminBoutImportResponse importExcelBouts(MultipartFile file) {
+    private AdminBoutImportResponse importExcelBouts(MultipartFile file, String idempotencyKey) {
         List<AdminBoutResponse> importedBouts = new ArrayList<>();
         DataFormatter formatter = new DataFormatter(Locale.ROOT);
         try (InputStream inputStream = file.getInputStream(); Workbook workbook = WorkbookFactory.create(inputStream)) {
@@ -183,7 +211,7 @@ public class AdminBoutService {
                     Cell cell = row.getCell(headerIndexes.get(header), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
                     values.put(header, cell == null ? null : formatter.formatCellValue(cell));
                 }
-                importedBouts.add(createBout(toImportRequest(values, rowIndex + 1L)));
+                importedBouts.add(createBout(toImportRequest(values, rowIndex + 1L), idempotencyKey, rowIndex));
             }
         } catch (IOException exception) {
             throw new IllegalArgumentException("bout import file cannot be read");
@@ -324,6 +352,17 @@ public class AdminBoutService {
                 && !normalizedFilename.endsWith(".xlsx")) {
             throw new IllegalArgumentException("Only CSV or Excel bout import is supported");
         }
+    }
+
+    private String validateImportKey(String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("idempotencyKey is required");
+        }
+        String normalizedKey = idempotencyKey.trim();
+        if (normalizedKey.length() > 100) {
+            throw new IllegalArgumentException("idempotencyKey must be 100 characters or fewer");
+        }
+        return normalizedKey;
     }
 
     private boolean isExcelFile(MultipartFile file) {

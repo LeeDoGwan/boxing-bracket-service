@@ -133,9 +133,12 @@ class AdminBoutControllerTest {
                 "tournamentId,ringId,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
                         .getBytes()
         );
-        given(adminBoutService.importBouts(any())).willReturn(AdminBoutImportResponse.from(List.of(response(20L))));
+        given(adminBoutService.importBouts(any(), eq("batch-1")))
+                .willReturn(AdminBoutImportResponse.from(List.of(response(20L))));
 
-        mockMvc.perform(multipart("/api/admin/bouts/import").file(file))
+        mockMvc.perform(multipart("/api/admin/bouts/import")
+                        .file(file)
+                        .header("Idempotency-Key", "batch-1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.importedCount").value(1))

@@ -160,6 +160,10 @@ event payload is not rendered as the source of truth.
 When a field changes, update the API module, page form, state behavior, and
 page test together. Do not depend on an undocumented response field.
 
+Multipart bout import requires an `Idempotency-Key`. The page creates one key
+for the selected file and keeps it across retries; a successful import clears
+the key with the file selection.
+
 ### 4.4 Ring Manager command matrix
 
 The routed page uses the server-provided assigned ring and current bout. It

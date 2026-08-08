@@ -38,6 +38,13 @@ function toNumber(value) {
   return Number.isInteger(parsed) ? parsed : null;
 }
 
+function createImportKey() {
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `bout-import-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 function LoginForm({ onLogin }) {
   const [form, setForm] = useState({ loginId: '', password: '' });
   const [error, setError] = useState('');
@@ -86,6 +93,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(() => blankForm(tournamentId));
   const [file, setFile] = useState(null);
+  const [importKey, setImportKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [listError, setListError] = useState('');
@@ -208,9 +216,10 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
     setActionError('');
     setMessage('');
     try {
-      const result = await importBouts(file, session.accessToken);
+      const result = await importBouts(file, session.accessToken, importKey);
       await loadBouts();
       setFile(null);
+      setImportKey('');
       formElement.reset();
       setMessage(`${result.importedCount}건의 경기를 가져왔습니다.`);
     } catch (requestError) {
@@ -239,7 +248,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
       {referenceError && <p aria-live="polite" className="form-error admin-reference-message" role="alert">{referenceError}</p>}
       {message && <p aria-live="polite" className="admin-success-message">{message}</p>}
-      <form className="bout-import-panel" onSubmit={handleImport}><label>대진 파일<input aria-label="대진 파일" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] || null)} type="file" /></label><div className="bout-import-actions"><button className="command-button" disabled={saving} type="submit">파일 가져오기</button><button className="secondary-button" onClick={downloadTemplate} type="button">CSV 양식 다운로드</button></div><small>경기 번호는 서버에서 자동 생성됩니다. · CSV, XLS, XLSX</small></form>
+      <form className="bout-import-panel" onSubmit={handleImport}><label>대진 파일<input aria-label="대진 파일" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const nextFile = event.target.files?.[0] || null; setFile(nextFile); setImportKey(nextFile ? createImportKey() : ''); }} type="file" /></label><div className="bout-import-actions"><button className="command-button" disabled={saving} type="submit">파일 가져오기</button><button className="secondary-button" onClick={downloadTemplate} type="button">CSV 양식 다운로드</button></div><small>경기 번호는 서버에서 자동 생성됩니다. · CSV, XLS, XLSX · 동일 파일 재시도는 중복 생성되지 않습니다.</small></form>
       {loading ? <StatePanel title="경기 목록을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
       {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadBouts} type="button">다시 시도</button>} title="경기 목록을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
       {!loading && !listError ? (

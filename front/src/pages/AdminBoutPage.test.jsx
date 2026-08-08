@@ -78,7 +78,7 @@ describe('AdminBoutPage', () => {
     const csv = new File(['tournamentId,ringId'], 'bouts.csv', { type: 'text/csv' });
     fireEvent.change(screen.getByLabelText('대진 파일'), { target: { files: [csv] } });
     fireEvent.click(screen.getByRole('button', { name: '파일 가져오기' }));
-    await waitFor(() => expect(importBouts).toHaveBeenCalledWith(csv, 'admin-token'));
+    await waitFor(() => expect(importBouts).toHaveBeenCalledWith(csv, 'admin-token', expect.any(String)));
     expect(await screen.findByText('2건의 경기를 가져왔습니다.')).toBeInTheDocument();
   });
 

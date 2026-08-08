@@ -31,8 +31,8 @@ class MariaDbMigrationSmokeIT {
                     .containsIgnoringCase("MariaDB");
         }
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
         assertThat(flyway.info().current().getDescription())
-                .isEqualTo("add unique tournament bout number");
+                .isEqualTo("add bout import idempotency");
     }
 }

@@ -16,8 +16,11 @@ export function deleteBout(boutId, token) {
   return deleteApi(`/api/admin/bouts/${boutId}`, { token });
 }
 
-export function importBouts(file, token) {
+export function importBouts(file, token, idempotencyKey) {
   const formData = new FormData();
   formData.append('file', file);
-  return postFormDataApi('/api/admin/bouts/import', formData, { token });
+  return postFormDataApi('/api/admin/bouts/import', formData, {
+    headers: { 'Idempotency-Key': idempotencyKey },
+    token,
+  });
 }

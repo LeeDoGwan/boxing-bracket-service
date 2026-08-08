@@ -24,6 +24,8 @@ public interface BoutRepository extends JpaRepository<Bout, Long> {
 
     boolean existsByRedAthleteIdOrBlueAthleteId(Long redAthleteId, Long blueAthleteId);
 
+    List<Bout> findByImportBatchKeyOrderByImportRowNumberAsc(String importBatchKey);
+
     Optional<Bout> findFirstByRingIdAndStatusOrderByScheduledOrderAsc(Long ringId, BoutStatus status);
 
     @Query("select bout.ringId from Bout bout where bout.id = :boutId")

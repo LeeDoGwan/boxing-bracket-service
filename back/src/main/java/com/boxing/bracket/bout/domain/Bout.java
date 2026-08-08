@@ -68,6 +68,11 @@ public class Bout extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean eventBout = false;
 
+    @Column(length = 100)
+    private String importBatchKey;
+
+    private Integer importRowNumber;
+
     private LocalDateTime startedAt;
 
     private LocalDateTime endedAt;
@@ -87,6 +92,8 @@ public class Bout extends BaseTimeEntity {
             BoutSide winnerSide,
             boolean resultConfirmed,
             boolean eventBout,
+            String importBatchKey,
+            Integer importRowNumber,
             LocalDateTime startedAt,
             LocalDateTime endedAt
     ) {
@@ -112,6 +119,8 @@ public class Bout extends BaseTimeEntity {
         this.winnerSide = winnerSide;
         this.resultConfirmed = resultConfirmed;
         this.eventBout = eventBout;
+        this.importBatchKey = importBatchKey;
+        this.importRowNumber = importRowNumber;
         this.startedAt = startedAt;
         this.endedAt = endedAt;
     }

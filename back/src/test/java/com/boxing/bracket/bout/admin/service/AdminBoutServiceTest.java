@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class AdminBoutServiceTest {
@@ -238,6 +239,22 @@ class AdminBoutServiceTest {
 
         assertThat(response.getImportedCount()).isEqualTo(1);
         assertThat(response.getBoutIds()).containsExactly(30L);
+    }
+
+    @Test
+    void importBoutsReturnsExistingRowsForRepeatedIdempotencyKey() {
+        Bout existing = createBout(40L);
+        given(boutRepository.findByImportBatchKeyOrderByImportRowNumberAsc("batch-1"))
+                .willReturn(List.of(existing));
+
+        AdminBoutImportResponse response = adminBoutService.importBouts(
+                csvFile("tournamentId,ringId,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"),
+                " batch-1 "
+        );
+
+        assertThat(response.getImportedCount()).isEqualTo(1);
+        assertThat(response.getBoutIds()).containsExactly(40L);
+        then(boutRepository).should(never()).save(any(Bout.class));
     }
 
     @Test
