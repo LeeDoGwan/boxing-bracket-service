@@ -7,9 +7,9 @@ Last updated: 2026-08-08
 - Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-08-08
-- Result: 400 passed, 0 failed, 0 errors, 0 skipped
+- Result: 400 passed, 0 failed, 0 errors, 1 skipped locally
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
-- Test classes: 72
+- Test classes: 72 local classes plus the CI-only `MariaDbMigrationSmokeIT`
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `back/src/test/resources/application-test.yml`
 
@@ -20,7 +20,7 @@ Last updated: 2026-08-08
 - The repository has no Maven Wrapper or Node version file; the workflow pins Java 11 and Node.js 24 explicitly, while Maven is supplied by the GitHub-hosted runner.
 - Triggers: relevant `back/` or `front/` branch pushes, future pull requests, and manual dispatch. Documentation-only changes do not trigger these source workflows.
 - Both workflows use read-only repository permissions, a 15-minute job timeout, and cancel older runs for the same workflow and ref. Backend and frontend jobs remain independent.
-- Success requires command exit codes to pass, no failed or errored tests, no ESLint errors, and a successful production build. Test counts are intentionally not hard-coded.
+- Success requires command exit codes to pass, no failed or errored tests, no ESLint errors, and a successful production build. The local Maven run skips only the CI-only MariaDB smoke test. Test counts are intentionally not hard-coded.
 - These workflows verify source changes only. Deployment, Docker, infrastructure, production database credentials, performance tests, and pull request creation remain outside this stage. The backend test profile does apply the checked-in Flyway migration to H2.
 
 ## Database Migration Verification
