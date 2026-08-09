@@ -1,13 +1,13 @@
 # Testing
 
-Last updated: 2026-08-08
+Last updated: 2026-08-09
 
 ## Latest Verification
 
 - Backend working directory: `back`
 - Command: `mvn test`
-- Verified at: 2026-08-08
-- Result: 406 passed, 0 failed, 0 errors, 1 skipped locally
+- Verified at: 2026-08-09
+- Result: 409 passed, 0 failed, 0 errors, 1 skipped locally
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
 - Test classes: 74 local classes plus the CI-only `MariaDbMigrationSmokeIT`
 - Runtime profile: `test`
@@ -28,8 +28,8 @@ Last updated: 2026-08-08
 - Flyway 9.22.3 and its `flyway-mysql` support module apply migrations from `back/src/main/resources/db/migration/` before Hibernate schema validation.
 - `back/src/main/resources/application-local.yml` enables MariaDB migration and sets `ddl-auto: validate`; it does not create or alter tables through Hibernate.
 - `back/src/test/resources/application-test.yml` uses the same migration location with H2 MySQL compatibility mode and `ddl-auto: validate`.
-- `DatabaseMigrationIntegrationTest` verifies V1 through V5 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the tournament `judge_count` column, MariaDB-compatible audit payload mapping, the `penalties.round_no` column, the per-tournament bout-number unique constraint, import idempotency columns and constraint, bout schedule indexes, and operational unique constraints.
-- `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dmariadb.integration=true` and verifies the database product plus the current Flyway V5 version.
+- `DatabaseMigrationIntegrationTest` verifies V1 through V6 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the tournament `judge_count` column, MariaDB-compatible audit payload mapping, the `penalties.round_no` column, the per-tournament bout-number unique constraint, import idempotency columns and constraint, bout schedule indexes, the athlete tournament-scope column/index, and operational unique constraints.
+- `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dmariadb.integration=true` and verifies the database product plus the current Flyway V6 version.
 - Existing `docs/database-migration-*.sql` files are historical pointers only. They contain no executable duplicate DDL; the Flyway directory is the single execution source.
 
 ## Test Scope
@@ -51,7 +51,7 @@ Last updated: 2026-08-08
 - Scalar-reference guard tests verify tournament, ring, athlete, account, and bout deletes reject orphan-producing mutations.
 - Import tests verify the required idempotency key, persistent key/row mapping, and repeated-key response reuse.
 - Auth tests verify sessions are rejected after account deletion, deactivation, identity changes, or role changes.
-- Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation and reasoned result correction, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
+- Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading and submitted public round-score display, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation and reasoned result correction, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
 
@@ -60,10 +60,10 @@ map is maintained in the
 [frontend wide-frame architecture guide](frontend-wide-frame.md).
 
 - Working directory: `front`
-- `npm test -- --run`: 91 passed across 26 test files
+- `npm test -- --run`: 92 passed across 26 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
-- Automated frontend coverage includes the public home and bracket routes, API failure and empty states, startup account revalidation, authenticated 401 session cleanup, the configured one-tournament context, bracket search, the shared `/staff/login` route, protected-route return paths, invalid-credential handling, and role-aware navigation. Authenticated score submission, result confirmation, ring commands, operator SSE-driven refetch, operations refresh/retry/auto-refresh, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by frontend page and session tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data. Manual browser verification remains a release smoke-test task.
+- Automated frontend coverage includes the public home and bracket routes, API failure and empty states, public submitted round-score rendering, startup account revalidation, authenticated 401 session cleanup, the configured one-tournament context, bracket search, the shared `/staff/login` route, protected-route return paths, invalid-credential handling, and role-aware navigation. Authenticated score submission, result confirmation, ring commands, operator SSE-driven refetch, operations refresh/retry/auto-refresh, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by frontend page and session tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data. Manual browser verification remains a release smoke-test task and is tracked in [Deployment runbook](deployment-runbook.md).
 
 ## Verification Inventory
 
@@ -82,14 +82,14 @@ map is maintained in the
 | Athlete | `AdminAthleteControllerTest` | 10 |
 | Athlete | `AthleteTest` | 2 |
 | Athlete | `AthleteRepositoryTest` | 1 |
-| Athlete | `AdminAthleteServiceTest` | 13 |
+| Athlete | `AdminAthleteServiceTest` | 14 |
 | Bout | `AdminBoutControllerTest` | 12 |
 | Bout | `AdminBoutServiceTest` | 24 |
-| Bout | `BoutControllerTest` | 7 |
+| Bout | `BoutControllerTest` | 8 |
 | Bout | `BoutTest` | 7 |
 | Bout | `BoutRepositoryTest` | 1 |
 | Bout | `BoutOptimisticLockTest` | 1 |
-| Bout | `BoutServiceTest` | 13 |
+| Bout | `BoutServiceTest` | 14 |
 | Event | `BoutEventStreamControllerTest` | 3 |
 | Event | `BoutEventResponseTest` | 2 |
 | Event | `BoutEventPublisherTest` | 2 |

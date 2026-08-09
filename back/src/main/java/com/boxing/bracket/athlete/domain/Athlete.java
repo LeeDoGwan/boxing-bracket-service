@@ -23,6 +23,9 @@ public class Athlete extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tournament_id")
+    private Long tournamentId;
+
     @Column(nullable = false)
     private String name;
 
@@ -39,6 +42,13 @@ public class Athlete extends BaseTimeEntity {
         validateName(name);
         this.name = name.trim();
         this.affiliation = normalizeAffiliation(affiliation);
+    }
+
+    public void assignTournament(Long tournamentId) {
+        if (tournamentId == null || tournamentId <= 0) {
+            throw new IllegalArgumentException("tournamentId is required");
+        }
+        this.tournamentId = tournamentId;
     }
 
     private static void validateName(String name) {

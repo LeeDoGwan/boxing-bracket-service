@@ -1,6 +1,6 @@
 # Backend Review
 
-Review date: 2026-08-08
+Review date: 2026-08-09
 
 ## Current Status
 
@@ -22,8 +22,13 @@ Resolved in the current implementation:
   to one side is added to the opponent's effective score.
 - The `RSC` result code remains API-compatible while user-facing labels display
   `TKO`. Effective-score ties remain an explicit Supervisor decision.
-- The current local verification baseline is 74 backend test classes with 406
-  passed cases and 26 frontend test files with 91 passed cases.
+- Public bout details now expose submitted round scores through a privacy-safe
+  judge sequence and reject draft or cross-tournament athlete visibility.
+- Athlete administration and bout assignment now carry tournament scope. V6
+  adds the transitional nullable column and index; legacy rows require backfill
+  before the column can be made non-null.
+- The current local verification baseline is 74 backend test classes with 409
+  passed cases and 26 frontend test files with 92 passed cases.
 - V5 adds composite indexes for tournament and ring schedule-order queries,
   reducing the primary scan cost for public bout and ring lookups.
 

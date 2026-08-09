@@ -23,7 +23,7 @@ class DatabaseMigrationIntegrationTest {
     void appliesAllMigrationsAndLeavesNoPendingChanges() {
         assertThat(flyway.info().applied())
                 .extracting(migration -> migration.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5");
+                .containsExactly("1", "2", "3", "4", "5", "6");
         assertThat(flyway.info().pending()).isEmpty();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbcTemplate.queryForObject(
@@ -54,6 +54,7 @@ class DatabaseMigrationIntegrationTest {
         assertThat(uniqueConstraintExists("audit_logs", "uk_audit_logs_deduplication_key")).isTrue();
         assertThat(indexExists("bouts", "idx_bouts_tournament_scheduled")).isTrue();
         assertThat(indexExists("bouts", "idx_bouts_ring_scheduled")).isTrue();
+        assertThat(indexExists("athletes", "idx_athletes_tournament_name")).isTrue();
         assertThat(columnExists("bouts", "version")).isTrue();
         assertThat(columnExists("rings", "version")).isTrue();
         assertThat(columnExists("round_scores", "version")).isTrue();
@@ -63,6 +64,7 @@ class DatabaseMigrationIntegrationTest {
         assertThat(columnExists("bouts", "import_batch_key")).isTrue();
         assertThat(columnExists("bouts", "import_row_number")).isTrue();
         assertThat(columnExists("tournaments", "judge_count")).isTrue();
+        assertThat(columnExists("athletes", "tournament_id")).isTrue();
     }
 
     private boolean tableExists(String tableName) {

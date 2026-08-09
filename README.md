@@ -39,6 +39,7 @@ Implemented core areas:
 - [Product requirements](docs/requirements.md)
 - [System design](docs/design.md)
 - [Frontend wide-frame architecture](docs/frontend-wide-frame.md)
+- [Single-server deployment runbook](docs/deployment-runbook.md)
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
 - [Database migration policy](docs/database-migration.md)
@@ -81,7 +82,7 @@ npm run lint
 npm run build
 ```
 
-Current documented suite: 74 backend test classes, 406 backend test cases, and 91 frontend test cases.
+Current documented suite: 74 backend test classes, 409 backend test cases, and 92 frontend test cases.
 
 The local backend profile connects to MariaDB and runs Flyway migrations before
 Hibernate validates the schema. Create the `boxing_bracket` database and a
@@ -153,7 +154,7 @@ GET http://localhost:8080/api/health
 - `POST /api/ring-manager/rings/{ringId}/next`
 - `/api/admin/tournaments`
 - `/api/admin/rings`
-- `/api/admin/athletes`
+- `/api/admin/athletes?tournamentId=`
 - `/api/admin/bouts`
 - `POST /api/admin/bouts/import`
 - `/api/admin/notices`

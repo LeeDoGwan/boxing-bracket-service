@@ -17,10 +17,12 @@ class AthleteRepositoryTest {
 
     @Test
     void savesAndFindsAthlete() {
-        Athlete saved = athleteRepository.saveAndFlush(Athlete.builder()
+        Athlete athlete = Athlete.builder()
                 .name("Red Boxer")
                 .affiliation("Seoul Gym")
-                .build());
+                .build();
+        athlete.assignTournament(1L);
+        Athlete saved = athleteRepository.saveAndFlush(athlete);
 
         Athlete found = athleteRepository.findById(saved.getId()).orElseThrow();
 

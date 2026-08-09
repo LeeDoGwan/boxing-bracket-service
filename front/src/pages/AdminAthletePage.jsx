@@ -66,7 +66,7 @@ function LoginForm({ onLogin }) {
   );
 }
 
-function AthleteWorkspace({ onLogout, session }) {
+function AthleteWorkspace({ onLogout, session, tournamentId }) {
   const [athletes, setAthletes] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -84,7 +84,7 @@ function AthleteWorkspace({ onLogout, session }) {
     setListError('');
     setActionError('');
     try {
-      const nextAthletes = (await getAthletes(keyword, session.accessToken)) || [];
+      const nextAthletes = (await getAthletes(tournamentId, keyword, session.accessToken)) || [];
       setAthletes(nextAthletes);
       setSelectedId((current) => current && nextAthletes.some((item) => item.athleteId === current)
         ? current
@@ -94,7 +94,7 @@ function AthleteWorkspace({ onLogout, session }) {
     } finally {
       setLoading(false);
     }
-  }, [keyword, session.accessToken]);
+  }, [keyword, session.accessToken, tournamentId]);
 
   useEffect(() => {
     loadAthletes();
@@ -127,7 +127,7 @@ function AthleteWorkspace({ onLogout, session }) {
     setSaving(true);
     setActionError('');
     setMessage('');
-    const payload = { ...form, affiliation: form.affiliation || null };
+    const payload = { ...form, affiliation: form.affiliation || null, tournamentId };
     try {
       if (selectedId) {
         const updated = await updateAthlete(selectedId, payload, session.accessToken);
@@ -154,7 +154,7 @@ function AthleteWorkspace({ onLogout, session }) {
     setActionError('');
     setMessage('');
     try {
-      await deleteAthlete(selectedId, session.accessToken);
+      await deleteAthlete(selectedId, tournamentId, session.accessToken);
       const remaining = athletes.filter((athlete) => athlete.athleteId !== selectedId);
       setAthletes(remaining);
       setSelectedId(remaining[0]?.athleteId || null);
@@ -201,7 +201,7 @@ function AthleteWorkspace({ onLogout, session }) {
   );
 }
 
-export function AdminAthletePage() {
+export function AdminAthletePage({ tournamentId = 1 }) {
   const [session, setSession] = useState(readSession);
 
   function handleLogin(nextSession) {
@@ -217,5 +217,7 @@ export function AdminAthletePage() {
     setSession(null);
   }
 
-  return session ? <AthleteWorkspace onLogout={handleLogout} session={session} /> : <LoginForm onLogin={handleLogin} />;
+  return session
+    ? <AthleteWorkspace onLogout={handleLogout} session={session} tournamentId={tournamentId} />
+    : <LoginForm onLogin={handleLogin} />;
 }

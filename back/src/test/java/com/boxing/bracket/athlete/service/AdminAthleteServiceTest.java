@@ -60,6 +60,19 @@ class AdminAthleteServiceTest {
     }
 
     @Test
+    void getAthletesScopesResultsToTournament() {
+        Athlete athlete = createAthlete(10L);
+        athlete.assignTournament(2L);
+        given(athleteRepository.findByTournamentIdOrderByIdAsc(2L))
+                .willReturn(List.of(athlete));
+
+        List<AthleteResponse> responses = adminAthleteService.getAthletes(2L, null);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getTournamentId()).isEqualTo(2L);
+    }
+
+    @Test
     void getAthleteReturnsAthlete() {
         given(athleteRepository.findById(10L)).willReturn(Optional.of(createAthlete(10L)));
 

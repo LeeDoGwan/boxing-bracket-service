@@ -172,8 +172,8 @@ class AdminBoutServiceTest {
     void createBoutRejectsMissingAthlete() {
         given(tournamentRepository.existsById(1L)).willReturn(true);
         given(ringRepository.findById(1L)).willReturn(Optional.of(createRing(1L, 1L)));
-        given(athleteRepository.existsById(10L)).willReturn(true);
-        given(athleteRepository.existsById(11L)).willReturn(false);
+        given(athleteRepository.existsByIdAndTournamentId(10L, 1L)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(11L, 1L)).willReturn(false);
 
         assertThatThrownBy(() -> adminBoutService.createBout(request()))
                 .isInstanceOf(AthleteNotFoundException.class)
@@ -193,10 +193,10 @@ class AdminBoutServiceTest {
     void importBoutsCreatesBoutsFromCsv() {
         given(tournamentRepository.existsById(1L)).willReturn(true);
         given(ringRepository.findById(1L)).willReturn(Optional.of(createRing(1L, 1L)));
-        given(athleteRepository.existsById(10L)).willReturn(true);
-        given(athleteRepository.existsById(11L)).willReturn(true);
-        given(athleteRepository.existsById(12L)).willReturn(true);
-        given(athleteRepository.existsById(13L)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(10L, 1L)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(11L, 1L)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(12L, 1L)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(13L, 1L)).willReturn(true);
         given(tournamentRepository.findWithLockById(1L)).willReturn(Optional.of(createTournament(1L)));
         given(boutRepository.findMaxBoutNumberByTournamentId(1L)).willReturn(0, 1);
         AtomicLong id = new AtomicLong(20L);
@@ -373,8 +373,8 @@ class AdminBoutServiceTest {
         lenient().when(tournamentRepository.findWithLockById(1L)).thenReturn(Optional.of(createTournament(1L)));
         lenient().when(boutRepository.findMaxBoutNumberByTournamentId(1L)).thenReturn(0);
         given(ringRepository.findById(1L)).willReturn(Optional.of(createRing(1L, 1L)));
-        given(athleteRepository.existsById(redAthleteId)).willReturn(true);
-        given(athleteRepository.existsById(blueAthleteId)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(redAthleteId, 1L)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(blueAthleteId, 1L)).willReturn(true);
     }
 
     private AdminBoutRequest request() {

@@ -1,6 +1,6 @@
 # Product Decisions
 
-Last updated: 2026-08-08
+Last updated: 2026-08-09
 
 This document records product and UX decisions confirmed after reviewing the
 requirements for the boxing tournament service. It is the source for frontend

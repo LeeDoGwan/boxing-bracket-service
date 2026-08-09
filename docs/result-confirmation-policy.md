@@ -1,6 +1,6 @@
 # Supervisor Result Confirmation Policy
 
-Last updated: 2026-08-08
+Last updated: 2026-08-09
 
 This document defines the current server and frontend contract for Supervisor
 review and bout result confirmation. It complements [Staff ring assignment](staff-assignment.md)
@@ -16,7 +16,7 @@ and [Judge scoring policy](scoring-policy.md).
 | Bout lifecycle | Implemented; confirmation requires an in-progress or scoring bout |
 | Result and penalty lock | Implemented; confirmed/finished bouts reject further mutations |
 | Judge-count minimum | Implemented; each tournament is configured for 3 or 5 active assigned Judges, and all must submit each started round |
-| Boxing decision combinations | Provisional code catalog is implemented; association-specific labels and combinations remain open |
+| Boxing decision combinations | MVP baseline is implemented; association-specific labels and combinations are post-MVP |
 | Confirmed-result correction | Implemented; authenticated Supervisor plus required reason and audit entry |
 | Penalty scope | Implemented; round-level entry is stored and the aggregate remains bout-level |
 
@@ -110,12 +110,21 @@ field instead of a hard-coded number.
 - Duplicate penalty reasons are not blocked because the venue policy is not
   yet defined.
 
-The current provisional display/code mapping is `POINTS` (points decision),
+The current MVP display/code mapping is `POINTS` (points decision),
 `KO`, `RSC` (displayed as `TKO` for technical knockout), `ABD` (withdrawal),
 `DSQ` (disqualification), and `WALKOVER` (walkover). `UNKNOWN` is storage-only
 and cannot be confirmed.
 The association-specific labels and allowed winner combinations still require
-venue confirmation.
+venue confirmation before expanding the catalog. This does not block the
+single-tournament MVP.
+
+## Public Score Projection
+
+`GET /api/bouts/{boutId}` includes a `roundScores` array containing only rows
+with `SUBMITTED` status and both score values. Each item contains `roundNo`,
+`judgeNo`, `redScore`, and `blueScore`. `judgeNo` is a one-based display
+sequence within the round; the persisted `judgeId` is intentionally omitted
+from public responses. Draft rows are never published to the audience.
 
 ## Frontend Contract
 

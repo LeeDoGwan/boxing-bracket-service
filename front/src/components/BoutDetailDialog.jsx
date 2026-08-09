@@ -77,6 +77,27 @@ export function BoutDetailDialog({ boutId, onClose }) {
               <p><span className="red-label">홍</span>{athleteLabel(detail.redAthlete)}</p>
               <p><span className="blue-label">청</span>{athleteLabel(detail.blueAthlete)}</p>
             </div>
+            {detail.roundScores?.length > 0 && (
+              <section aria-label="Round scores" className="public-round-scores">
+                <h3>Round scores</h3>
+                <div className="public-round-score-table" role="table">
+                  <div className="public-round-score-row public-round-score-header" role="row">
+                    <span>Round</span>
+                    <span>Judge</span>
+                    <span className="red-score-text">Red</span>
+                    <span className="blue-score-text">Blue</span>
+                  </div>
+                  {detail.roundScores.map((score) => (
+                    <div className="public-round-score-row" key={`${score.roundNo}-${score.judgeNo}`} role="row">
+                      <span>R{score.roundNo}</span>
+                      <span>Judge {score.judgeNo}</span>
+                      <strong className="red-score-text">{score.redScore}</strong>
+                      <strong className="blue-score-text">{score.blueScore}</strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
             {detail.resultConfirmed && (
               <div className="confirmed-result">
                 <p>확정 결과</p>

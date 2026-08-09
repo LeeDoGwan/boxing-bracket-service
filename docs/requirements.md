@@ -2,7 +2,7 @@
 
 Source: ChatGPT project `복싱 대회 어드바이스 서비스`, `기능.txt`-based analysis on 2026-07-07.
 
-Reviewed against the MVP implementation on 2026-07-14. See [System design](design.md) for the implementation architecture and known boundaries.
+Reviewed against the MVP implementation on 2026-08-09. See [System design](design.md) for the implementation architecture and known boundaries.
 Product decisions confirmed on 2026-07-17 are recorded in [Product decisions](product-decisions.md).
 
 ## Goal
@@ -18,7 +18,7 @@ The service must keep the on-site UX simple because tournament staff may not be 
 - View notices on the home screen.
 - View current bout cards by ring.
 - Open current bout details.
-- View round scores when available.
+- View submitted round scores when available; judge account IDs are never exposed.
 - Preview next and later bouts.
 - View event schedules such as breaks, lunch, performances, and non-bout events.
 - Search official brackets by athlete name, affiliation, bout type, or bout number.
@@ -113,6 +113,7 @@ The first working loop is:
 ### Athlete
 
 - `id`
+- `tournamentId`
 - `name`
 - `affiliation`
 - `gender`
@@ -241,10 +242,10 @@ The first working loop is:
 
 ## Remaining Open Questions
 
-The following details still require a venue or association decision before the
-corresponding validation and screens are finalized:
+The following details are post-MVP venue or association decisions. The current
+MVP uses the provisional catalog and rules documented in the policy files.
 
-- What is the complete decision-type catalog for wins, draws, withdrawals,
+- What is the complete association-specific decision-type catalog for wins, draws, withdrawals,
   disqualifications, injury stoppages, and other exceptional outcomes?
 - Which association-specific labels and winner combinations should be used for
   exceptional result types? A result type means how the bout ended, for example

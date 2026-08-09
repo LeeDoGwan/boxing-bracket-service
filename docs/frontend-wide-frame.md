@@ -1,6 +1,6 @@
 # Frontend Wide-Frame Architecture Guide
 
-Last updated: 2026-07-17
+Last updated: 2026-08-09
 
 This is the implementation-oriented wide frame for the frontend in front/.
 It connects screens, state, API calls, components, realtime events, tests,
@@ -14,7 +14,8 @@ structure and audience data flow in about ten minutes.
 Current boundaries:
 
 - Public audience views: home, notices, ring status, current/next/later bouts,
-  confirmed result totals, schedules, bracket search, and bout detail.
+  confirmed result totals, submitted round scores, schedules, bracket search,
+  and bout detail.
 - Authenticated operational views: judge, supervisor, ring manager, operations,
   audit logs, and administration.
 
@@ -57,7 +58,7 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 | Audience home | / | Audience | Notices, rings, current/next/later bout, confirmed results, schedule | /api/home, /api/bouts, /api/bouts/{boutId}, /api/events/stream | AudienceHome, NoticeCarousel, RingCard, ScheduleList, BoutDetailDialog, StatePanel | Loading, error, stale data/retry, empty sections, connected/reconnecting/offline |
 | Bracket | /bracket | Audience | List, search, live refresh, highlight, and inspect bracket status/result | /api/bouts, /api/bouts/search, /api/events/stream | BracketPage, StatePanel | Loading, error, stale data/retry, empty, search, selected row |
 | Staff login | /staff/login | All staff roles | Shared credential entry and role-based workspace redirect | /api/auth/login, /api/auth/logout | StaffLoginPage, StaffAuthProvider, StaffRoute | Return-path redirect, invalid credentials, unsupported role, session cleanup |
-| Bout detail | Home dialog | Audience | Inspect a selected audience bout and confirmed totals | /api/bouts/{boutId} | BoutDetailDialog, StatePanel | Loading, error/retry, empty detail, Escape/focus return |
+| Bout detail | Home dialog | Audience | Inspect a selected audience bout, submitted round scores, and confirmed totals | /api/bouts/{boutId} | BoutDetailDialog, StatePanel | Loading, error/retry, empty detail, score table, Escape/focus return |
 | Judge | /judge | Judge | Select assigned ring, enter round scores | Assigned ring/bout APIs, Judge score APIs | JudgeAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, loading, error, action feedback |
 | Supervisor | /supervisor | Supervisor | Select assigned ring, review score readiness/penalties, confirm result | Assigned ring/bout APIs, Supervisor APIs | SupervisorAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, score readiness, confirmation review/cancel, locked result, action feedback |
 | Ring manager | /ring-manager | Ring Manager | Select assigned ring and run state-valid bout commands | Assigned ring/bout APIs, Ring Manager APIs | RingManagerAssignedPage, StatePanel | Session/role guard, assigned-empty, revoked, current-bout mismatch, state command matrix, confirmation, loading, error, action feedback |
@@ -153,7 +154,7 @@ event payload is not rendered as the source of truth.
 | --- | --- | --- |
 | Tournament admin | /api/admin/tournaments | Create, update, delete |
 | Ring admin | /api/admin/rings?tournamentId= | Create, update, delete |
-| Athlete admin | /api/admin/athletes?keyword= | Search, create, update, delete |
+| Athlete admin | /api/admin/athletes?tournamentId={id}&keyword= | Tournament-scoped search, create, update, delete |
 | Notice admin | /api/admin/notices?tournamentId= | Create, update, delete |
 | Schedule admin | /api/admin/schedules?tournamentId= | Create, update, delete |
 | Bout admin | /api/admin/bouts?tournamentId= | Create, update, delete, multipart import |
@@ -344,11 +345,11 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 26 test files and 87 passing tests.
+The current frontend baseline is 26 test files and 92 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
-| Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
+| Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, submitted round-score projection, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
 | Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
 | Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Composition, loading/error, live status, list/search/selection, request signal | Stale data and invalid query |
 | Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, 0-10 score validation/confirmation, Supervisor result readiness/round penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
@@ -431,6 +432,6 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 26 frontend test files and 87 tests unless coverage
+- Preserve the baseline of 26 frontend test files and 92 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.

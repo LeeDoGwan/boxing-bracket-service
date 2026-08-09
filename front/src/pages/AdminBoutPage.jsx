@@ -128,7 +128,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
     try {
       const [nextRings, nextAthletes] = await Promise.all([
         getRings(tournamentId, session.accessToken),
-        getAthletes('', session.accessToken),
+        getAthletes(tournamentId, '', session.accessToken),
       ]);
       setRings(nextRings || []);
       setAthletes(nextAthletes || []);

@@ -22,9 +22,9 @@ One ring can run one bout end to end:
 
 - Test documentation: [Testing](testing.md)
 - Design documentation: [System design](design.md)
-- Latest `mvn test` result: 406 passed, 0 failed, 0 errors, 1 CI-only MariaDB smoke test skipped locally.
+- Latest `mvn test` result: 409 passed, 0 failed, 0 errors, 1 CI-only MariaDB smoke test skipped locally.
 - Covered areas: auth, BCrypt password hashing, role access policy, SSE events, notices, schedules, audience home, bracket, bout CSV/Excel import, judge scoring, supervisor scoring, ring manager workflow, tournament operation status, administrator audit logging, admin management, workflow concurrency, domain rules, repositories, and health check.
-- Historical Sprint 1 baseline: 47 frontend tests passed across 19 test files, ESLint passed, and the Vite production build passed. The current 91-test verification baseline is maintained in [Testing](testing.md).
+- Historical Sprint 1 baseline: 47 frontend tests passed across 19 test files, ESLint passed, and the Vite production build passed. The current 92-test verification baseline is maintained in [Testing](testing.md).
 - Workflow safety: bout, ring, round score, and result aggregates use optimistic versions; mutating workflow paths use transaction-scoped row locks, ring-before-bout lock ordering, idempotent retries, DB unique constraints, and post-commit SSE delivery.
 
 ## Screens
@@ -247,7 +247,7 @@ CSV and Excel upload are available for admin bout import.
 
 ### Athlete Admin
 
-- `GET /api/admin/athletes?keyword=`
+- `GET /api/admin/athletes?tournamentId=&keyword=`
 - `POST /api/admin/athletes`
 - `PUT /api/admin/athletes/{athleteId}`
 - `DELETE /api/admin/athletes/{athleteId}`
@@ -295,8 +295,8 @@ CSV and Excel upload are available for admin bout import.
 - `POST /api/admin/rings`
 - `PUT /api/admin/rings/{ringId}`
 - `DELETE /api/admin/rings/{ringId}`
-- `GET /api/admin/athletes?keyword=`
-- `GET /api/admin/athletes/{athleteId}`
+- `GET /api/admin/athletes?tournamentId=&keyword=`
+- `GET /api/admin/athletes/{athleteId}?tournamentId=`
 - `POST /api/admin/athletes`
 - `PUT /api/admin/athletes/{athleteId}`
 - `DELETE /api/admin/athletes/{athleteId}`

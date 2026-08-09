@@ -171,18 +171,26 @@ class WorkflowConcurrencyIntegrationTest {
                 .name("Ring A")
                 .status(RingStatus.READY)
                 .build());
-        Athlete redAthlete = athleteRepository.saveAndFlush(Athlete.builder()
+        Athlete redAthlete = Athlete.builder()
                 .name("Red Athlete")
-                .build());
-        Athlete blueAthlete = athleteRepository.saveAndFlush(Athlete.builder()
+                .build();
+        redAthlete.assignTournament(tournament.getId());
+        redAthlete = athleteRepository.saveAndFlush(redAthlete);
+        Athlete blueAthlete = Athlete.builder()
                 .name("Blue Athlete")
-                .build());
-        Athlete secondRedAthlete = athleteRepository.saveAndFlush(Athlete.builder()
+                .build();
+        blueAthlete.assignTournament(tournament.getId());
+        blueAthlete = athleteRepository.saveAndFlush(blueAthlete);
+        Athlete secondRedAthlete = Athlete.builder()
                 .name("Second Red Athlete")
-                .build());
-        Athlete secondBlueAthlete = athleteRepository.saveAndFlush(Athlete.builder()
+                .build();
+        secondRedAthlete.assignTournament(tournament.getId());
+        secondRedAthlete = athleteRepository.saveAndFlush(secondRedAthlete);
+        Athlete secondBlueAthlete = Athlete.builder()
                 .name("Second Blue Athlete")
-                .build());
+                .build();
+        secondBlueAthlete.assignTournament(tournament.getId());
+        secondBlueAthlete = athleteRepository.saveAndFlush(secondBlueAthlete);
         List<AdminBoutRequest> requests = List.of(
                 new AdminBoutRequest(
                         tournament.getId(),

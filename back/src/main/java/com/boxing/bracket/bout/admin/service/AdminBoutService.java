@@ -301,8 +301,8 @@ public class AdminBoutService {
             throw new IllegalArgumentException("ring does not belong to tournament");
         }
 
-        if (!athleteRepository.existsById(request.getRedAthleteId())
-                || !athleteRepository.existsById(request.getBlueAthleteId())) {
+        if (!athleteRepository.existsByIdAndTournamentId(request.getRedAthleteId(), request.getTournamentId())
+                || !athleteRepository.existsByIdAndTournamentId(request.getBlueAthleteId(), request.getTournamentId())) {
             throw new AthleteNotFoundException();
         }
     }

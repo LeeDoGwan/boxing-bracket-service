@@ -6,10 +6,13 @@ import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.dto.BoutDetailResponse;
 import com.boxing.bracket.bout.dto.BoutListResponse;
+import com.boxing.bracket.bout.dto.BoutRoundScoreResponse;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.service.BoutService;
 import com.boxing.bracket.scoring.domain.BoutResult;
 import com.boxing.bracket.scoring.domain.DecisionType;
+import com.boxing.bracket.scoring.domain.RoundScore;
+import com.boxing.bracket.scoring.domain.RoundScoreStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -125,6 +128,34 @@ class BoutControllerTest {
                 .andExpect(jsonPath("$.data.result.resultId").value(100))
                 .andExpect(jsonPath("$.data.result.redTotalScore").value(19))
                 .andExpect(jsonPath("$.data.result.winnerSide").value("RED"));
+    }
+
+    @Test
+    void getBoutDetailReturnsPublicRoundScoresWithoutJudgeIds() throws Exception {
+        RoundScore roundScore = RoundScore.builder()
+                .boutId(1L)
+                .roundNo(1)
+                .judgeId(20L)
+                .redScore(10)
+                .blueScore(9)
+                .status(RoundScoreStatus.SUBMITTED)
+                .build();
+
+        given(boutService.getBoutDetail(1L))
+                .willReturn(BoutDetailResponse.of(
+                        createBout(1L, 1, 1, false),
+                        createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club"),
+                        createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club"),
+                        null,
+                        List.of(BoutRoundScoreResponse.of(roundScore, 1))
+                ));
+
+        mockMvc.perform(get("/api/bouts/{boutId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.roundScores[0].roundNo").value(1))
+                .andExpect(jsonPath("$.data.roundScores[0].judgeNo").value(1))
+                .andExpect(jsonPath("$.data.roundScores[0].redScore").value(10))
+                .andExpect(jsonPath("$.data.roundScores[0].judgeId").doesNotExist());
     }
 
     @Test
