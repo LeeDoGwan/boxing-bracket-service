@@ -23,7 +23,7 @@ class DatabaseMigrationIntegrationTest {
     void appliesAllMigrationsAndLeavesNoPendingChanges() {
         assertThat(flyway.info().applied())
                 .extracting(migration -> migration.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4");
+                .containsExactly("1", "2", "3", "4", "5");
         assertThat(flyway.info().pending()).isEmpty();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbcTemplate.queryForObject(
@@ -52,6 +52,8 @@ class DatabaseMigrationIntegrationTest {
         assertThat(uniqueConstraintExists("bouts", "uk_bouts_import_batch_row")).isTrue();
         assertThat(uniqueConstraintExists("staff_assignments", "uk_staff_assignments_account_tournament_ring")).isTrue();
         assertThat(uniqueConstraintExists("audit_logs", "uk_audit_logs_deduplication_key")).isTrue();
+        assertThat(indexExists("bouts", "idx_bouts_tournament_scheduled")).isTrue();
+        assertThat(indexExists("bouts", "idx_bouts_ring_scheduled")).isTrue();
         assertThat(columnExists("bouts", "version")).isTrue();
         assertThat(columnExists("rings", "version")).isTrue();
         assertThat(columnExists("round_scores", "version")).isTrue();
@@ -89,6 +91,16 @@ class DatabaseMigrationIntegrationTest {
                 Integer.class,
                 tableName,
                 constraintName
+        ) > 0;
+    }
+
+    private boolean indexExists(String tableName, String indexName) {
+        return jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES "
+                        + "WHERE LOWER(TABLE_NAME) = ? AND LOWER(INDEX_NAME) = ?",
+                Integer.class,
+                tableName,
+                indexName
         ) > 0;
     }
 }

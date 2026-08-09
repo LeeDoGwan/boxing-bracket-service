@@ -24,11 +24,15 @@ Resolved in the current implementation:
   `TKO`. Effective-score ties remain an explicit Supervisor decision.
 - The current local verification baseline is 74 backend test classes with 406
   passed cases and 26 frontend test files with 91 passed cases.
+- V5 adds composite indexes for tournament and ring schedule-order queries,
+  reducing the primary scan cost for public bout and ring lookups.
 
 Remaining follow-up risks:
 
 - Process-local sessions need a shared store before horizontal scaling. This is
   outside the current single-backend-server MVP deployment target.
+- Home, ring, and bout aggregation still resolve athlete summaries in service
+  loops; bulk projections and endpoint pagination remain future optimizations.
 
 The historical sections below retain their original evidence and priorities;
 the resolved items above are no longer release blockers.

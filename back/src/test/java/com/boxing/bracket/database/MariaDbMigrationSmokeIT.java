@@ -31,8 +31,8 @@ class MariaDbMigrationSmokeIT {
                     .containsIgnoringCase("MariaDB");
         }
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
         assertThat(flyway.info().current().getDescription())
-                .isEqualTo("add bout import idempotency");
+                .isEqualTo("add bout schedule indexes");
     }
 }

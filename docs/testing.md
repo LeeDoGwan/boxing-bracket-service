@@ -28,8 +28,8 @@ Last updated: 2026-08-08
 - Flyway 9.22.3 and its `flyway-mysql` support module apply migrations from `back/src/main/resources/db/migration/` before Hibernate schema validation.
 - `back/src/main/resources/application-local.yml` enables MariaDB migration and sets `ddl-auto: validate`; it does not create or alter tables through Hibernate.
 - `back/src/test/resources/application-test.yml` uses the same migration location with H2 MySQL compatibility mode and `ddl-auto: validate`.
-- `DatabaseMigrationIntegrationTest` verifies V1 through V4 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the tournament `judge_count` column, MariaDB-compatible audit payload mapping, the `penalties.round_no` column, the per-tournament bout-number unique constraint, import idempotency columns and constraint, and operational unique constraints.
-- `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dmariadb.integration=true` and verifies the database product plus the current Flyway version.
+- `DatabaseMigrationIntegrationTest` verifies V1 through V5 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the tournament `judge_count` column, MariaDB-compatible audit payload mapping, the `penalties.round_no` column, the per-tournament bout-number unique constraint, import idempotency columns and constraint, bout schedule indexes, and operational unique constraints.
+- `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dmariadb.integration=true` and verifies the database product plus the current Flyway V5 version.
 - Existing `docs/database-migration-*.sql` files are historical pointers only. They contain no executable duplicate DDL; the Flyway directory is the single execution source.
 
 ## Test Scope

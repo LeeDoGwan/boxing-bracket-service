@@ -359,30 +359,32 @@ is the schema owner; Hibernate validates the resulting schema and never creates
 or alters tables at application startup. The policy and operator procedures are
 in [Database migration policy](database-migration.md).
 
-The current migration head is `V4__add_bout_import_idempotency.sql`. `V1__create_initial_schema.sql`
+The current migration head is `V5__add_bout_schedule_indexes.sql`. `V1__create_initial_schema.sql`
 contains the initially mapped tables, optimistic-lock columns, workflow
 uniqueness constraints, schedule and staff-assignment indexes, and audit-log
 indexes. It also stores the tournament Judge count (`3` or `5`) and uses
 MariaDB-compatible `LONGTEXT` audit payload columns. V2 adds the nullable `penalties.round_no` column used to retain the
 round reference while penalty totals remain bout-level. V3 adds the
 per-tournament bout-number uniqueness constraint. V4 adds the nullable import
-batch key and source row number used for persistent retry idempotency.
+batch key and source row number used for persistent retry idempotency. V5 adds
+composite indexes for tournament and ring schedule-order queries.
 Entity references are scalar IDs, so this baseline intentionally does not add
 foreign keys that the current model does not declare. Service-level delete and
 ownership guards preserve the referential rules described in the workflow
 section while keeping audit history independent.
 
 The repository has no deployed shared database at this MVP stage. New
-installations therefore apply V1, V2, V3, and then V4. After first deployment,
+installations therefore apply V1 through V5. After first deployment,
 V1 is immutable and future changes require a new migration. An existing database must be inspected,
 backed up, and explicitly baselined only after its schema is proven equivalent;
 `baseline-on-migrate` is disabled so an unknown schema cannot start silently.
 
 The test profile uses H2 in MySQL compatibility mode, applies the same Flyway
-V1, V2, V3, and V4 migrations, and then validates the JPA mapping. A migration
+V1 through V5 migrations, and then validates the JPA mapping. A migration
 integration test checks both applied versions, idempotent startup, tables,
 version columns, the tournament Judge count, the penalty round column,
-per-tournament bout-number uniqueness, and operational unique constraints.
+per-tournament bout-number uniqueness, bout schedule indexes, and operational
+unique constraints.
 
 Operational prerequisites:
 
