@@ -100,7 +100,7 @@ class AdminBoutControllerTest {
 
     @Test
     void createBoutReturnsBadRequestForMissingTournamentId() throws Exception {
-        AdminBoutRequest request = new AdminBoutRequest(null, 1L, 1, "75", 10L, 11L, 3, 1, false);
+        AdminBoutRequest request = new AdminBoutRequest(null, 1L, "75", 10L, 11L, 3, 1, false);
 
         mockMvc.perform(post("/api/admin/bouts")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -130,12 +130,15 @@ class AdminBoutControllerTest {
                 "file",
                 "bouts.csv",
                 "text/csv",
-                "tournamentId,ringId,boutNumber,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
+                "tournamentId,ringId,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout\n"
                         .getBytes()
         );
-        given(adminBoutService.importBouts(any())).willReturn(AdminBoutImportResponse.from(List.of(response(20L))));
+        given(adminBoutService.importBouts(any(), eq("batch-1")))
+                .willReturn(AdminBoutImportResponse.from(List.of(response(20L))));
 
-        mockMvc.perform(multipart("/api/admin/bouts/import").file(file))
+        mockMvc.perform(multipart("/api/admin/bouts/import")
+                        .file(file)
+                        .header("Idempotency-Key", "batch-1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.importedCount").value(1))
@@ -189,7 +192,7 @@ class AdminBoutControllerTest {
     }
 
     private AdminBoutRequest request() {
-        return new AdminBoutRequest(1L, 1L, 1, "75 - middle school", 10L, 11L, 3, 1, false);
+        return new AdminBoutRequest(1L, 1L, "75 - middle school", 10L, 11L, 3, 1, false);
     }
 
     private AdminBoutResponse response(Long id) {

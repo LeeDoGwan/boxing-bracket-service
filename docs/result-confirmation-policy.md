@@ -1,6 +1,6 @@
 # Supervisor Result Confirmation Policy
 
-Last updated: 2026-07-17
+Last updated: 2026-08-09
 
 This document defines the current server and frontend contract for Supervisor
 review and bout result confirmation. It complements [Staff ring assignment](staff-assignment.md)
@@ -15,8 +15,9 @@ and [Judge scoring policy](scoring-policy.md).
 | Score readiness | Implemented; every existing score record must be submitted with both values |
 | Bout lifecycle | Implemented; confirmation requires an in-progress or scoring bout |
 | Result and penalty lock | Implemented; confirmed/finished bouts reject further mutations |
-| Judge-count minimum | Odd Judge count confirmed; exact count and missing-submission rule remain open |
-| Boxing decision combinations | Broad multi-type result support confirmed; exact catalog remains open |
+| Judge-count minimum | Implemented; each tournament is configured for 3 or 5 active assigned Judges, and all must submit each started round |
+| Boxing decision combinations | MVP baseline is implemented; association-specific labels and combinations are post-MVP |
+| Confirmed-result correction | Implemented; authenticated Supervisor plus required reason and audit entry |
 | Penalty scope | Implemented; round-level entry is stored and the aggregate remains bout-level |
 
 ## Confirmation Contract
@@ -47,6 +48,28 @@ Repeated confirmation with the same winner, decision, and authenticated actor
 returns the existing result. A different request returns
 `409 RESULT_ALREADY_CONFIRMED`.
 
+## Correction Contract
+
+The correction endpoint is:
+
+```text
+PUT /api/supervisor/bouts/{boutId}/result
+```
+
+```json
+{
+  "winnerSide": "DRAW",
+  "decisionType": "POINTS",
+  "reason": "Supervisor reviewed the official score sheet"
+}
+```
+
+The authenticated Supervisor is the approver. `approvedBy` is accepted only
+as a legacy compatibility field and must match the authenticated account when
+provided. The server locks the bout, updates the existing result, updates the
+bout winner, publishes `RESULT_CORRECTED`, and the audit record includes the
+same `reason` in its after snapshot.
+
 ## State Rules
 
 | Condition | Result confirmation |
@@ -58,7 +81,9 @@ returns the existing result. A different request returns
 | Existing result or confirmed bout | Idempotent same request, otherwise `409 RESULT_ALREADY_CONFIRMED` |
 | No score records | `409 SCORES_NOT_READY` |
 | Any draft score or missing red/blue value | `409 SCORES_NOT_READY` |
-| Existing score records all submitted | Eligible for the next checks |
+| Fewer than the configured 3 or 5 assigned Judges submit a started round | `409 SCORES_NOT_READY` |
+| Existing score records for every assigned Judge are submitted | Eligible for the next checks |
+| Confirmed result correction without a reason | `400 reason is required` |
 
 The implementation does not invent a minimum Judge count. If the tournament
 model later gains a required Judge-count field, confirmation must use that
@@ -69,21 +94,37 @@ field instead of a hard-coded number.
 - `NONE` and `UNKNOWN` are rejected for final confirmation.
 - `RED`, `BLUE`, and `DRAW` are accepted as winner selections.
 - `DRAW` is currently accepted only with `POINTS`.
+- A tied effective total is a recommendation for `DRAW`; the Supervisor remains
+  the final decision maker.
 - Score totals are displayed as reference data; the server does not force the
   Supervisor's selected winner to match the higher total.
+- A penalty assigned to Red is added to Blue's effective total, and a penalty
+  assigned to Blue is added to Red's effective total. In formulas:
+  `effectiveRed = redTotalScore + bluePenaltyTotal` and
+  `effectiveBlue = blueTotalScore + redPenaltyTotal`.
 - Penalty points are positive integers. Zero and negative values return
   `400 INVALID_PENALTY_VALUE`.
 - Penalties cannot be added after result confirmation.
-- Penalties may be entered with a round reference, while the adjusted total is
+- Penalties may be entered with a round reference, while the effective total is
   calculated across the whole bout.
 - Duplicate penalty reasons are not blocked because the venue policy is not
   yet defined.
 
-The following decisions remain provisional and require boxing association or
-venue-official confirmation: score requirements for `WALKOVER`, whether
-`UNKNOWN` may be stored for an intermediate state, exceptional decision and
-winner combinations, draw handling, penalty calculation semantics, and any
-post-confirmation correction workflow.
+The current MVP display/code mapping is `POINTS` (points decision),
+`KO`, `RSC` (displayed as `TKO` for technical knockout), `ABD` (withdrawal),
+`DSQ` (disqualification), and `WALKOVER` (walkover). `UNKNOWN` is storage-only
+and cannot be confirmed.
+The association-specific labels and allowed winner combinations still require
+venue confirmation before expanding the catalog. This does not block the
+single-tournament MVP.
+
+## Public Score Projection
+
+`GET /api/bouts/{boutId}` includes a `roundScores` array containing only rows
+with `SUBMITTED` status and both score values. Each item contains `roundNo`,
+`judgeNo`, `redScore`, and `blueScore`. `judgeNo` is a one-based display
+sequence within the round; the persisted `judgeId` is intentionally omitted
+from public responses. Draft rows are never published to the audience.
 
 ## Frontend Contract
 
@@ -92,7 +133,7 @@ then assigned official bouts. It does not use the public bout list as the
 permission source. The page:
 
 - shows submitted and draft score counts, score totals, penalty totals, and
-  adjusted comparison values;
+  effective comparison values;
 - blocks result review until the bout is started and all existing scores are
   submitted;
 - keeps penalty and result inputs during SSE-driven refetches;
@@ -100,7 +141,9 @@ permission source. The page:
   and mismatch warning details;
 - prevents duplicate penalty/result requests;
 - removes `createdBy` and `confirmedBy` from write request bodies;
-- locks penalty and result controls after `RESULT_CONFIRMED`.
+- locks penalty controls after `RESULT_CONFIRMED`;
+- exposes a Supervisor-only correction form with a required reason after
+  `RESULT_CONFIRMED` and refreshes on `RESULT_CORRECTED`.
 
 ## Error Contract
 
@@ -115,6 +158,8 @@ permission source. The page:
 | `INVALID_PENALTY_VALUE` | 400 | Penalty is not a positive integer |
 | `PENALTY_NOT_ALLOWED` | 409 | Bout result is already final |
 | `RESULT_ALREADY_CONFIRMED` | 409 | Existing result conflicts with the request |
+| `RESULT_NOT_FOUND` | 409 | Correction has no confirmed result to update |
+| `RESULT_NOT_CONFIRMED` | 409 | Correction target is not a finished confirmed bout |
 
 Failed validation occurs before persistence and event publication. Successful
 confirmation publishes one `RESULT_CONFIRMED` event after the state mutation.

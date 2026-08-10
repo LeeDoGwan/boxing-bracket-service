@@ -1,5 +1,47 @@
 # Backend Review
 
+Review date: 2026-08-09
+
+## Current Status
+
+This status section supersedes the historical findings below.
+
+Resolved in the current implementation:
+
+- Local runtime authentication is enabled; public audience endpoints remain login-free.
+- The local datasource password is read from `BOXING_DB_PASSWORD`.
+- JPA auditing is enabled outside the test profile, and repository coverage verifies `createdAt` and `updatedAt`.
+- Backend CI now runs a MariaDB 10.11 migration smoke test in addition to the H2 suite.
+- Admin bout schedule mutations are blocked after a bout starts or reaches a terminal state. Deletion also checks scoring references and the ring's current-bout pointer.
+- Ring-manager operations now acquire the ring lock before any bout lock. A scalar ring-id lookup avoids loading a stale bout entity before the lock, and unit/concurrency tests cover the ordering.
+- Scalar reference mutations now have application-level protection: tournament, ring, athlete, and account deletes fail when owned records remain; bout deletes also check schedule references, and ring tournament ownership is immutable.
+- Bout CSV/Excel imports now require a persistent `Idempotency-Key`; imported rows retain the key and row number so a retry returns the original rows instead of creating duplicates.
+- Local sessions revalidate account existence, active status, role, identity fields, and update timestamps on each authenticated request; a shared store is still required before horizontal scaling.
+- Flyway 9.22.3 and its `flyway-mysql` support module are pinned so the MariaDB 10.11 migration smoke test uses a supported database version.
+- Confirmed results expose both stored totals and effective totals; a penalty assigned
+  to one side is added to the opponent's effective score.
+- The `RSC` result code remains API-compatible while user-facing labels display
+  `TKO`. Effective-score ties remain an explicit Supervisor decision.
+- Public bout details now expose submitted round scores through a privacy-safe
+  judge sequence and reject draft or cross-tournament athlete visibility.
+- Athlete administration and bout assignment now carry tournament scope. V6
+  adds the transitional nullable column and index; legacy rows require backfill
+  before the column can be made non-null.
+- The current local verification baseline is 74 backend test classes with 409
+  passed cases and 26 frontend test files with 92 passed cases.
+- V5 adds composite indexes for tournament and ring schedule-order queries,
+  reducing the primary scan cost for public bout and ring lookups.
+
+Remaining follow-up risks:
+
+- Process-local sessions need a shared store before horizontal scaling. This is
+  outside the current single-backend-server MVP deployment target.
+- Home, ring, and bout aggregation still resolve athlete summaries in service
+  loops; bulk projections and endpoint pagination remain future optimizations.
+
+The historical sections below retain their original evidence and priorities;
+the resolved items above are no longer release blockers.
+
 검토일: 2026-07-16
 대상 커밋: `feaf0da8894741b922d41912319a7f51b3a273df`
 대상 범위: `back/` 전체 소스, 설계 문서, Flyway 스키마, 백엔드 테스트 및 CI
@@ -111,7 +153,7 @@
 
 ### P1. CI가 실제 MariaDB를 검증하지 않음
 
-Backend CI는 `mvn test`만 실행하고 MariaDB 서비스를 시작하지 않는다. 테스트 프로필은 H2 MySQL 호환 모드다. 따라서 MariaDB DDL, Boolean/CLOB 매핑, 실제 비관적 락과 트랜잭션 격리 수준은 배포 전에 검증되지 않는다.
+Backend CI는 H2 기반 `mvn test`와 MariaDB 10.11 migration smoke test를 함께 실행한다. H2는 빠른 회귀 검증에 사용하고, MariaDB smoke test는 실제 DDL과 Flyway 지원 모듈을 검증한다. 실제 비관적 락과 트랜잭션 격리 수준은 여전히 운영 환경 검증 범위다.
 
 근거:
 
@@ -119,7 +161,7 @@ Backend CI는 `mvn test`만 실행하고 MariaDB 서비스를 시작하지 않�
 - [`application-test.yml:3`](../back/src/test/resources/application-test.yml#L3)
 - [`application-local.yml:3`](../back/src/main/resources/application-local.yml#L3)
 
-개선 방향: Testcontainers MariaDB 또는 GitHub Actions MariaDB 서비스를 사용해 migration, JPA validate, 워크플로 동시성 테스트를 실제 DB에서 실행한다.
+개선 방향: GitHub Actions MariaDB smoke test를 유지하고, 이후 필요하면 Testcontainers MariaDB로 JPA validate와 워크플로 동시성 테스트까지 확장한다.
 
 ### P2. 조회 성능과 확장성 위험
 
@@ -136,7 +178,7 @@ Backend CI는 `mvn test`만 실행하고 MariaDB 서비스를 시작하지 않�
 
 ## 3. 테스트 결과와 공백
 
-검토 시 `mvn -q test`를 실행했고 72개 테스트 클래스에서 실패·에러·스킵 없이 통과했다.
+검토 시 `mvn -q test`를 실행했고 74개 테스트 클래스에서 실패·에러 없이 통과했다. 로컬에서는 CI 전용 MariaDB smoke test 1개만 스킵된다.
 
 현재 테스트 공백:
 

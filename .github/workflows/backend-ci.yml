@@ -22,6 +22,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_DATABASE: boxing_bracket
+          MARIADB_USER: boxing
+          MARIADB_PASSWORD: boxing
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -uboxing -pboxing"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     defaults:
       run:
         working-directory: back
@@ -44,3 +59,6 @@ jobs:
 
       - name: Run backend tests
         run: mvn -q test
+
+      - name: Run MariaDB migration smoke test
+        run: mvn -q -Dtest=MariaDbMigrationSmokeIT -Dmariadb.integration=true test

@@ -18,7 +18,7 @@ safety rules from boxing-association rules that still require venue confirmation
 | Maximum score | Implemented as 10 in backend and frontend |
 | Ten-point-must rule | Provisional; validation required from boxing association officials |
 | Tie-round policy | Provisional; validation required from boxing association officials |
-| Deduction interaction with Judge input | Provisional; validation required from boxing association officials |
+| Penalty interaction with final total | Implemented; a penalty is added to the opponent's effective total |
 
 ## Applied Rules
 
@@ -38,9 +38,16 @@ enforces the following rules:
 ## Confirmed Target Rules
 
 The product decision is that each red or blue athlete score is an integer from
-0 through 10. A submitted score remains immutable. The event's Judge count is
-odd, so a tie is expected to be uncommon, but the exact count and any
-association-specific tie handling remain open.
+0 through 10. A submitted score remains immutable. Each tournament configures
+3 or 5 active assigned Judges; Supervisor result confirmation waits for every
+assigned Judge to submit each started round. If effective totals tie, the
+Supervisor makes the final winner decision.
+
+For a confirmed bout, a penalty does not reduce the penalized athlete's stored
+score. It adds the penalty points to the opponent's effective total:
+`effectiveRed = redTotalScore + bluePenaltyTotal` and
+`effectiveBlue = blueTotalScore + redPenaltyTotal`. When those effective totals
+are equal, the Supervisor may finalize Red, Blue, or Draw.
 
 ## State Matrix
 
@@ -84,7 +91,7 @@ Before enforcing association-specific rules, confirm:
 - minimum per-athlete round scores;
 - whether every round must include a ten-point score;
 - whether tied rounds are valid;
-- whether deductions are entered separately and how they affect final totals;
+- venue-specific penalty limits or exceptional-bout penalty handling;
 - whether late submission of an earlier round is allowed at the venue;
 - whether score entry timing changes for stoppages or exceptional bouts.
 

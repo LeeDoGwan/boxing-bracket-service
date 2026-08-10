@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface RoundScoreRepository extends JpaRepository<RoundScore, Long> {
 
+    boolean existsByBoutId(Long boutId);
+
     List<RoundScore> findByBoutId(Long boutId);
 
     List<RoundScore> findByBoutIdIn(Collection<Long> boutIds);

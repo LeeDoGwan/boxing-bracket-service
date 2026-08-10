@@ -2,7 +2,7 @@
 
 Source: ChatGPT project `복싱 대회 어드바이스 서비스`, `기능.txt`-based analysis on 2026-07-07.
 
-Reviewed against the MVP implementation on 2026-07-14. See [System design](design.md) for the implementation architecture and known boundaries.
+Reviewed against the MVP implementation on 2026-08-09. See [System design](design.md) for the implementation architecture and known boundaries.
 Product decisions confirmed on 2026-07-17 are recorded in [Product decisions](product-decisions.md).
 
 ## Goal
@@ -18,7 +18,7 @@ The service must keep the on-site UX simple because tournament staff may not be 
 - View notices on the home screen.
 - View current bout cards by ring.
 - Open current bout details.
-- View round scores when available.
+- View submitted round scores when available; judge account IDs are never exposed.
 - Preview next and later bouts.
 - View event schedules such as breaks, lunch, performances, and non-bout events.
 - Search official brackets by athlete name, affiliation, bout type, or bout number.
@@ -38,6 +38,7 @@ The service must keep the on-site UX simple because tournament staff may not be 
 - Review judge scores.
 - Enter referee penalties.
 - Confirm the final winner and result.
+- Correct a confirmed result with a required correction reason.
 - Publish confirmed results to audience home and bracket views.
 
 ### Ring Manager
@@ -80,7 +81,8 @@ The first working loop is:
 ## Workflow Safety
 
 - A repeated request with the same payload must return the existing bout, round, score, or result state without a duplicate SSE event.
-- A request that conflicts with the current bout state or changes an already submitted score/result must return HTTP 409.
+- A request that conflicts with the current bout state or changes an already submitted score must return HTTP 409. Confirmed-result changes use the explicit Supervisor correction workflow below.
+- A result correction is allowed only for a confirmed bout, only by the authenticated Supervisor, and only with a 1-500 character reason that is recorded in the audit log.
 - Bout, ring, round score, and bout result updates use optimistic versions. Workflow mutations also lock the affected bout or ring for the transaction.
 - A judge can have one score per bout and round, and a bout can have one confirmed result. These constraints are enforced in the database.
 
@@ -94,6 +96,7 @@ The first working loop is:
 - `startDate`
 - `endDate`
 - `status`: `PREPARING`, `IN_PROGRESS`, `COMPLETED`
+- `judgeCount`: `3` or `5`
 - `createdAt`
 - `updatedAt`
 
@@ -110,6 +113,7 @@ The first working loop is:
 ### Athlete
 
 - `id`
+- `tournamentId`
 - `name`
 - `affiliation`
 - `gender`
@@ -169,6 +173,8 @@ The first working loop is:
 - `blueTotalScore`
 - `redPenaltyTotal`
 - `bluePenaltyTotal`
+- `redEffectiveScore`: `redTotalScore + bluePenaltyTotal`
+- `blueEffectiveScore`: `blueTotalScore + redPenaltyTotal`
 - `winnerSide`: `RED`, `BLUE`, `DRAW`
 - `decisionType`
 - `confirmedBy`
@@ -236,17 +242,19 @@ The first working loop is:
 
 ## Remaining Open Questions
 
-The following details still require a venue or association decision before the
-corresponding validation and screens are finalized:
+The following details are post-MVP venue or association decisions. The current
+MVP uses the provisional catalog and rules documented in the policy files.
 
-- What is the complete decision-type catalog for wins, draws, withdrawals,
+- What is the complete association-specific decision-type catalog for wins, draws, withdrawals,
   disqualifications, injury stoppages, and other exceptional outcomes?
-- What exact odd Judge count is required for a bout, and can a bout proceed
-  with a missing Judge submission?
+- Which association-specific labels and winner combinations should be used for
+  exceptional result types? A result type means how the bout ended, for example
+  a points decision, KO, referee stoppage, withdrawal, disqualification,
+  walkover, or draw. It is not another Judge score.
 - Which association scoring rules apply beyond the confirmed maximum of 10,
   including the ten-point-must rule and tied-round handling?
-- How is a confirmed result corrected, who approves it, and what reason is
-  required in the audit record?
+- No correction workflow decision remains open for the MVP: a Supervisor
+  approves corrections and must provide the reason, which is logged.
 - What tournament-level access rule applies if the service later manages more
   than one tournament?
 

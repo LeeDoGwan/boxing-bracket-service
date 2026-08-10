@@ -6,11 +6,17 @@ import com.boxing.bracket.bout.admin.dto.AdminBoutImportResponse;
 import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
 import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
 import com.boxing.bracket.bout.domain.Bout;
+import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.scoring.repository.BoutResultRepository;
+import com.boxing.bracket.scoring.repository.PenaltyRepository;
+import com.boxing.bracket.scoring.repository.RoundScoreRepository;
+import com.boxing.bracket.schedule.repository.ScheduleItemRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.apache.poi.ss.usermodel.Cell;
@@ -39,6 +45,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,7 +56,6 @@ public class AdminBoutService {
     private static final List<String> IMPORT_HEADERS = List.of(
             "tournamentId",
             "ringId",
-            "boutNumber",
             "matchType",
             "redAthleteId",
             "blueAthleteId",
@@ -62,17 +68,29 @@ public class AdminBoutService {
     private final TournamentRepository tournamentRepository;
     private final RingRepository ringRepository;
     private final AthleteRepository athleteRepository;
+    private final RoundScoreRepository roundScoreRepository;
+    private final PenaltyRepository penaltyRepository;
+    private final BoutResultRepository boutResultRepository;
+    private final ScheduleItemRepository scheduleItemRepository;
 
     public AdminBoutService(
             BoutRepository boutRepository,
             TournamentRepository tournamentRepository,
             RingRepository ringRepository,
-            AthleteRepository athleteRepository
+            AthleteRepository athleteRepository,
+            RoundScoreRepository roundScoreRepository,
+            PenaltyRepository penaltyRepository,
+            BoutResultRepository boutResultRepository,
+            ScheduleItemRepository scheduleItemRepository
     ) {
         this.boutRepository = boutRepository;
         this.tournamentRepository = tournamentRepository;
         this.ringRepository = ringRepository;
         this.athleteRepository = athleteRepository;
+        this.roundScoreRepository = roundScoreRepository;
+        this.penaltyRepository = penaltyRepository;
+        this.boutResultRepository = boutResultRepository;
+        this.scheduleItemRepository = scheduleItemRepository;
     }
 
     @Transactional(readOnly = true)
@@ -96,29 +114,54 @@ public class AdminBoutService {
     }
 
     public AdminBoutResponse createBout(AdminBoutRequest request) {
+        return createBout(request, null, null);
+    }
+
+    private AdminBoutResponse createBout(
+            AdminBoutRequest request,
+            String importBatchKey,
+            Integer importRowNumber
+    ) {
         validateRequest(request);
+        lockTournament(request.getTournamentId());
+        Integer boutNumber = nextBoutNumber(request.getTournamentId());
 
         Bout bout = Bout.builder()
                 .tournamentId(request.getTournamentId())
                 .ringId(request.getRingId())
-                .boutNumber(request.getBoutNumber())
+                .boutNumber(boutNumber)
                 .matchType(request.getMatchType())
                 .redAthleteId(request.getRedAthleteId())
                 .blueAthleteId(request.getBlueAthleteId())
                 .totalRounds(request.getTotalRounds())
                 .scheduledOrder(request.getScheduledOrder())
                 .eventBout(request.isEventBout())
+                .importBatchKey(importBatchKey)
+                .importRowNumber(importRowNumber)
                 .build();
 
         return AdminBoutResponse.from(boutRepository.save(bout));
     }
 
     public AdminBoutImportResponse importBouts(MultipartFile file) {
-        validateImportFile(file);
-        return isExcelFile(file) ? importExcelBouts(file) : importCsvBouts(file);
+        return importBouts(file, UUID.randomUUID().toString());
     }
 
-    private AdminBoutImportResponse importCsvBouts(MultipartFile file) {
+    public AdminBoutImportResponse importBouts(MultipartFile file, String idempotencyKey) {
+        validateImportFile(file);
+        String normalizedKey = validateImportKey(idempotencyKey);
+        List<Bout> existingBouts = boutRepository.findByImportBatchKeyOrderByImportRowNumberAsc(normalizedKey);
+        if (!existingBouts.isEmpty()) {
+            return AdminBoutImportResponse.from(existingBouts.stream()
+                    .map(AdminBoutResponse::from)
+                    .collect(Collectors.toList()));
+        }
+        return isExcelFile(file)
+                ? importExcelBouts(file, normalizedKey)
+                : importCsvBouts(file, normalizedKey);
+    }
+
+    private AdminBoutImportResponse importCsvBouts(MultipartFile file, String idempotencyKey) {
 
         List<AdminBoutResponse> importedBouts = new ArrayList<>();
         try (
@@ -132,7 +175,11 @@ public class AdminBoutService {
         ) {
             validateImportHeaders(parser);
             for (CSVRecord record : parser) {
-                importedBouts.add(createBout(toImportRequest(record)));
+                importedBouts.add(createBout(
+                        toImportRequest(record),
+                        idempotencyKey,
+                        Math.toIntExact(record.getRecordNumber())
+                ));
             }
         } catch (IOException exception) {
             throw new IllegalArgumentException("bout import file cannot be read");
@@ -144,7 +191,7 @@ public class AdminBoutService {
         return AdminBoutImportResponse.from(importedBouts);
     }
 
-    private AdminBoutImportResponse importExcelBouts(MultipartFile file) {
+    private AdminBoutImportResponse importExcelBouts(MultipartFile file, String idempotencyKey) {
         List<AdminBoutResponse> importedBouts = new ArrayList<>();
         DataFormatter formatter = new DataFormatter(Locale.ROOT);
         try (InputStream inputStream = file.getInputStream(); Workbook workbook = WorkbookFactory.create(inputStream)) {
@@ -164,7 +211,7 @@ public class AdminBoutService {
                     Cell cell = row.getCell(headerIndexes.get(header), Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
                     values.put(header, cell == null ? null : formatter.formatCellValue(cell));
                 }
-                importedBouts.add(createBout(toImportRequest(values, rowIndex + 1L)));
+                importedBouts.add(createBout(toImportRequest(values, rowIndex + 1L), idempotencyKey, rowIndex));
             }
         } catch (IOException exception) {
             throw new IllegalArgumentException("bout import file cannot be read");
@@ -182,10 +229,11 @@ public class AdminBoutService {
 
         Bout bout = boutRepository.findById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
+        validateScheduleMutation(bout, request);
         bout.updateSchedule(
                 request.getTournamentId(),
                 request.getRingId(),
-                request.getBoutNumber(),
+                bout.getBoutNumber(),
                 request.getMatchType(),
                 request.getRedAthleteId(),
                 request.getBlueAthleteId(),
@@ -199,11 +247,40 @@ public class AdminBoutService {
 
     public void deleteBout(Long boutId) {
         validateBoutId(boutId);
-        if (!boutRepository.existsById(boutId)) {
-            throw new BoutNotFoundException();
+        Bout bout = boutRepository.findById(boutId)
+                .orElseThrow(BoutNotFoundException::new);
+        validateDeleteAllowed(bout);
+        boutRepository.deleteById(boutId);
+    }
+
+    private void validateScheduleMutation(Bout bout, AdminBoutRequest request) {
+        if (bout.getStatus() == BoutStatus.IN_PROGRESS
+                || bout.getStatus() == BoutStatus.SCORING
+                || bout.isCompleted()) {
+            throw new WorkflowConflictException("BOUT_SCHEDULE_LOCKED");
+        }
+        if (!bout.getTournamentId().equals(request.getTournamentId())) {
+            throw new IllegalArgumentException("bout tournament cannot be changed");
+        }
+    }
+
+    private void validateDeleteAllowed(Bout bout) {
+        if (bout.getStatus() == BoutStatus.IN_PROGRESS
+                || bout.getStatus() == BoutStatus.SCORING
+                || bout.isCompleted()
+                || roundScoreRepository.existsByBoutId(bout.getId())
+                || penaltyRepository.existsByBoutId(bout.getId())
+                || boutResultRepository.existsByBoutId(bout.getId())
+                || scheduleItemRepository.existsByRelatedBoutId(bout.getId())) {
+            throw new WorkflowConflictException("BOUT_DELETE_NOT_ALLOWED");
         }
 
-        boutRepository.deleteById(boutId);
+        boolean isCurrentBout = ringRepository.findById(bout.getRingId())
+                .map(ring -> bout.getId().equals(ring.getCurrentBoutId()))
+                .orElse(false);
+        if (isCurrentBout) {
+            throw new WorkflowConflictException("BOUT_DELETE_NOT_ALLOWED");
+        }
     }
 
     private void validateRequest(AdminBoutRequest request) {
@@ -224,8 +301,8 @@ public class AdminBoutService {
             throw new IllegalArgumentException("ring does not belong to tournament");
         }
 
-        if (!athleteRepository.existsById(request.getRedAthleteId())
-                || !athleteRepository.existsById(request.getBlueAthleteId())) {
+        if (!athleteRepository.existsByIdAndTournamentId(request.getRedAthleteId(), request.getTournamentId())
+                || !athleteRepository.existsByIdAndTournamentId(request.getBlueAthleteId(), request.getTournamentId())) {
             throw new AthleteNotFoundException();
         }
     }
@@ -234,12 +311,6 @@ public class AdminBoutService {
         validateTournamentId(request.getTournamentId());
         if (request.getRingId() == null) {
             throw new IllegalArgumentException("ringId is required");
-        }
-        if (request.getBoutNumber() == null) {
-            throw new IllegalArgumentException("boutNumber is required");
-        }
-        if (request.getBoutNumber() <= 0) {
-            throw new IllegalArgumentException("boutNumber must be positive");
         }
         if (request.getRedAthleteId() == null) {
             throw new IllegalArgumentException("redAthleteId is required");
@@ -281,6 +352,17 @@ public class AdminBoutService {
                 && !normalizedFilename.endsWith(".xlsx")) {
             throw new IllegalArgumentException("Only CSV or Excel bout import is supported");
         }
+    }
+
+    private String validateImportKey(String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("idempotencyKey is required");
+        }
+        String normalizedKey = idempotencyKey.trim();
+        if (normalizedKey.length() > 100) {
+            throw new IllegalArgumentException("idempotencyKey must be 100 characters or fewer");
+        }
+        return normalizedKey;
     }
 
     private boolean isExcelFile(MultipartFile file) {
@@ -336,7 +418,6 @@ public class AdminBoutService {
             return new AdminBoutRequest(
                     parseLong(values.get("tournamentId"), "tournamentId", true),
                     parseLong(values.get("ringId"), "ringId", true),
-                    parseInteger(values.get("boutNumber"), "boutNumber", true),
                     normalize(values.get("matchType")),
                     parseLong(values.get("redAthleteId"), "redAthleteId", true),
                     parseLong(values.get("blueAthleteId"), "blueAthleteId", true),
@@ -389,5 +470,15 @@ public class AdminBoutService {
             return null;
         }
         return value.trim();
+    }
+
+    private void lockTournament(Long tournamentId) {
+        tournamentRepository.findWithLockById(tournamentId)
+                .orElseThrow(TournamentNotFoundException::new);
+    }
+
+    private int nextBoutNumber(Long tournamentId) {
+        Integer currentNumber = boutRepository.findMaxBoutNumberByTournamentId(tournamentId);
+        return (currentNumber == null ? 0 : currentNumber) + 1;
     }
 }

@@ -34,6 +34,7 @@ class BoutRepositoryTest {
         assertThat(ringBouts).extracting(Bout::getScheduledOrder).containsExactly(1, 2);
         assertThat(currentBout).isPresent();
         assertThat(currentBout.get().getBoutNumber()).isEqualTo(1);
+        assertThat(boutRepository.findMaxBoutNumberByTournamentId(1L)).isEqualTo(2);
     }
 
     private Bout createBout(Long tournamentId, Long ringId, int boutNumber, int scheduledOrder, BoutStatus status) {

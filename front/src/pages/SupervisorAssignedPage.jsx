@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getBoutDetail } from '../api/audience';
 import { login, logout } from '../api/auth';
-import { confirmResult, createPenalty, getPenalties, getSupervisorScores } from '../api/supervisor';
+import { confirmResult, correctResult, createPenalty, getPenalties, getSupervisorScores } from '../api/supervisor';
 import { getAssignedBouts, getAssignedRings } from '../api/staffAssignments';
 import { StatePanel } from '../components/StatePanel';
 import { useBoutEventStream } from '../hooks/useBoutEventStream';
 import { useEventRefresh } from '../hooks/useEventRefresh';
 
 const SESSION_KEY = 'boxing.supervisor.session';
-const SUPERVISOR_EVENT_TYPES = ['BOUT_STARTED', 'BOUT_STATUS_CHANGED', 'ROUND_STARTED', 'NEXT_BOUT_READY', 'SCORE_SUBMITTED', 'RESULT_CONFIRMED'];
+const SUPERVISOR_EVENT_TYPES = ['BOUT_STARTED', 'BOUT_STATUS_CHANGED', 'ROUND_STARTED', 'NEXT_BOUT_READY', 'SCORE_SUBMITTED', 'RESULT_CONFIRMED', 'RESULT_CORRECTED'];
 const DECISION_TYPES = [
   ['POINTS', 'Points'],
   ['KO', 'KO'],
-  ['RSC', 'RSC'],
+  ['RSC', 'TKO'],
   ['ABD', 'Abandoned'],
   ['DSQ', 'Disqualification'],
   ['WALKOVER', 'Walkover'],
@@ -38,6 +38,9 @@ function requestMessage(error, fallback) {
     INVALID_WINNER_SELECTION: 'Select a valid winner.',
     PENALTY_NOT_ALLOWED: 'Penalties cannot be added after result confirmation.',
     RESULT_ALREADY_CONFIRMED: 'This result has already been confirmed.',
+    RESULT_NOT_FOUND: 'No confirmed result exists for this bout.',
+    RESULT_NOT_CONFIRMED: 'Only a confirmed result can be corrected.',
+    reason: 'Enter a correction reason.',
     SCORES_NOT_READY: 'All available judge scores must be submitted first.',
   };
   return messages[error?.message] || fallback;
@@ -80,7 +83,9 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
   const [actionError, setActionError] = useState('');
   const [penalty, setPenalty] = useState({ penaltyPoint: '', reason: '', roundNo: '1', targetSide: 'RED' });
   const [resultForm, setResultForm] = useState({ decisionType: 'POINTS', winnerSide: 'RED' });
+  const [correctionForm, setCorrectionForm] = useState({ decisionType: 'POINTS', reason: '', winnerSide: 'RED' });
   const [confirmingResult, setConfirmingResult] = useState(false);
+  const [confirmingCorrection, setConfirmingCorrection] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
 
@@ -98,12 +103,13 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
   const scoreReady = submittedScores.length > 0 && draftScores.length === 0;
   const boutStarted = bout?.status === 'IN_PROGRESS' || bout?.status === 'SCORING';
   const canConfirm = !confirmed && boutStarted && scoreReady;
-  const adjustedRed = scoreTotals.red - penaltyTotals.red;
-  const adjustedBlue = scoreTotals.blue - penaltyTotals.blue;
+  const effectiveRed = scoreTotals.red + penaltyTotals.blue;
+  const effectiveBlue = scoreTotals.blue + penaltyTotals.red;
   const penaltyRounds = useMemo(() => bout
     ? Array.from({ length: Math.max(1, bout.totalRounds || bout.currentRound || 1) }, (_, index) => index + 1)
     : [], [bout]);
-  const expectedWinner = adjustedRed === adjustedBlue ? 'DRAW' : adjustedRed > adjustedBlue ? 'RED' : 'BLUE';
+  const expectedWinner = effectiveRed === effectiveBlue ? 'DRAW' : effectiveRed > effectiveBlue ? 'RED' : 'BLUE';
+  const totalsTied = effectiveRed === effectiveBlue;
   const winnerMismatch = resultForm.decisionType === 'POINTS'
     && expectedWinner !== 'DRAW'
     && resultForm.winnerSide !== expectedWinner;
@@ -164,6 +170,11 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
         setScores(nextScores || []);
         setPenalties(nextPenalties || []);
         setResult(nextBout.result || null);
+        setCorrectionForm({
+          decisionType: nextBout.result?.decisionType || 'POINTS',
+          reason: '',
+          winnerSide: nextBout.result?.winnerSide || 'RED',
+        });
       }
     } catch (requestError) {
       if (isActive()) setActionError(requestMessage(requestError, 'Review data could not be loaded.'));
@@ -175,7 +186,9 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
   useEffect(() => {
     setPenalty({ penaltyPoint: '', reason: '', roundNo: '1', targetSide: 'RED' });
     setResultForm({ decisionType: 'POINTS', winnerSide: 'RED' });
+    setCorrectionForm({ decisionType: 'POINTS', reason: '', winnerSide: 'RED' });
     setConfirmingResult(false);
+    setConfirmingCorrection(false);
     setActionError('');
     let active = true;
     loadDetail(boutId, () => active);
@@ -251,6 +264,40 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
     }
   }
 
+  function startResultCorrection(event) {
+    event.preventDefault();
+    if (!correctionForm.reason.trim()) {
+      setActionError('Enter a correction reason.');
+      return;
+    }
+    setActionError('');
+    setConfirmingCorrection(true);
+  }
+
+  async function submitResultCorrection() {
+    if (busyRef.current || !correctionForm.reason.trim()) return;
+    busyRef.current = true;
+    setBusy(true);
+    setActionError('');
+    try {
+      const saved = await correctResult(boutId, {
+        decisionType: correctionForm.decisionType,
+        reason: correctionForm.reason.trim(),
+        winnerSide: correctionForm.winnerSide,
+      }, session.accessToken);
+      const correctedResult = saved || { ...result, ...correctionForm };
+      setResult(correctedResult);
+      setBout((current) => current ? { ...current, result: correctedResult, resultConfirmed: true, status: 'FINISHED', winnerSide: correctedResult.winnerSide } : current);
+      setCorrectionForm((current) => ({ ...current, reason: '' }));
+      setConfirmingCorrection(false);
+    } catch (requestError) {
+      setActionError(requestMessage(requestError, 'Result correction failed.'));
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  }
+
   if (loading) return <main className="page-shell"><StatePanel title="Loading assigned rings">Please wait.</StatePanel></main>;
   return <main className="page-shell supervisor-shell">
     <div className="judge-heading">
@@ -271,8 +318,8 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
           <p>{bout.redAthlete?.name || 'Red'} vs {bout.blueAthlete?.name || 'Blue'}</p>
           <h4>Scores</h4>
           <div className="supervisor-score-summary">
-            <div className="supervisor-total red-total"><span>Red total</span><strong>{scoreTotals.red}</strong><small>Penalty -{penaltyTotals.red} · Adjusted {adjustedRed}</small></div>
-            <div className="supervisor-total blue-total"><span>Blue total</span><strong>{scoreTotals.blue}</strong><small>Penalty -{penaltyTotals.blue} · Adjusted {adjustedBlue}</small></div>
+            <div className="supervisor-total red-total"><span>Red total</span><strong>{scoreTotals.red}</strong><small>Blue penalty +{penaltyTotals.blue} | Effective {effectiveRed}</small></div>
+            <div className="supervisor-total blue-total"><span>Blue total</span><strong>{scoreTotals.blue}</strong><small>Red penalty +{penaltyTotals.red} | Effective {effectiveBlue}</small></div>
           </div>
           <p aria-live="polite" className="score-readiness">Submitted {submittedScores.length} · Draft {draftScores.length}</p>
           <ScoreReview scores={scores} />
@@ -286,7 +333,15 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
             <button className="command-button" disabled={busy || confirmed} type="submit">Add penalty</button>
           </form>
           <h4>Result</h4>
-          {confirmed ? <div className="confirmed-result supervisor-confirmed"><strong>{resultLabel(result)}</strong><small>Result confirmed. Further changes are locked.</small></div> : <form noValidate onSubmit={startResultConfirmation}>
+          {confirmed ? <>
+            <div className="confirmed-result supervisor-confirmed"><strong>{resultLabel(result)}</strong><small>Result confirmed. A Supervisor may correct it with a required reason.</small></div>
+            <form noValidate onSubmit={startResultCorrection}>
+              <label>Winner<select disabled={busy} onChange={(event) => setCorrectionForm({ ...correctionForm, winnerSide: event.target.value })} value={correctionForm.winnerSide}><option value="RED">Red</option><option value="BLUE">Blue</option><option value="DRAW">Draw</option></select></label>
+              <label>Decision<select disabled={busy} onChange={(event) => setCorrectionForm({ ...correctionForm, decisionType: event.target.value })} value={correctionForm.decisionType}>{DECISION_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <label>Correction reason<textarea disabled={busy} maxLength="500" onChange={(event) => setCorrectionForm({ ...correctionForm, reason: event.target.value })} required value={correctionForm.reason} /></label>
+              <button className="command-button" disabled={busy} type="submit">Review correction</button>
+            </form>
+          </> : <form noValidate onSubmit={startResultConfirmation}>
             <label>Winner<select disabled={busy} onChange={(event) => setResultForm({ ...resultForm, winnerSide: event.target.value })} value={resultForm.winnerSide}><option value="RED">Red</option><option value="BLUE">Blue</option><option value="DRAW">Draw</option></select></label>
             <label>Decision<select disabled={busy} onChange={(event) => setResultForm({ ...resultForm, decisionType: event.target.value })} value={resultForm.decisionType}>{DECISION_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
             <button className="command-button" disabled={busy || !canConfirm} type="submit">Review result</button>
@@ -294,9 +349,16 @@ export function SupervisorAssignedPage({ session, onLogout, tournamentId }) {
           {confirmingResult && !confirmed && <div aria-label="Confirm result" className="score-confirmation" role="dialog">
             <strong>Confirm result</strong>
             <p>Bout {bout.boutNumber}: {bout.redAthlete?.name || 'Red'} vs {bout.blueAthlete?.name || 'Blue'}</p>
-            <p>{resultForm.winnerSide} · {resultForm.decisionType} · scores {scoreTotals.red}-{scoreTotals.blue} · penalties {penaltyTotals.red}-{penaltyTotals.blue}</p>
-            {winnerMismatch && <p className="form-error" role="alert">The selected winner differs from the adjusted score comparison.</p>}
+            <p>{resultForm.winnerSide} | {resultForm.decisionType} | effective scores {effectiveRed}-{effectiveBlue}</p>
+            {totalsTied && <p>Effective totals are tied. Supervisor decides the final winner.</p>}
+            {winnerMismatch && <p className="form-error" role="alert">The selected winner differs from the effective score comparison.</p>}
             <div><button className="command-button" disabled={busy} onClick={submitResult} type="button">Confirm result</button><button className="secondary-button" disabled={busy} onClick={() => setConfirmingResult(false)} type="button">Cancel</button></div>
+          </div>}
+          {confirmingCorrection && confirmed && <div aria-label="Confirm result correction" className="score-confirmation" role="dialog">
+            <strong>Confirm result correction</strong>
+            <p>Bout {bout.boutNumber}: {correctionForm.winnerSide} · {correctionForm.decisionType}</p>
+            <p>Reason: {correctionForm.reason}</p>
+            <div><button className="command-button" disabled={busy} onClick={submitResultCorrection} type="button">Confirm correction</button><button className="secondary-button" disabled={busy} onClick={() => setConfirmingCorrection(false)} type="button">Cancel</button></div>
           </div>}
           {actionError && <p aria-live="polite" className="form-error" role="alert">{actionError}</p>}
         </> : <StatePanel title="Select a bout">Choose an assigned bout to review.</StatePanel>}

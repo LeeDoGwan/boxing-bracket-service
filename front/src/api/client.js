@@ -10,22 +10,27 @@ export function buildApiUrl(path, params = {}) {
   return configuredBaseUrl ? url.toString() : `${url.pathname}${url.search}`;
 }
 
-function requestHeaders(token, hasBody, isFormData) {
+function requestHeaders(token, hasBody, isFormData, extraHeaders = {}) {
   return {
     Accept: 'application/json',
     ...(hasBody && !isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extraHeaders,
   };
 }
 
-export async function requestApi(path, { body, method = 'GET', params, signal, token } = {}) {
+export async function requestApi(path, { body, headers, method = 'GET', params, signal, token } = {}) {
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const response = await fetch(buildApiUrl(path, params), {
     body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-    headers: requestHeaders(token, body !== undefined, isFormData),
+    headers: requestHeaders(token, body !== undefined, isFormData, headers),
     method,
     signal,
   });
+
+  if (response.status === 401 && token && typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('boxing:staff-logout'));
+  }
 
   let payload;
   try {

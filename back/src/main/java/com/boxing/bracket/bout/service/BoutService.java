@@ -5,10 +5,15 @@ import com.boxing.bracket.athlete.repository.AthleteRepository;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.dto.BoutDetailResponse;
 import com.boxing.bracket.bout.dto.BoutListResponse;
+import com.boxing.bracket.bout.dto.BoutRoundScoreResponse;
 import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
 import com.boxing.bracket.scoring.domain.BoutResult;
+import com.boxing.bracket.scoring.domain.RoundScore;
+import com.boxing.bracket.scoring.domain.RoundScoreStatus;
 import com.boxing.bracket.scoring.repository.BoutResultRepository;
+import com.boxing.bracket.scoring.repository.RoundScoreRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,15 +34,27 @@ public class BoutService {
     private final BoutRepository boutRepository;
     private final AthleteRepository athleteRepository;
     private final BoutResultRepository boutResultRepository;
+    private final RoundScoreRepository roundScoreRepository;
 
     public BoutService(
             BoutRepository boutRepository,
             AthleteRepository athleteRepository,
             BoutResultRepository boutResultRepository
     ) {
+        this(boutRepository, athleteRepository, boutResultRepository, null);
+    }
+
+    @Autowired
+    public BoutService(
+            BoutRepository boutRepository,
+            AthleteRepository athleteRepository,
+            BoutResultRepository boutResultRepository,
+            RoundScoreRepository roundScoreRepository
+    ) {
         this.boutRepository = boutRepository;
         this.athleteRepository = athleteRepository;
         this.boutResultRepository = boutResultRepository;
+        this.roundScoreRepository = roundScoreRepository;
     }
 
     public List<BoutListResponse> getOfficialBouts(Long tournamentId) {
@@ -74,6 +91,10 @@ public class BoutService {
                 .stream()
                 .map(Athlete::getId)
                 .filter(Objects::nonNull)
+                .filter(athleteId -> athleteRepository.findById(athleteId)
+                        .map(athlete -> athlete.getTournamentId() == null
+                                || tournamentId.equals(athlete.getTournamentId()))
+                        .orElse(false))
                 .collect(Collectors.toSet());
 
         List<Bout> matchedBouts = boutRepository.findByTournamentIdOrderByScheduledOrderAsc(tournamentId).stream()
@@ -97,17 +118,39 @@ public class BoutService {
 
         return BoutDetailResponse.of(
                 bout,
-                getAthlete(bout.getRedAthleteId()),
-                getAthlete(bout.getBlueAthleteId()),
-                boutResultRepository.findByBoutId(boutId).orElse(null)
+                getAthlete(bout.getTournamentId(), bout.getRedAthleteId()),
+                getAthlete(bout.getTournamentId(), bout.getBlueAthleteId()),
+                boutResultRepository.findByBoutId(boutId).orElse(null),
+                getPublicRoundScores(boutId)
         );
+    }
+
+    private List<BoutRoundScoreResponse> getPublicRoundScores(Long boutId) {
+        if (roundScoreRepository == null) {
+            return Collections.emptyList();
+        }
+
+        List<RoundScore> submittedScores = roundScoreRepository.findByBoutIdOrderByRoundNoAscJudgeIdAsc(boutId);
+        if (submittedScores == null) {
+            return Collections.emptyList();
+        }
+
+        Map<Integer, Integer> judgeNoByRound = new java.util.HashMap<>();
+        return submittedScores.stream()
+                .filter(score -> score.getStatus() == RoundScoreStatus.SUBMITTED)
+                .filter(score -> score.getRedScore() != null && score.getBlueScore() != null)
+                .map(score -> BoutRoundScoreResponse.of(
+                        score,
+                        judgeNoByRound.merge(score.getRoundNo(), 1, Integer::sum)
+                ))
+                .collect(Collectors.toList());
     }
 
     private BoutListResponse toListResponse(Bout bout, BoutResult boutResult) {
         return BoutListResponse.of(
                 bout,
-                getAthlete(bout.getRedAthleteId()),
-                getAthlete(bout.getBlueAthleteId()),
+                getAthlete(bout.getTournamentId(), bout.getRedAthleteId()),
+                getAthlete(bout.getTournamentId(), bout.getBlueAthleteId()),
                 boutResult
         );
     }
@@ -150,8 +193,10 @@ public class BoutService {
         }
     }
 
-    private Athlete getAthlete(Long athleteId) {
+    private Athlete getAthlete(Long tournamentId, Long athleteId) {
         return athleteRepository.findById(athleteId)
+                .filter(athlete -> athlete.getTournamentId() == null
+                        || tournamentId.equals(athlete.getTournamentId()))
                 .orElseThrow(() -> new IllegalStateException("Athlete not found"));
     }
 }

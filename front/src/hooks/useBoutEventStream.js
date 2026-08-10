@@ -8,6 +8,7 @@ export const DEFAULT_EVENT_TYPES = [
   'NEXT_BOUT_READY',
   'SCORE_SUBMITTED',
   'RESULT_CONFIRMED',
+  'RESULT_CORRECTED',
 ];
 
 export function useBoutEventStream(tournamentId, onEventOrOptions) {

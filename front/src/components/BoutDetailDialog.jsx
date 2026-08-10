@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getBoutDetail } from '../api/audience';
-import { athleteLabel, statusLabel, winnerText } from '../utils';
+import { athleteLabel, decisionLabel, effectiveResultScores, statusLabel, winnerText } from '../utils';
 
 export function BoutDetailDialog({ boutId, onClose }) {
   const [state, setState] = useState({ loading: false, detail: null, error: null });
@@ -56,6 +56,7 @@ export function BoutDetailDialog({ boutId, onClose }) {
   }
 
   const { detail, error, loading } = state;
+  const effectiveScores = effectiveResultScores(detail?.result);
   return (
     <div aria-modal="true" className="dialog-backdrop" role="presentation">
       <section aria-labelledby="bout-detail-title" aria-modal="true" className="bout-dialog" role="dialog">
@@ -76,12 +77,33 @@ export function BoutDetailDialog({ boutId, onClose }) {
               <p><span className="red-label">홍</span>{athleteLabel(detail.redAthlete)}</p>
               <p><span className="blue-label">청</span>{athleteLabel(detail.blueAthlete)}</p>
             </div>
+            {detail.roundScores?.length > 0 && (
+              <section aria-label="Round scores" className="public-round-scores">
+                <h3>Round scores</h3>
+                <div className="public-round-score-table" role="table">
+                  <div className="public-round-score-row public-round-score-header" role="row">
+                    <span>Round</span>
+                    <span>Judge</span>
+                    <span className="red-score-text">Red</span>
+                    <span className="blue-score-text">Blue</span>
+                  </div>
+                  {detail.roundScores.map((score) => (
+                    <div className="public-round-score-row" key={`${score.roundNo}-${score.judgeNo}`} role="row">
+                      <span>R{score.roundNo}</span>
+                      <span>Judge {score.judgeNo}</span>
+                      <strong className="red-score-text">{score.redScore}</strong>
+                      <strong className="blue-score-text">{score.blueScore}</strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
             {detail.resultConfirmed && (
               <div className="confirmed-result">
                 <p>확정 결과</p>
                 <strong>{winnerText(detail)}</strong>
-                <span className="confirmed-score-summary">총점 {detail.result?.redTotalScore ?? '-'} : {detail.result?.blueTotalScore ?? '-'}</span>
-                <span>{detail.result?.decisionType || '판정'}</span>
+                <span className="confirmed-score-summary">Effective score {effectiveScores?.red ?? '-'} : {effectiveScores?.blue ?? '-'}</span>
+                <span>{decisionLabel(detail.result?.decisionType)}</span>
               </div>
             )}
           </>

@@ -49,6 +49,22 @@ public class AuditDataSerializer {
         }
     }
 
+    public String appendTextField(String serialized, String fieldName, String value) {
+        if (serialized == null || fieldName == null || value == null) {
+            return serialized;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(serialized);
+            if (node instanceof ObjectNode) {
+                ((ObjectNode) node).put(fieldName, value);
+                return objectMapper.writeValueAsString(node);
+            }
+        } catch (JsonProcessingException | IllegalArgumentException ignored) {
+            return serialized;
+        }
+        return serialized;
+    }
+
     public JsonNode toRequestNode(Object[] arguments) {
         if (arguments == null || arguments.length == 0) {
             return null;

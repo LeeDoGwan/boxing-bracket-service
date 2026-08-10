@@ -30,14 +30,18 @@ public class AdminAthleteController {
 
     @GetMapping
     public ApiResponse<List<AthleteResponse>> getAthletes(
+            @RequestParam Long tournamentId,
             @RequestParam(required = false) String keyword
     ) {
-        return ApiResponse.success(adminAthleteService.getAthletes(keyword), "OK");
+        return ApiResponse.success(adminAthleteService.getAthletes(tournamentId, keyword), "OK");
     }
 
     @GetMapping("/{athleteId}")
-    public ApiResponse<AthleteResponse> getAthlete(@PathVariable Long athleteId) {
-        return ApiResponse.success(adminAthleteService.getAthlete(athleteId), "OK");
+    public ApiResponse<AthleteResponse> getAthlete(
+            @PathVariable Long athleteId,
+            @RequestParam Long tournamentId
+    ) {
+        return ApiResponse.success(adminAthleteService.getAthlete(tournamentId, athleteId), "OK");
     }
 
     @PostMapping
@@ -50,12 +54,18 @@ public class AdminAthleteController {
             @PathVariable Long athleteId,
             @Valid @RequestBody AthleteRequest request
     ) {
-        return ApiResponse.success(adminAthleteService.updateAthlete(athleteId, request), "OK");
+        return ApiResponse.success(
+                adminAthleteService.updateAthlete(request.getTournamentId(), athleteId, request),
+                "OK"
+        );
     }
 
     @DeleteMapping("/{athleteId}")
-    public ApiResponse<Void> deleteAthlete(@PathVariable Long athleteId) {
-        adminAthleteService.deleteAthlete(athleteId);
+    public ApiResponse<Void> deleteAthlete(
+            @PathVariable Long athleteId,
+            @RequestParam Long tournamentId
+    ) {
+        adminAthleteService.deleteAthlete(tournamentId, athleteId);
         return ApiResponse.success(null, "OK");
     }
 }

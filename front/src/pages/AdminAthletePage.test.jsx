@@ -42,7 +42,7 @@ describe('AdminAthletePage', () => {
     fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '선수 관리' })).toBeInTheDocument();
-    expect(getAthletes).toHaveBeenCalledWith('', 'admin-token');
+    expect(getAthletes).toHaveBeenCalledWith(1, '', 'admin-token');
     expect(await screen.findByText('Red Boxer')).toBeInTheDocument();
   });
 
@@ -53,13 +53,13 @@ describe('AdminAthletePage', () => {
     expect(await screen.findByText('Red Boxer')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('선수 검색'), { target: { value: 'Blue' } });
     fireEvent.click(screen.getByRole('button', { name: '검색' }));
-    await waitFor(() => expect(getAthletes).toHaveBeenCalledWith('Blue', 'admin-token'));
+    await waitFor(() => expect(getAthletes).toHaveBeenCalledWith(1, 'Blue', 'admin-token'));
     fireEvent.click(screen.getByRole('button', { name: '+ 새 선수' }));
     fireEvent.change(screen.getByLabelText('선수명'), { target: { value: 'Blue Boxer' } });
     fireEvent.change(screen.getByLabelText('소속'), { target: { value: 'Blue Gym' } });
     fireEvent.click(screen.getByRole('button', { name: '선수 생성' }));
 
-    await waitFor(() => expect(createAthlete).toHaveBeenCalledWith({ affiliation: 'Blue Gym', name: 'Blue Boxer' }, 'admin-token'));
+    await waitFor(() => expect(createAthlete).toHaveBeenCalledWith({ affiliation: 'Blue Gym', name: 'Blue Boxer', tournamentId: 1 }, 'admin-token'));
     expect(await screen.findByText('선수를 생성했습니다.')).toBeInTheDocument();
   });
 
@@ -71,11 +71,11 @@ describe('AdminAthletePage', () => {
     fireEvent.change(screen.getByLabelText('선수명'), { target: { value: 'Main Boxer' } });
     fireEvent.change(screen.getByLabelText('소속'), { target: { value: 'Main Gym' } });
     fireEvent.click(screen.getByRole('button', { name: '선수 저장' }));
-    await waitFor(() => expect(updateAthlete).toHaveBeenCalledWith(10, { affiliation: 'Main Gym', name: 'Main Boxer' }, 'admin-token'));
+    await waitFor(() => expect(updateAthlete).toHaveBeenCalledWith(10, { affiliation: 'Main Gym', name: 'Main Boxer', tournamentId: 1 }, 'admin-token'));
 
     fireEvent.click(screen.getByRole('button', { name: '선수 삭제' }));
     fireEvent.click(screen.getByRole('button', { name: '확인' }));
-    await waitFor(() => expect(deleteAthlete).toHaveBeenCalledWith(10, 'admin-token'));
+    await waitFor(() => expect(deleteAthlete).toHaveBeenCalledWith(10, 1, 'admin-token'));
     expect(await screen.findByText('선수를 삭제했습니다.')).toBeInTheDocument();
   });
 });

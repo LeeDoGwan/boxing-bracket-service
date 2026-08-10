@@ -9,7 +9,7 @@ import { StatePanel } from '../components/StatePanel';
 const SESSION_KEY = 'boxing.operations.session';
 const ALLOWED_ROLES = new Set(['GAME_MANAGER', 'SERVICE_MANAGER']);
 const STATUS_LABELS = { CANCELED: '취소', FINISHED: '종료', IN_PROGRESS: '진행 중', READY: '준비', SCHEDULED: '예정', SCORING: '채점 중' };
-const CSV_HEADERS = 'tournamentId,ringId,boutNumber,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout';
+const CSV_HEADERS = 'tournamentId,ringId,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout';
 
 function readSession() {
   try {
@@ -22,11 +22,11 @@ function readSession() {
 }
 
 function blankForm(tournamentId) {
-  return { blueAthleteId: '', boutNumber: '', eventBout: false, matchType: '', redAthleteId: '', ringId: '', scheduledOrder: '', totalRounds: '3', tournamentId: String(tournamentId) };
+  return { blueAthleteId: '', eventBout: false, matchType: '', redAthleteId: '', ringId: '', scheduledOrder: '', totalRounds: '3', tournamentId: String(tournamentId) };
 }
 
 function formFromBout(bout) {
-  return { blueAthleteId: String(bout.blueAthleteId || ''), boutNumber: String(bout.boutNumber || ''), eventBout: bout.eventBout, matchType: bout.matchType || '', redAthleteId: String(bout.redAthleteId || ''), ringId: String(bout.ringId || ''), scheduledOrder: String(bout.scheduledOrder || ''), totalRounds: String(bout.totalRounds || ''), tournamentId: String(bout.tournamentId) };
+  return { blueAthleteId: String(bout.blueAthleteId || ''), eventBout: bout.eventBout, matchType: bout.matchType || '', redAthleteId: String(bout.redAthleteId || ''), ringId: String(bout.ringId || ''), scheduledOrder: String(bout.scheduledOrder || ''), totalRounds: String(bout.totalRounds || ''), tournamentId: String(bout.tournamentId) };
 }
 
 function statusLabel(status) {
@@ -36,6 +36,13 @@ function statusLabel(status) {
 function toNumber(value) {
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) ? parsed : null;
+}
+
+function createImportKey() {
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `bout-import-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 function LoginForm({ onLogin }) {
@@ -86,6 +93,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(() => blankForm(tournamentId));
   const [file, setFile] = useState(null);
+  const [importKey, setImportKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [listError, setListError] = useState('');
@@ -120,7 +128,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
     try {
       const [nextRings, nextAthletes] = await Promise.all([
         getRings(tournamentId, session.accessToken),
-        getAthletes('', session.accessToken),
+        getAthletes(tournamentId, '', session.accessToken),
       ]);
       setRings(nextRings || []);
       setAthletes(nextAthletes || []);
@@ -150,7 +158,6 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
     setMessage('');
     const payload = {
       blueAthleteId: toNumber(form.blueAthleteId),
-      boutNumber: toNumber(form.boutNumber),
       eventBout: form.eventBout,
       matchType: form.matchType || null,
       redAthleteId: toNumber(form.redAthleteId),
@@ -209,9 +216,10 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
     setActionError('');
     setMessage('');
     try {
-      const result = await importBouts(file, session.accessToken);
+      const result = await importBouts(file, session.accessToken, importKey);
       await loadBouts();
       setFile(null);
+      setImportKey('');
       formElement.reset();
       setMessage(`${result.importedCount}건의 경기를 가져왔습니다.`);
     } catch (requestError) {
@@ -240,7 +248,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
       {referenceError && <p aria-live="polite" className="form-error admin-reference-message" role="alert">{referenceError}</p>}
       {message && <p aria-live="polite" className="admin-success-message">{message}</p>}
-      <form className="bout-import-panel" onSubmit={handleImport}><label>대진 파일<input aria-label="대진 파일" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] || null)} type="file" /></label><div className="bout-import-actions"><button className="command-button" disabled={saving} type="submit">파일 가져오기</button><button className="secondary-button" onClick={downloadTemplate} type="button">CSV 양식 다운로드</button></div><small>필수 열: {CSV_HEADERS} · CSV, XLS, XLSX</small></form>
+      <form className="bout-import-panel" onSubmit={handleImport}><label>대진 파일<input aria-label="대진 파일" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const nextFile = event.target.files?.[0] || null; setFile(nextFile); setImportKey(nextFile ? createImportKey() : ''); }} type="file" /></label><div className="bout-import-actions"><button className="command-button" disabled={saving} type="submit">파일 가져오기</button><button className="secondary-button" onClick={downloadTemplate} type="button">CSV 양식 다운로드</button></div><small>경기 번호는 서버에서 자동 생성됩니다. · CSV, XLS, XLSX · 동일 파일 재시도는 중복 생성되지 않습니다.</small></form>
       {loading ? <StatePanel title="경기 목록을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
       {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadBouts} type="button">다시 시도</button>} title="경기 목록을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
       {!loading && !listError ? (
@@ -254,7 +262,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
           <section className="admin-form-panel">
             <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `BOUT ${selectedId}` : 'NEW BOUT'}</p><h3>{selectedId ? '경기 정보 수정' : '경기 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
-              <div className="admin-form-grid"><label>링<select aria-label="링" onChange={(event) => updateField('ringId', event.target.value)} required value={form.ringId}><option value="">링을 선택하세요</option>{form.ringId && !rings.some((ring) => String(ring.ringId) === form.ringId) ? <option value={form.ringId}>링 #{form.ringId}</option> : null}{rings.map((ring) => <option key={ring.ringId} value={ring.ringId}>{ring.name} · #{ring.ringId}</option>)}</select></label><label>경기 번호<input min="1" onChange={(event) => updateField('boutNumber', event.target.value)} required type="number" value={form.boutNumber} /></label><label>빨강 선수<select aria-label="빨강 선수" onChange={(event) => updateField('redAthleteId', event.target.value)} required value={form.redAthleteId}><option value="">선수를 선택하세요</option>{form.redAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.redAthleteId) ? <option value={form.redAthleteId}>선수 #{form.redAthleteId}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>파랑 선수<select aria-label="파랑 선수" onChange={(event) => updateField('blueAthleteId', event.target.value)} required value={form.blueAthleteId}><option value="">선수를 선택하세요</option>{form.blueAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.blueAthleteId) ? <option value={form.blueAthleteId}>선수 #{form.blueAthleteId}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>경기 유형<input onChange={(event) => updateField('matchType', event.target.value)} value={form.matchType} /></label><label>라운드 수<input min="1" onChange={(event) => updateField('totalRounds', event.target.value)} required type="number" value={form.totalRounds} /></label><label>진행 순서<input min="1" onChange={(event) => updateField('scheduledOrder', event.target.value)} required type="number" value={form.scheduledOrder} /></label><label className="admin-toggle-field"><input checked={form.eventBout} onChange={(event) => updateField('eventBout', event.target.checked)} type="checkbox" /> 이벤트 경기</label></div>
+              <div className="admin-form-grid"><label>링<select aria-label="링" onChange={(event) => updateField('ringId', event.target.value)} required value={form.ringId}><option value="">링을 선택하세요</option>{form.ringId && !rings.some((ring) => String(ring.ringId) === form.ringId) ? <option value={form.ringId}>링 #{form.ringId}</option> : null}{rings.map((ring) => <option key={ring.ringId} value={ring.ringId}>{ring.name} · #{ring.ringId}</option>)}</select></label><label>빨강 선수<select aria-label="빨강 선수" onChange={(event) => updateField('redAthleteId', event.target.value)} required value={form.redAthleteId}><option value="">선수를 선택하세요</option>{form.redAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.redAthleteId) ? <option value={form.redAthleteId}>선수 #{form.redAthleteId}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>파랑 선수<select aria-label="파랑 선수" onChange={(event) => updateField('blueAthleteId', event.target.value)} required value={form.blueAthleteId}><option value="">선수를 선택하세요</option>{form.blueAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.blueAthleteId) ? <option value={form.blueAthleteId}>선수 #{form.blueAthleteId}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>경기 유형<input onChange={(event) => updateField('matchType', event.target.value)} value={form.matchType} /></label><label>라운드 수<input min="1" onChange={(event) => updateField('totalRounds', event.target.value)} required type="number" value={form.totalRounds} /></label><label>진행 순서<input min="1" onChange={(event) => updateField('scheduledOrder', event.target.value)} required type="number" value={form.scheduledOrder} /></label><label className="admin-toggle-field"><input checked={form.eventBout} onChange={(event) => updateField('eventBout', event.target.checked)} type="checkbox" /> 이벤트 경기</label></div>
               <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '경기 저장' : '경기 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">경기 삭제</button> : null}</div>
             </form>
           </section>

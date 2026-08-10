@@ -51,7 +51,7 @@ function AppRoutes() {
         <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AuditLogPage tournamentId={tournamentId} /></StaffRoute>} path="/audit-logs" />
         <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminTournamentPage /></StaffRoute>} path="/admin/tournaments" />
         <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminRingPage tournamentId={tournamentId} /></StaffRoute>} path="/admin/rings" />
-        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminAthletePage /></StaffRoute>} path="/admin/athletes" />
+        <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminAthletePage tournamentId={tournamentId} /></StaffRoute>} path="/admin/athletes" />
         <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminNoticePage tournamentId={tournamentId} /></StaffRoute>} path="/admin/notices" />
         <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminSchedulePage tournamentId={tournamentId} /></StaffRoute>} path="/admin/schedules" />
         <Route element={<StaffRoute allowedRoles={['GAME_MANAGER', 'SERVICE_MANAGER']}><AdminBoutPage tournamentId={tournamentId} /></StaffRoute>} path="/admin/bouts" />

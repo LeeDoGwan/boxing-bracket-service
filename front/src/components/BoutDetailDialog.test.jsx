@@ -27,4 +27,26 @@ describe('BoutDetailDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /상세 닫기/ }));
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('shows submitted public round scores without exposing judge ids', async () => {
+    getBoutDetail.mockResolvedValue({
+      blueAthlete: { affiliation: 'Blue Gym', name: 'Blue Boxer' },
+      boutNumber: 12,
+      currentRound: 1,
+      matchType: 'Final',
+      redAthlete: { affiliation: 'Red Gym', name: 'Red Boxer' },
+      roundScores: [
+        { blueScore: 9, judgeNo: 1, redScore: 10, roundNo: 1 },
+        { blueScore: 10, judgeNo: 2, redScore: 9, roundNo: 1 },
+      ],
+      status: 'SCORING',
+      totalRounds: 3,
+    });
+
+    render(<BoutDetailDialog boutId={12} onClose={vi.fn()} />);
+
+    expect(await screen.findByRole('heading', { name: 'Round scores' })).toBeInTheDocument();
+    expect(screen.getByText('Judge 1')).toBeInTheDocument();
+    expect(screen.getByText('Judge 2')).toBeInTheDocument();
+  });
 });

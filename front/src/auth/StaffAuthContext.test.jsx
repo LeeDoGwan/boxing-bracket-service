@@ -1,9 +1,20 @@
 import {
   STAFF_SESSION_KEY,
+  StaffAuthProvider,
   clearStaffSession,
   readStaffSession,
+  useStaffAuth,
   writeStaffSession,
 } from './StaffAuthContext';
+
+import { render, screen, waitFor } from '@testing-library/react';
+
+vi.mock('../api/auth', () => ({
+  getCurrentAccount: vi.fn(),
+  logout: vi.fn(),
+}));
+
+import { getCurrentAccount } from '../api/auth';
 
 const session = {
   accessToken: 'staff-token',
@@ -12,6 +23,7 @@ const session = {
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  vi.clearAllMocks();
 });
 
 describe('staff session storage', () => {
@@ -38,6 +50,34 @@ describe('staff session storage', () => {
     clearStaffSession();
 
     expect(readStaffSession()).toBeNull();
+    expect(window.sessionStorage.length).toBe(0);
+  });
+});
+
+function SessionProbe() {
+  const { isChecking, session } = useStaffAuth();
+  return <output data-checking={isChecking} data-testid="session-probe">{session?.account.name || 'signed-out'}</output>;
+}
+
+describe('staff session validation', () => {
+  it('refreshes a stored session with the current account', async () => {
+    writeStaffSession(session);
+    getCurrentAccount.mockResolvedValue({ ...session.account, name: 'Updated Judge' });
+
+    render(<StaffAuthProvider><SessionProbe /></StaffAuthProvider>);
+
+    expect(await screen.findByText('Updated Judge')).toBeInTheDocument();
+    expect(getCurrentAccount).toHaveBeenCalledWith('staff-token');
+    expect(JSON.parse(window.sessionStorage.getItem(STAFF_SESSION_KEY)).account.name).toBe('Updated Judge');
+  });
+
+  it('clears stored sessions when the current account cannot be loaded', async () => {
+    writeStaffSession(session);
+    getCurrentAccount.mockRejectedValue(new Error('Authentication required'));
+
+    render(<StaffAuthProvider><SessionProbe /></StaffAuthProvider>);
+
+    await waitFor(() => expect(screen.getByTestId('session-probe')).toHaveTextContent('signed-out'));
     expect(window.sessionStorage.length).toBe(0);
   });
 });

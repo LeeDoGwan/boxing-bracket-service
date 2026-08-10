@@ -254,6 +254,13 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .dialog-status, .dialog-state { color: #52636a; }
 .detail-fighters { display: grid; gap: 10px; margin: 24px 0; border-top: 1px solid #d9e3e6; border-bottom: 1px solid #d9e3e6; padding: 18px 0; }
 .detail-fighters p { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 700; }
+.public-round-scores { margin: 24px 0; }
+.public-round-scores h3 { margin: 0 0 10px; font-size: 16px; }
+.public-round-score-table { overflow: hidden; border: 1px solid #d9e3e6; border-radius: 4px; }
+.public-round-score-row { display: grid; grid-template-columns: 72px 1fr 64px 64px; align-items: center; gap: 10px; border-bottom: 1px solid #e2eaed; padding: 10px 12px; font-size: 13px; }
+.public-round-score-row:last-child { border-bottom: 0; }
+.public-round-score-header { background: #edf2f3; color: #52636a; font-size: 12px; font-weight: 700; }
+.public-round-score-row strong { font-size: 16px; }
 .confirmed-result { display: grid; gap: 4px; border-left: 4px solid #0f7582; padding-left: 14px; }
 .confirmed-result p, .confirmed-result span { margin: 0; color: #52636a; }
 .confirmed-result strong { color: #0f7582; font-size: 20px; }
@@ -499,6 +506,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .bracket-row-header span:nth-child(4), .bracket-row-header span:nth-child(5), .bracket-row > span:nth-child(4), .bracket-row > span:nth-child(5) { display: none; }
   .bracket-row span:nth-child(2), .bracket-row span:nth-child(3) { font-size: 13px; }
   .state-panel, .bout-dialog { padding: 24px; }
+  .public-round-score-row { grid-template-columns: 56px minmax(0, 1fr) 48px 48px; gap: 6px; padding: 10px; }
   .confirm-dialog { padding: 24px; }
   .stale-banner { align-items: start; flex-direction: column; }
   .later-bout-button { grid-template-columns: 1fr auto; }

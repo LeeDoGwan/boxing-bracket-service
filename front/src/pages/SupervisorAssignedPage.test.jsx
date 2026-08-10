@@ -1,12 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getBoutDetail } from '../api/audience';
-import { confirmResult, createPenalty, getPenalties, getSupervisorScores } from '../api/supervisor';
+import { confirmResult, correctResult, createPenalty, getPenalties, getSupervisorScores } from '../api/supervisor';
 import { getAssignedBouts, getAssignedRings } from '../api/staffAssignments';
 import { useBoutEventStream } from '../hooks/useBoutEventStream';
 import { SupervisorAssignedPage } from './SupervisorAssignedPage';
 
 vi.mock('../api/audience', () => ({ getBoutDetail: vi.fn() }));
-vi.mock('../api/supervisor', () => ({ confirmResult: vi.fn(), createPenalty: vi.fn(), getPenalties: vi.fn(), getSupervisorScores: vi.fn() }));
+vi.mock('../api/supervisor', () => ({ confirmResult: vi.fn(), correctResult: vi.fn(), createPenalty: vi.fn(), getPenalties: vi.fn(), getSupervisorScores: vi.fn() }));
 vi.mock('../api/staffAssignments', () => ({ getAssignedBouts: vi.fn(), getAssignedRings: vi.fn() }));
 vi.mock('../hooks/useBoutEventStream', () => ({ useBoutEventStream: vi.fn(() => 'connected') }));
 
@@ -23,6 +23,7 @@ beforeEach(() => {
   getPenalties.mockResolvedValue([]);
   createPenalty.mockResolvedValue({ penaltyId: 1, penaltyPoint: 1, reason: 'hold', targetSide: 'RED' });
   confirmResult.mockResolvedValue(undefined);
+  correctResult.mockResolvedValue(undefined);
 });
 
 describe('SupervisorAssignedPage', () => {
@@ -57,6 +58,36 @@ describe('SupervisorAssignedPage', () => {
 
     expect(await screen.findByText('Submitted 1 · Draft 1')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review result' })).toBeDisabled();
+  });
+
+  it('adds a penalty to the opponent effective total', async () => {
+    getSupervisorScores.mockResolvedValue([
+      { blueScore: 9, judgeId: 10, redScore: 10, roundNo: 1, status: 'SUBMITTED' },
+    ]);
+    getPenalties.mockResolvedValue([
+      { penaltyId: 1, penaltyPoint: 1, targetSide: 'RED' },
+      { penaltyId: 2, penaltyPoint: 2, targetSide: 'BLUE' },
+    ]);
+
+    render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+
+    expect(await screen.findByText('Blue penalty +2 | Effective 12')).toBeInTheDocument();
+    expect(screen.getByText('Red penalty +1 | Effective 10')).toBeInTheDocument();
+  });
+
+  it('leaves a tied effective total for the Supervisor to decide', async () => {
+    getSupervisorScores.mockResolvedValue([
+      { blueScore: 10, judgeId: 10, redScore: 10, roundNo: 1, status: 'SUBMITTED' },
+    ]);
+
+    render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    await screen.findByText('Red vs Blue');
+
+    fireEvent.change(screen.getByLabelText('Winner'), { target: { value: 'BLUE' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Review result' }));
+
+    expect(screen.getByText('Effective totals are tied. Supervisor decides the final winner.')).toBeInTheDocument();
+    expect(screen.getByText('BLUE | POINTS | effective scores 10-10')).toBeInTheDocument();
   });
 
   it('blocks zero penalty points without calling the API', async () => {
@@ -124,7 +155,7 @@ describe('SupervisorAssignedPage', () => {
 
     expect(confirmResult).toHaveBeenCalledTimes(1);
     resolveRequest({ decisionType: 'POINTS', winnerSide: 'RED' });
-    await waitFor(() => expect(screen.getByText('Result confirmed. Further changes are locked.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Result confirmed. A Supervisor may correct it with a required reason.')).toBeInTheDocument());
   });
 
   it('locks penalty actions when a result confirmation event refreshes the bout', async () => {
@@ -136,7 +167,24 @@ describe('SupervisorAssignedPage', () => {
 
     act(() => streamOptions.onEvent({ boutId: 12, eventType: 'RESULT_CONFIRMED' }));
 
-    await waitFor(() => expect(screen.getByText('Result confirmed. Further changes are locked.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Result confirmed. A Supervisor may correct it with a required reason.')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Add penalty' })).toBeDisabled();
+  });
+
+  it('allows a supervisor to correct a confirmed result with a reason', async () => {
+    getSupervisorScores.mockResolvedValue([{ blueScore: 9, judgeId: 10, redScore: 10, roundNo: 1, status: 'SUBMITTED' }]);
+    getBoutDetail.mockResolvedValue({ ...bout, result: { decisionType: 'POINTS', winnerSide: 'RED' }, resultConfirmed: true, status: 'FINISHED' });
+    render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    await screen.findByText('Result confirmed. A Supervisor may correct it with a required reason.');
+
+    fireEvent.change(screen.getByLabelText('Correction reason'), { target: { value: 'Supervisor reviewed tie evidence' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Review correction' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm correction' }));
+
+    await waitFor(() => expect(correctResult).toHaveBeenCalledWith(
+      12,
+      { decisionType: 'POINTS', reason: 'Supervisor reviewed tie evidence', winnerSide: 'RED' },
+      'supervisor-token',
+    ));
   });
 });

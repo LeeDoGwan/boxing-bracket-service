@@ -24,6 +24,7 @@ const ACTION_LABELS = {
   NOTICE_UPDATED: '공지 수정',
   PENALTY_CREATED: '감점 생성',
   RESULT_CONFIRMED: '결과 확정',
+  RESULT_CORRECTED: '결과 수정',
   ROUND_STARTED: '라운드 시작',
   SCORE_SUBMITTED: '점수 제출',
 };

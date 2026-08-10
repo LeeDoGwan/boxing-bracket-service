@@ -2,6 +2,7 @@ package com.boxing.bracket.scoring.controller;
 
 import com.boxing.bracket.common.response.ApiResponse;
 import com.boxing.bracket.scoring.dto.BoutResultConfirmRequest;
+import com.boxing.bracket.scoring.dto.BoutResultCorrectionRequest;
 import com.boxing.bracket.scoring.dto.BoutResultResponse;
 import com.boxing.bracket.scoring.service.SupervisorResultService;
 import org.springframework.context.annotation.Lazy;
@@ -29,5 +30,13 @@ public class SupervisorResultController {
             @Valid @RequestBody BoutResultConfirmRequest request
     ) {
         return ApiResponse.success(supervisorResultService.confirmResult(boutId, request), "OK");
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/bouts/{boutId}/result")
+    public ApiResponse<BoutResultResponse> correctResult(
+            @PathVariable Long boutId,
+            @Valid @RequestBody BoutResultCorrectionRequest request
+    ) {
+        return ApiResponse.success(supervisorResultService.correctResult(boutId, request), "OK");
     }
 }

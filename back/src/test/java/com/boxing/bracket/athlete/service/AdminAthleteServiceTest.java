@@ -5,6 +5,8 @@ import com.boxing.bracket.athlete.dto.AthleteRequest;
 import com.boxing.bracket.athlete.dto.AthleteResponse;
 import com.boxing.bracket.athlete.exception.AthleteNotFoundException;
 import com.boxing.bracket.athlete.repository.AthleteRepository;
+import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +29,9 @@ class AdminAthleteServiceTest {
 
     @Mock
     private AthleteRepository athleteRepository;
+
+    @Mock
+    private BoutRepository boutRepository;
 
     @InjectMocks
     private AdminAthleteService adminAthleteService;
@@ -52,6 +57,19 @@ class AdminAthleteServiceTest {
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).getAthleteId()).isEqualTo(10L);
+    }
+
+    @Test
+    void getAthletesScopesResultsToTournament() {
+        Athlete athlete = createAthlete(10L);
+        athlete.assignTournament(2L);
+        given(athleteRepository.findByTournamentIdOrderByIdAsc(2L))
+                .willReturn(List.of(athlete));
+
+        List<AthleteResponse> responses = adminAthleteService.getAthletes(2L, null);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getTournamentId()).isEqualTo(2L);
     }
 
     @Test
@@ -148,6 +166,16 @@ class AdminAthleteServiceTest {
         assertThatThrownBy(() -> adminAthleteService.deleteAthlete(99L))
                 .isInstanceOf(AthleteNotFoundException.class)
                 .hasMessage("Athlete not found");
+    }
+
+    @Test
+    void deleteAthleteRejectsReferencedAthlete() {
+        given(athleteRepository.existsById(10L)).willReturn(true);
+        given(boutRepository.existsByRedAthleteIdOrBlueAthleteId(10L, 10L)).willReturn(true);
+
+        assertThatThrownBy(() -> adminAthleteService.deleteAthlete(10L))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("ATHLETE_DELETE_NOT_ALLOWED");
     }
 
     @Test

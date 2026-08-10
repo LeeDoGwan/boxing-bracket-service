@@ -16,7 +16,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Index;
-import javax.persistence.Lob;
 import javax.persistence.Table;
 
 @Getter
@@ -62,10 +61,10 @@ public class AuditLog extends BaseTimeEntity {
     @Column(unique = true, length = 64)
     private String deduplicationKey;
 
-    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String beforeData;
 
-    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String afterData;
 
     private String ipAddress;

@@ -18,7 +18,7 @@ Implemented core areas:
 - Admin bout CSV and Excel import API
 - Audience React MVP with live bout updates and official bracket search
 - Judge React scoring desk with authenticated login and round score submission
-- Supervisor React review desk with penalty history, creation, and result confirmation
+- Supervisor React review desk with penalty history, result confirmation, and reasoned result correction
 - Audience schedule list for bouts, breaks, meals, performances, and events
 - Ring Manager React operations desk with ring bout control and round transitions
 - Operations React monitoring desk with ring progress and exception tracking
@@ -28,7 +28,7 @@ Implemented core areas:
 - Athlete admin React desk with searchable athlete CRUD management
 - Notice admin React desk with tournament-scoped notice publishing management
 - Schedule admin React desk with tournament-scoped schedule CRUD management
-- Bout admin React desk with bout CRUD and CSV/Excel import
+- Bout admin React desk with bout CRUD and CSV/Excel import; bout numbers are generated per tournament by the server
 - Account admin React desk restricted to service managers, with keyword, role, and status filters
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
@@ -39,6 +39,7 @@ Implemented core areas:
 - [Product requirements](docs/requirements.md)
 - [System design](docs/design.md)
 - [Frontend wide-frame architecture](docs/frontend-wide-frame.md)
+- [Single-server deployment runbook](docs/deployment-runbook.md)
 - [Sprint 1 scope](docs/sprint-1.md)
 - [Test inventory and verification](docs/testing.md)
 - [Database migration policy](docs/database-migration.md)
@@ -81,12 +82,15 @@ npm run lint
 npm run build
 ```
 
-Current documented suite: 72 backend test classes, 382 backend test cases, and 78 frontend test cases.
+Current documented suite: 74 backend test classes, 409 backend test cases, and 92 frontend test cases.
 
 The local backend profile connects to MariaDB and runs Flyway migrations before
 Hibernate validates the schema. Create the `boxing_bracket` database and a
-least-privilege application account before starting the backend; schema changes
-are versioned under `back/src/main/resources/db/migration/`.
+least-privilege application account before starting the backend, then set
+`BOXING_DB_PASSWORD` in the shell before starting the backend. Local API
+authentication is enabled; public audience APIs remain login-free and staff
+routes redirect to the shared `/staff/login` screen. Schema changes are
+versioned under `back/src/main/resources/db/migration/`.
 
 ### Run application
 
@@ -105,13 +109,13 @@ npm install
 npm run dev
 ```
 
-Open `/judge?tournamentId=1` for the judge desk, `/supervisor?tournamentId=1` for the supervisor desk, `/ring-manager?tournamentId=1` for the ring manager desk, `/operations?tournamentId=1` for the operations desk, `/audit-logs?tournamentId=1` for the audit log desk, `/admin/tournaments?tournamentId=1` for tournament management, `/admin/rings?tournamentId=1` for ring management, `/admin/athletes?tournamentId=1` for athlete management, `/admin/notices?tournamentId=1` for notice management, `/admin/schedules?tournamentId=1` for schedule management, `/admin/bouts?tournamentId=1` for bout management, or `/admin/accounts?tournamentId=1` for account management. These APIs require the matching role account; Judge, Supervisor, and Ring Manager desks load active assigned rings before scoped operations.
+Open `/staff/login` to enter the shared staff login. After authentication, use the role-aware operations menu for the Judge, Supervisor, Ring Manager, Operations, Audit Log, and admin desks. These APIs require the matching role account; Judge, Supervisor, and Ring Manager desks load active assigned rings before scoped operations.
 
 ## Continuous Integration
 
 GitHub Actions keeps source verification separate from deployment:
 
-- [Backend CI](.github/workflows/backend-ci.yml) runs Java 11 and `mvn -q test` from `back/`.
+- [Backend CI](.github/workflows/backend-ci.yml) runs Java 11 and `mvn -q test` from `back/`, then runs a MariaDB 10.11 migration smoke test.
 - [Frontend CI](.github/workflows/frontend-ci.yml) runs Node 24, `npm ci`, `npm test`, `npm run lint`, and `npm run build` from `front/`.
 - Each workflow runs on relevant `back/` or `front/` changes, future pull requests, and manual dispatch. Pushes cancel older in-progress runs for the same workflow and ref.
 - CI uses read-only repository permissions and does not deploy, create pull requests, or require secrets.
@@ -142,6 +146,7 @@ GET http://localhost:8080/api/health
 - `GET /api/supervisor/bouts/{boutId}/penalties`
 - `POST /api/supervisor/bouts/{boutId}/penalties`
 - `POST /api/supervisor/bouts/{boutId}/result`
+- `PUT /api/supervisor/bouts/{boutId}/result` (Supervisor-only correction with reason)
 - `GET /api/ring-manager/rings/{ringId}/bouts`
 - `POST /api/ring-manager/bouts/{boutId}/start`
 - `POST /api/ring-manager/bouts/{boutId}/rounds/{roundNo}/start`
@@ -149,7 +154,7 @@ GET http://localhost:8080/api/health
 - `POST /api/ring-manager/rings/{ringId}/next`
 - `/api/admin/tournaments`
 - `/api/admin/rings`
-- `/api/admin/athletes`
+- `/api/admin/athletes?tournamentId=`
 - `/api/admin/bouts`
 - `POST /api/admin/bouts/import`
 - `/api/admin/notices`

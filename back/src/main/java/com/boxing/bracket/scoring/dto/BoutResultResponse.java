@@ -14,6 +14,8 @@ public class BoutResultResponse {
     private final Integer blueTotalScore;
     private final Integer redPenaltyTotal;
     private final Integer bluePenaltyTotal;
+    private final Integer redEffectiveScore;
+    private final Integer blueEffectiveScore;
     private final BoutSide winnerSide;
     private final DecisionType decisionType;
     private final Long confirmedBy;
@@ -26,6 +28,8 @@ public class BoutResultResponse {
             Integer blueTotalScore,
             Integer redPenaltyTotal,
             Integer bluePenaltyTotal,
+            Integer redEffectiveScore,
+            Integer blueEffectiveScore,
             BoutSide winnerSide,
             DecisionType decisionType,
             Long confirmedBy,
@@ -37,6 +41,8 @@ public class BoutResultResponse {
         this.blueTotalScore = blueTotalScore;
         this.redPenaltyTotal = redPenaltyTotal;
         this.bluePenaltyTotal = bluePenaltyTotal;
+        this.redEffectiveScore = redEffectiveScore;
+        this.blueEffectiveScore = blueEffectiveScore;
         this.winnerSide = winnerSide;
         this.decisionType = decisionType;
         this.confirmedBy = confirmedBy;
@@ -51,6 +57,8 @@ public class BoutResultResponse {
                 boutResult.getBlueTotalScore(),
                 boutResult.getRedPenaltyTotal(),
                 boutResult.getBluePenaltyTotal(),
+                boutResult.getRedEffectiveScore(),
+                boutResult.getBlueEffectiveScore(),
                 boutResult.getWinnerSide(),
                 boutResult.getDecisionType(),
                 boutResult.getConfirmedBy(),
@@ -80,6 +88,14 @@ public class BoutResultResponse {
 
     public Integer getBluePenaltyTotal() {
         return bluePenaltyTotal;
+    }
+
+    public Integer getRedEffectiveScore() {
+        return redEffectiveScore;
+    }
+
+    public Integer getBlueEffectiveScore() {
+        return blueEffectiveScore;
     }
 
     public BoutSide getWinnerSide() {

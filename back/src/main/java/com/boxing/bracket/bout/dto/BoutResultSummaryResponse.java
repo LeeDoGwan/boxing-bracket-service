@@ -13,6 +13,8 @@ public class BoutResultSummaryResponse {
     private final Integer blueTotalScore;
     private final Integer redPenaltyTotal;
     private final Integer bluePenaltyTotal;
+    private final Integer redEffectiveScore;
+    private final Integer blueEffectiveScore;
     private final BoutSide winnerSide;
     private final DecisionType decisionType;
     private final LocalDateTime confirmedAt;
@@ -23,6 +25,8 @@ public class BoutResultSummaryResponse {
             Integer blueTotalScore,
             Integer redPenaltyTotal,
             Integer bluePenaltyTotal,
+            Integer redEffectiveScore,
+            Integer blueEffectiveScore,
             BoutSide winnerSide,
             DecisionType decisionType,
             LocalDateTime confirmedAt
@@ -32,6 +36,8 @@ public class BoutResultSummaryResponse {
         this.blueTotalScore = blueTotalScore;
         this.redPenaltyTotal = redPenaltyTotal;
         this.bluePenaltyTotal = bluePenaltyTotal;
+        this.redEffectiveScore = redEffectiveScore;
+        this.blueEffectiveScore = blueEffectiveScore;
         this.winnerSide = winnerSide == null ? BoutSide.NONE : winnerSide;
         this.decisionType = decisionType == null ? DecisionType.UNKNOWN : decisionType;
         this.confirmedAt = confirmedAt;
@@ -47,6 +53,8 @@ public class BoutResultSummaryResponse {
                 boutResult.getBlueTotalScore(),
                 boutResult.getRedPenaltyTotal(),
                 boutResult.getBluePenaltyTotal(),
+                boutResult.getRedEffectiveScore(),
+                boutResult.getBlueEffectiveScore(),
                 boutResult.getWinnerSide(),
                 boutResult.getDecisionType(),
                 boutResult.getConfirmedAt()
@@ -71,6 +79,14 @@ public class BoutResultSummaryResponse {
 
     public Integer getBluePenaltyTotal() {
         return bluePenaltyTotal;
+    }
+
+    public Integer getRedEffectiveScore() {
+        return redEffectiveScore;
+    }
+
+    public Integer getBlueEffectiveScore() {
+        return blueEffectiveScore;
     }
 
     public BoutSide getWinnerSide() {

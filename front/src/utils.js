@@ -12,6 +12,20 @@ export function statusLabel(status) {
   return statusLabels[status] || status || '정보 없음';
 }
 
+export function decisionLabel(decisionType) {
+  return decisionType === 'RSC' ? 'TKO' : decisionType || '판정';
+}
+
+export function effectiveResultScores(result) {
+  if (!result) {
+    return null;
+  }
+  return {
+    red: result.redEffectiveScore ?? ((result.redTotalScore ?? 0) + (result.bluePenaltyTotal ?? 0)),
+    blue: result.blueEffectiveScore ?? ((result.blueTotalScore ?? 0) + (result.redPenaltyTotal ?? 0)),
+  };
+}
+
 export function athleteLabel(athlete) {
   if (!athlete) {
     return '선수 정보 없음';

@@ -49,4 +49,17 @@ class TournamentTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("endDate must not be before startDate");
     }
+
+    @Test
+    void supportsThreeOrFiveJudges() {
+        Tournament tournament = Tournament.builder()
+                .name("Seoul Cup")
+                .judgeCount(5)
+                .build();
+
+        assertThat(tournament.getJudgeCount()).isEqualTo(5);
+        assertThatThrownBy(() -> Tournament.builder().name("Invalid Cup").judgeCount(4).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("judgeCount must be 3 or 5");
+    }
 }

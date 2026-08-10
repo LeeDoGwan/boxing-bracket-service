@@ -41,10 +41,10 @@ class AdminAthleteControllerTest {
 
     @Test
     void getAthletesReturnsAthleteList() throws Exception {
-        given(adminAthleteService.getAthletes(null))
+        given(adminAthleteService.getAthletes(1L, null))
                 .willReturn(List.of(createResponse(10L, "Kim Min", "Blue Gym")));
 
-        mockMvc.perform(get("/api/admin/athletes"))
+        mockMvc.perform(get("/api/admin/athletes").param("tournamentId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].athleteId").value(10))
@@ -53,11 +53,12 @@ class AdminAthleteControllerTest {
 
     @Test
     void getAthletesPassesKeyword() throws Exception {
-        given(adminAthleteService.getAthletes("kim"))
+        given(adminAthleteService.getAthletes(1L, "kim"))
                 .willReturn(List.of(createResponse(10L, "Kim Min", "Blue Gym")));
 
         mockMvc.perform(get("/api/admin/athletes")
-                        .param("keyword", "kim"))
+                        .param("keyword", "kim")
+                        .param("tournamentId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].athleteId").value(10));
@@ -65,10 +66,11 @@ class AdminAthleteControllerTest {
 
     @Test
     void getAthleteReturnsAthlete() throws Exception {
-        given(adminAthleteService.getAthlete(10L))
+        given(adminAthleteService.getAthlete(1L, 10L))
                 .willReturn(createResponse(10L, "Kim Min", "Blue Gym"));
 
-        mockMvc.perform(get("/api/admin/athletes/{athleteId}", 10L))
+        mockMvc.perform(get("/api/admin/athletes/{athleteId}", 10L)
+                        .param("tournamentId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.athleteId").value(10));
@@ -76,9 +78,10 @@ class AdminAthleteControllerTest {
 
     @Test
     void getAthleteReturnsNotFoundForMissingAthlete() throws Exception {
-        given(adminAthleteService.getAthlete(99L)).willThrow(new AthleteNotFoundException());
+        given(adminAthleteService.getAthlete(1L, 99L)).willThrow(new AthleteNotFoundException());
 
-        mockMvc.perform(get("/api/admin/athletes/{athleteId}", 99L))
+        mockMvc.perform(get("/api/admin/athletes/{athleteId}", 99L)
+                        .param("tournamentId", "1"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Athlete not found"));
@@ -115,7 +118,7 @@ class AdminAthleteControllerTest {
     @Test
     void updateAthleteReturnsUpdatedAthlete() throws Exception {
         AthleteRequest request = new AthleteRequest("Lee Jun", "Red Gym");
-        given(adminAthleteService.updateAthlete(eq(10L), any(AthleteRequest.class)))
+        given(adminAthleteService.updateAthlete(eq(1L), eq(10L), any(AthleteRequest.class)))
                 .willReturn(createResponse(10L, "Lee Jun", "Red Gym"));
 
         mockMvc.perform(put("/api/admin/athletes/{athleteId}", 10L)
@@ -131,7 +134,7 @@ class AdminAthleteControllerTest {
     @Test
     void updateAthleteReturnsNotFoundForMissingAthlete() throws Exception {
         AthleteRequest request = new AthleteRequest("Lee Jun", "Red Gym");
-        given(adminAthleteService.updateAthlete(eq(99L), any(AthleteRequest.class)))
+        given(adminAthleteService.updateAthlete(eq(1L), eq(99L), any(AthleteRequest.class)))
                 .willThrow(new AthleteNotFoundException());
 
         mockMvc.perform(put("/api/admin/athletes/{athleteId}", 99L)
@@ -144,7 +147,8 @@ class AdminAthleteControllerTest {
 
     @Test
     void deleteAthleteReturnsOk() throws Exception {
-        mockMvc.perform(delete("/api/admin/athletes/{athleteId}", 10L))
+        mockMvc.perform(delete("/api/admin/athletes/{athleteId}", 10L)
+                        .param("tournamentId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("OK"));
@@ -152,9 +156,10 @@ class AdminAthleteControllerTest {
 
     @Test
     void deleteAthleteReturnsNotFoundForMissingAthlete() throws Exception {
-        willThrow(new AthleteNotFoundException()).given(adminAthleteService).deleteAthlete(99L);
+        willThrow(new AthleteNotFoundException()).given(adminAthleteService).deleteAthlete(1L, 99L);
 
-        mockMvc.perform(delete("/api/admin/athletes/{athleteId}", 99L))
+        mockMvc.perform(delete("/api/admin/athletes/{athleteId}", 99L)
+                        .param("tournamentId", "1"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Athlete not found"));

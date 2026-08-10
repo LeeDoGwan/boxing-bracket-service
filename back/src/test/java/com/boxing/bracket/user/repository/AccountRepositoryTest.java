@@ -6,12 +6,16 @@ import com.boxing.bracket.user.domain.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(AccountRepositoryTest.JpaAuditingTestConfig.class)
 class AccountRepositoryTest {
 
     @Autowired
@@ -32,5 +36,12 @@ class AccountRepositoryTest {
         assertThat(accountRepository.existsByLoginId("judge01")).isTrue();
         assertThat(found.getRole()).isEqualTo(UserRole.JUDGE);
         assertThat(found.getStatus()).isEqualTo(AccountStatus.ACTIVE);
+        assertThat(found.getCreatedAt()).isNotNull();
+        assertThat(found.getUpdatedAt()).isNotNull();
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    @EnableJpaAuditing
+    static class JpaAuditingTestConfig {
     }
 }

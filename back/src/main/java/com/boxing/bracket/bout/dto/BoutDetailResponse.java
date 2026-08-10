@@ -6,6 +6,9 @@ import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.scoring.domain.BoutResult;
 
+import java.util.Collections;
+import java.util.List;
+
 public class BoutDetailResponse {
 
     private final Long boutId;
@@ -22,6 +25,7 @@ public class BoutDetailResponse {
     private final BoutSide winnerSide;
     private final boolean resultConfirmed;
     private final BoutResultSummaryResponse result;
+    private final List<BoutRoundScoreResponse> roundScores;
     private final boolean eventBout;
 
     private BoutDetailResponse(
@@ -39,6 +43,7 @@ public class BoutDetailResponse {
             BoutSide winnerSide,
             boolean resultConfirmed,
             BoutResultSummaryResponse result,
+            List<BoutRoundScoreResponse> roundScores,
             boolean eventBout
     ) {
         this.boutId = boutId;
@@ -55,6 +60,7 @@ public class BoutDetailResponse {
         this.winnerSide = winnerSide == null ? BoutSide.NONE : winnerSide;
         this.resultConfirmed = resultConfirmed;
         this.result = result;
+        this.roundScores = roundScores == null ? Collections.emptyList() : List.copyOf(roundScores);
         this.eventBout = eventBout;
     }
 
@@ -63,6 +69,16 @@ public class BoutDetailResponse {
     }
 
     public static BoutDetailResponse of(Bout bout, Athlete redAthlete, Athlete blueAthlete, BoutResult boutResult) {
+        return of(bout, redAthlete, blueAthlete, boutResult, Collections.emptyList());
+    }
+
+    public static BoutDetailResponse of(
+            Bout bout,
+            Athlete redAthlete,
+            Athlete blueAthlete,
+            BoutResult boutResult,
+            List<BoutRoundScoreResponse> roundScores
+    ) {
         return new BoutDetailResponse(
                 bout.getId(),
                 bout.getTournamentId(),
@@ -78,6 +94,7 @@ public class BoutDetailResponse {
                 bout.getWinnerSide(),
                 bout.isResultConfirmed(),
                 BoutResultSummaryResponse.from(boutResult),
+                roundScores,
                 bout.isEventBout()
         );
     }
@@ -136,6 +153,10 @@ public class BoutDetailResponse {
 
     public BoutResultSummaryResponse getResult() {
         return result;
+    }
+
+    public List<BoutRoundScoreResponse> getRoundScores() {
+        return roundScores;
     }
 
     public boolean isEventBout() {

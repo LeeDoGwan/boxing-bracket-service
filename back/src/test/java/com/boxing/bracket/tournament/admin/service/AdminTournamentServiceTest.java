@@ -1,5 +1,11 @@
 package com.boxing.bracket.tournament.admin.service;
 
+import com.boxing.bracket.assignment.repository.StaffAssignmentRepository;
+import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
+import com.boxing.bracket.notice.repository.NoticeRepository;
+import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.schedule.repository.ScheduleItemRepository;
 import com.boxing.bracket.tournament.admin.dto.AdminTournamentRequest;
 import com.boxing.bracket.tournament.admin.dto.AdminTournamentResponse;
 import com.boxing.bracket.tournament.domain.Tournament;
@@ -29,6 +35,21 @@ class AdminTournamentServiceTest {
 
     @Mock
     private TournamentRepository tournamentRepository;
+
+    @Mock
+    private RingRepository ringRepository;
+
+    @Mock
+    private BoutRepository boutRepository;
+
+    @Mock
+    private StaffAssignmentRepository assignmentRepository;
+
+    @Mock
+    private NoticeRepository noticeRepository;
+
+    @Mock
+    private ScheduleItemRepository scheduleItemRepository;
 
     @InjectMocks
     private AdminTournamentService adminTournamentService;
@@ -157,6 +178,16 @@ class AdminTournamentServiceTest {
         assertThatThrownBy(() -> adminTournamentService.deleteTournament(99L))
                 .isInstanceOf(TournamentNotFoundException.class)
                 .hasMessage("Tournament not found");
+    }
+
+    @Test
+    void deleteTournamentRejectsTournamentWithChildren() {
+        given(tournamentRepository.existsById(1L)).willReturn(true);
+        given(ringRepository.existsByTournamentId(1L)).willReturn(true);
+
+        assertThatThrownBy(() -> adminTournamentService.deleteTournament(1L))
+                .isInstanceOf(WorkflowConflictException.class)
+                .hasMessage("TOURNAMENT_DELETE_NOT_ALLOWED");
     }
 
     private AdminTournamentRequest request() {

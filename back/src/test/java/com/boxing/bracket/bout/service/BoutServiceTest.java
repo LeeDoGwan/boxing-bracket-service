@@ -11,7 +11,10 @@ import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.bout.repository.BoutRepository;
 import com.boxing.bracket.scoring.domain.BoutResult;
 import com.boxing.bracket.scoring.domain.DecisionType;
+import com.boxing.bracket.scoring.domain.RoundScore;
+import com.boxing.bracket.scoring.domain.RoundScoreStatus;
 import com.boxing.bracket.scoring.repository.BoutResultRepository;
+import com.boxing.bracket.scoring.repository.RoundScoreRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,6 +44,9 @@ class BoutServiceTest {
 
     @Mock
     private BoutResultRepository boutResultRepository;
+
+    @Mock
+    private RoundScoreRepository roundScoreRepository;
 
     @InjectMocks
     private BoutService boutService;
@@ -271,6 +277,44 @@ class BoutServiceTest {
         assertThat(response.getResult().getResultId()).isEqualTo(100L);
         assertThat(response.getResult().getWinnerSide()).isEqualTo(BoutSide.BLUE);
         assertThat(response.getResult().getBlueTotalScore()).isEqualTo(18);
+    }
+
+    @Test
+    void getBoutDetailIncludesSubmittedRoundScoresWithoutJudgeIdentifiers() {
+        Bout bout = createBout(1L, 1, 1, 10L, 11L, false);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+        RoundScore submittedScore = RoundScore.builder()
+                .boutId(1L)
+                .roundNo(1)
+                .judgeId(20L)
+                .redScore(10)
+                .blueScore(9)
+                .status(RoundScoreStatus.SUBMITTED)
+                .build();
+        RoundScore draftScore = RoundScore.builder()
+                .boutId(1L)
+                .roundNo(2)
+                .judgeId(20L)
+                .redScore(10)
+                .blueScore(9)
+                .status(RoundScoreStatus.DRAFT)
+                .build();
+
+        given(boutRepository.findById(1L)).willReturn(Optional.of(bout));
+        given(boutResultRepository.findByBoutId(1L)).willReturn(Optional.empty());
+        given(roundScoreRepository.findByBoutIdOrderByRoundNoAscJudgeIdAsc(1L))
+                .willReturn(List.of(submittedScore, draftScore));
+        given(athleteRepository.findById(10L)).willReturn(Optional.of(redAthlete));
+        given(athleteRepository.findById(11L)).willReturn(Optional.of(blueAthlete));
+
+        BoutDetailResponse response = boutService.getBoutDetail(1L);
+
+        assertThat(response.getRoundScores()).hasSize(1);
+        assertThat(response.getRoundScores().get(0).getRoundNo()).isEqualTo(1);
+        assertThat(response.getRoundScores().get(0).getJudgeNo()).isEqualTo(1);
+        assertThat(response.getRoundScores().get(0).getRedScore()).isEqualTo(10);
+        assertThat(response.getRoundScores().get(0).getBlueScore()).isEqualTo(9);
     }
 
     @Test

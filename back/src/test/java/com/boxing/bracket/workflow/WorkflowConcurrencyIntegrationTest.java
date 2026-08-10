@@ -1,5 +1,12 @@
 package com.boxing.bracket.workflow;
 
+import com.boxing.bracket.athlete.domain.Athlete;
+import com.boxing.bracket.athlete.repository.AthleteRepository;
+import com.boxing.bracket.assignment.domain.StaffAssignment;
+import com.boxing.bracket.assignment.repository.StaffAssignmentRepository;
+import com.boxing.bracket.bout.admin.dto.AdminBoutRequest;
+import com.boxing.bracket.bout.admin.dto.AdminBoutResponse;
+import com.boxing.bracket.bout.admin.service.AdminBoutService;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
@@ -22,6 +29,8 @@ import com.boxing.bracket.scoring.repository.PenaltyRepository;
 import com.boxing.bracket.scoring.repository.RoundScoreRepository;
 import com.boxing.bracket.scoring.service.JudgeScoreService;
 import com.boxing.bracket.scoring.service.SupervisorResultService;
+import com.boxing.bracket.tournament.domain.Tournament;
+import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +46,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.then;
@@ -46,6 +56,9 @@ import static org.mockito.Mockito.times;
 @SpringBootTest
 @ActiveProfiles("test")
 class WorkflowConcurrencyIntegrationTest {
+
+    @Autowired
+    private AdminBoutService adminBoutService;
 
     @Autowired
     private RingManagerService ringManagerService;
@@ -60,7 +73,13 @@ class WorkflowConcurrencyIntegrationTest {
     private RingRepository ringRepository;
 
     @Autowired
+    private AthleteRepository athleteRepository;
+
+    @Autowired
     private BoutRepository boutRepository;
+
+    @Autowired
+    private TournamentRepository tournamentRepository;
 
     @Autowired
     private RoundScoreRepository roundScoreRepository;
@@ -70,6 +89,9 @@ class WorkflowConcurrencyIntegrationTest {
 
     @Autowired
     private BoutResultRepository boutResultRepository;
+
+    @Autowired
+    private StaffAssignmentRepository staffAssignmentRepository;
 
     @SpyBean
     private BoutEventPublisher boutEventPublisher;
@@ -118,13 +140,15 @@ class WorkflowConcurrencyIntegrationTest {
     void concurrentIdenticalResultRequestsPersistOneResultAndPublishOneEvent() throws Exception {
         Ring ring = createRing();
         Bout bout = createBout(ring.getId(), BoutStatus.IN_PROGRESS);
-        RoundScore score = RoundScore.builder()
-                .boutId(bout.getId())
-                .roundNo(1)
-                .judgeId(30L)
-                .build();
-        score.submit(10, 9);
-        roundScoreRepository.saveAndFlush(score);
+        for (long judgeId = 30L; judgeId <= 32L; judgeId++) {
+            RoundScore score = RoundScore.builder()
+                    .boutId(bout.getId())
+                    .roundNo(1)
+                    .judgeId(judgeId)
+                    .build();
+            score.submit(10, 9);
+            roundScoreRepository.saveAndFlush(score);
+        }
         BoutResultConfirmRequest request = new BoutResultConfirmRequest(BoutSide.RED, DecisionType.POINTS, 40L);
 
         List<BoutResultResponse> responses = executeConcurrently(
@@ -137,17 +161,96 @@ class WorkflowConcurrencyIntegrationTest {
         then(boutEventPublisher).should(times(1)).publish(org.mockito.ArgumentMatchers.any(BoutEventResponse.class));
     }
 
-    private Ring createRing() {
-        return ringRepository.saveAndFlush(Ring.builder()
-                .tournamentId(1L)
+    @Test
+    void concurrentCreateRequestsAssignDifferentBoutNumbersPerTournament() throws Exception {
+        Tournament tournament = tournamentRepository.saveAndFlush(Tournament.builder()
+                .name("Seoul Boxing Cup")
+                .build());
+        Ring ring = ringRepository.saveAndFlush(Ring.builder()
+                .tournamentId(tournament.getId())
                 .name("Ring A")
                 .status(RingStatus.READY)
                 .build());
+        Athlete redAthlete = Athlete.builder()
+                .name("Red Athlete")
+                .build();
+        redAthlete.assignTournament(tournament.getId());
+        redAthlete = athleteRepository.saveAndFlush(redAthlete);
+        Athlete blueAthlete = Athlete.builder()
+                .name("Blue Athlete")
+                .build();
+        blueAthlete.assignTournament(tournament.getId());
+        blueAthlete = athleteRepository.saveAndFlush(blueAthlete);
+        Athlete secondRedAthlete = Athlete.builder()
+                .name("Second Red Athlete")
+                .build();
+        secondRedAthlete.assignTournament(tournament.getId());
+        secondRedAthlete = athleteRepository.saveAndFlush(secondRedAthlete);
+        Athlete secondBlueAthlete = Athlete.builder()
+                .name("Second Blue Athlete")
+                .build();
+        secondBlueAthlete.assignTournament(tournament.getId());
+        secondBlueAthlete = athleteRepository.saveAndFlush(secondBlueAthlete);
+        List<AdminBoutRequest> requests = List.of(
+                new AdminBoutRequest(
+                        tournament.getId(),
+                        ring.getId(),
+                        "75",
+                        redAthlete.getId(),
+                        blueAthlete.getId(),
+                        3,
+                        1,
+                        false
+                ),
+                new AdminBoutRequest(
+                        tournament.getId(),
+                        ring.getId(),
+                        "80",
+                        secondRedAthlete.getId(),
+                        secondBlueAthlete.getId(),
+                        3,
+                        2,
+                        false
+                )
+        );
+        AtomicInteger requestIndex = new AtomicInteger();
+
+        List<AdminBoutResponse> responses = executeConcurrently(
+                () -> adminBoutService.createBout(requests.get(requestIndex.getAndIncrement()))
+        );
+
+        assertThat(responses)
+                .extracting(AdminBoutResponse::getBoutNumber)
+                .containsExactlyInAnyOrder(1, 2);
+        assertThat(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(tournament.getId()))
+                .extracting(Bout::getBoutNumber)
+                .containsExactlyInAnyOrder(1, 2);
+    }
+
+    private Ring createRing() {
+        Tournament tournament = tournamentRepository.saveAndFlush(Tournament.builder()
+                .name("Seoul Boxing Cup")
+                .judgeCount(3)
+                .build());
+        Ring ring = ringRepository.saveAndFlush(Ring.builder()
+                .tournamentId(tournament.getId())
+                .name("Ring A")
+                .status(RingStatus.READY)
+                .build());
+        for (long judgeId = 30L; judgeId <= 32L; judgeId++) {
+            staffAssignmentRepository.save(StaffAssignment.builder()
+                    .accountId(judgeId)
+                    .tournamentId(tournament.getId())
+                    .ringId(ring.getId())
+                    .role(com.boxing.bracket.user.domain.UserRole.JUDGE)
+                    .build());
+        }
+        return ring;
     }
 
     private Bout createBout(Long ringId, BoutStatus status) {
         return boutRepository.saveAndFlush(Bout.builder()
-                .tournamentId(1L)
+                .tournamentId(ringRepository.findById(ringId).orElseThrow().getTournamentId())
                 .ringId(ringId)
                 .boutNumber(1)
                 .redAthleteId(10L)
@@ -193,7 +296,10 @@ class WorkflowConcurrencyIntegrationTest {
         penaltyRepository.deleteAll();
         roundScoreRepository.deleteAll();
         boutRepository.deleteAll();
+        staffAssignmentRepository.deleteAll();
         ringRepository.deleteAll();
+        athleteRepository.deleteAll();
+        tournamentRepository.deleteAll();
     }
 
     @FunctionalInterface

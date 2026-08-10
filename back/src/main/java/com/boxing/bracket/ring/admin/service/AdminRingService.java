@@ -1,10 +1,14 @@
 package com.boxing.bracket.ring.admin.service;
 
+import com.boxing.bracket.assignment.repository.StaffAssignmentRepository;
+import com.boxing.bracket.bout.repository.BoutRepository;
+import com.boxing.bracket.common.exception.WorkflowConflictException;
 import com.boxing.bracket.ring.admin.dto.AdminRingRequest;
 import com.boxing.bracket.ring.admin.dto.AdminRingResponse;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.exception.RingNotFoundException;
 import com.boxing.bracket.ring.repository.RingRepository;
+import com.boxing.bracket.schedule.repository.ScheduleItemRepository;
 import com.boxing.bracket.tournament.exception.TournamentNotFoundException;
 import com.boxing.bracket.tournament.repository.TournamentRepository;
 import org.springframework.context.annotation.Lazy;
@@ -21,10 +25,22 @@ public class AdminRingService {
 
     private final RingRepository ringRepository;
     private final TournamentRepository tournamentRepository;
+    private final BoutRepository boutRepository;
+    private final StaffAssignmentRepository assignmentRepository;
+    private final ScheduleItemRepository scheduleItemRepository;
 
-    public AdminRingService(RingRepository ringRepository, TournamentRepository tournamentRepository) {
+    public AdminRingService(
+            RingRepository ringRepository,
+            TournamentRepository tournamentRepository,
+            BoutRepository boutRepository,
+            StaffAssignmentRepository assignmentRepository,
+            ScheduleItemRepository scheduleItemRepository
+    ) {
         this.ringRepository = ringRepository;
         this.tournamentRepository = tournamentRepository;
+        this.boutRepository = boutRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.scheduleItemRepository = scheduleItemRepository;
     }
 
     @Transactional(readOnly = true)
@@ -64,6 +80,9 @@ public class AdminRingService {
 
         Ring ring = ringRepository.findById(ringId)
                 .orElseThrow(RingNotFoundException::new);
+        if (!ring.getTournamentId().equals(request.getTournamentId())) {
+            throw new IllegalArgumentException("ring tournament cannot be changed");
+        }
         ring.updateInfo(request.getTournamentId(), request.getName(), request.getStatus());
 
         return AdminRingResponse.from(ringRepository.save(ring));
@@ -73,6 +92,11 @@ public class AdminRingService {
         validateRingId(ringId);
         if (!ringRepository.existsById(ringId)) {
             throw new RingNotFoundException();
+        }
+        if (boutRepository.existsByRingId(ringId)
+                || assignmentRepository.existsByRingId(ringId)
+                || scheduleItemRepository.existsByRingId(ringId)) {
+            throw new WorkflowConflictException("RING_DELETE_NOT_ALLOWED");
         }
 
         ringRepository.deleteById(ringId);

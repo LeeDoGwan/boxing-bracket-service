@@ -121,16 +121,16 @@ public class RingService {
     private RingBoutSummaryResponse toBoutSummaryResponse(Bout bout) {
         return RingBoutSummaryResponse.of(
                 bout,
-                getAthlete(bout.getRedAthleteId()),
-                getAthlete(bout.getBlueAthleteId())
+                getAthlete(bout.getTournamentId(), bout.getRedAthleteId()),
+                getAthlete(bout.getTournamentId(), bout.getBlueAthleteId())
         );
     }
 
     private BoutDetailResponse toBoutDetailResponse(Bout bout) {
         return BoutDetailResponse.of(
                 bout,
-                getAthlete(bout.getRedAthleteId()),
-                getAthlete(bout.getBlueAthleteId()),
+                getAthlete(bout.getTournamentId(), bout.getRedAthleteId()),
+                getAthlete(bout.getTournamentId(), bout.getBlueAthleteId()),
                 boutResultRepository.findByBoutId(bout.getId()).orElse(null)
         );
     }
@@ -141,8 +141,10 @@ public class RingService {
                 .collect(Collectors.toList());
     }
 
-    private Athlete getAthlete(Long athleteId) {
+    private Athlete getAthlete(Long tournamentId, Long athleteId) {
         return athleteRepository.findById(athleteId)
+                .filter(athlete -> athlete.getTournamentId() == null
+                        || tournamentId.equals(athlete.getTournamentId()))
                 .orElseThrow(() -> new IllegalStateException("Athlete not found"));
     }
 }

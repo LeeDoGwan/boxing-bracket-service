@@ -1,4 +1,4 @@
-import { getApi, postApi } from './client';
+import { getApi, postApi, putApi } from './client';
 
 export function getSupervisorScores(boutId, token) {
   return getApi(`/api/supervisor/bouts/${boutId}/scores`, undefined, { token });
@@ -14,4 +14,8 @@ export function createPenalty(boutId, penalty, token) {
 
 export function confirmResult(boutId, result, token) {
   return postApi(`/api/supervisor/bouts/${boutId}/result`, result, { token });
+}
+
+export function correctResult(boutId, result, token) {
+  return putApi(`/api/supervisor/bouts/${boutId}/result`, result, { token });
 }

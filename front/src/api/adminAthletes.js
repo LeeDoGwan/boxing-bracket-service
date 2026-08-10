@@ -1,7 +1,7 @@
 import { deleteApi, getApi, postApi, putApi } from './client';
 
-export function getAthletes(keyword, token) {
-  return getApi('/api/admin/athletes', { keyword }, { token });
+export function getAthletes(tournamentId, keyword, token) {
+  return getApi('/api/admin/athletes', { tournamentId, keyword }, { token });
 }
 
 export function createAthlete(athlete, token) {
@@ -12,6 +12,6 @@ export function updateAthlete(athleteId, athlete, token) {
   return putApi(`/api/admin/athletes/${athleteId}`, athlete, { token });
 }
 
-export function deleteAthlete(athleteId, token) {
-  return deleteApi(`/api/admin/athletes/${athleteId}`, { token });
+export function deleteAthlete(athleteId, tournamentId, token) {
+  return deleteApi(`/api/admin/athletes/${athleteId}`, { token, params: { tournamentId } });
 }

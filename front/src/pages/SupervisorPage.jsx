@@ -11,7 +11,7 @@ const DECISION_LABELS = {
   DSQ: '실격',
   KO: 'KO',
   POINTS: '판정',
-  RSC: 'RSC',
+  RSC: 'TKO',
   UNKNOWN: '기타',
   WALKOVER: '부전승',
 };

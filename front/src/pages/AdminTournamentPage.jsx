@@ -19,12 +19,13 @@ function readSession() {
 }
 
 function blankForm() {
-  return { endDate: '', location: '', name: '', startDate: '', status: 'READY' };
+  return { endDate: '', judgeCount: '3', location: '', name: '', startDate: '', status: 'READY' };
 }
 
 function formFromTournament(tournament) {
   return {
     endDate: tournament.endDate || '',
+    judgeCount: String(tournament.judgeCount || 3),
     location: tournament.location || '',
     name: tournament.name || '',
     startDate: tournament.startDate || '',
@@ -122,7 +123,7 @@ function TournamentWorkspace({ onLogout, session }) {
     setSaving(true);
     setError('');
     setMessage('');
-    const payload = { ...form, endDate: form.endDate || null, startDate: form.startDate || null };
+    const payload = { ...form, endDate: form.endDate || null, judgeCount: Number(form.judgeCount), startDate: form.startDate || null };
     try {
       if (selectedId) {
         const updated = await updateTournament(selectedId, payload, session.accessToken);
@@ -188,6 +189,7 @@ function TournamentWorkspace({ onLogout, session }) {
                 <label>시작일<input onChange={(event) => updateField('startDate', event.target.value)} type="date" value={form.startDate} /></label>
                 <label>종료일<input onChange={(event) => updateField('endDate', event.target.value)} type="date" value={form.endDate} /></label>
                 <label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                <label>Judge count<select onChange={(event) => updateField('judgeCount', event.target.value)} value={form.judgeCount}><option value="3">3</option><option value="5">5</option></select></label>
               </div>
               <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '대회 저장' : '대회 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">대회 삭제</button> : null}</div>
             </form>

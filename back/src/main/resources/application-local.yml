@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:mariadb://localhost:3306/boxing_bracket
     username: boxing
-    password: boxing
+    password: ${BOXING_DB_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver
 
   jpa:
@@ -22,4 +22,4 @@ spring:
 
 boxing:
   auth:
-    enabled: false
+    enabled: true

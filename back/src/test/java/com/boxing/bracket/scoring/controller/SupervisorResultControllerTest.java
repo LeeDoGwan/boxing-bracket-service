@@ -5,6 +5,7 @@ import com.boxing.bracket.bout.exception.BoutNotFoundException;
 import com.boxing.bracket.scoring.domain.BoutResult;
 import com.boxing.bracket.scoring.domain.DecisionType;
 import com.boxing.bracket.scoring.dto.BoutResultConfirmRequest;
+import com.boxing.bracket.scoring.dto.BoutResultCorrectionRequest;
 import com.boxing.bracket.scoring.dto.BoutResultResponse;
 import com.boxing.bracket.scoring.service.SupervisorResultService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -51,6 +53,8 @@ class SupervisorResultControllerTest {
                 .andExpect(jsonPath("$.data.boutId").value(1))
                 .andExpect(jsonPath("$.data.redTotalScore").value(19))
                 .andExpect(jsonPath("$.data.blueTotalScore").value(18))
+                .andExpect(jsonPath("$.data.redEffectiveScore").value(19))
+                .andExpect(jsonPath("$.data.blueEffectiveScore").value(19))
                 .andExpect(jsonPath("$.data.winnerSide").value("RED"))
                 .andExpect(jsonPath("$.data.decisionType").value("POINTS"))
                 .andExpect(jsonPath("$.data.confirmedBy").value(20));
@@ -80,6 +84,22 @@ class SupervisorResultControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Bout not found"));
+    }
+
+    @Test
+    void correctResultReturnsUpdatedResult() throws Exception {
+        BoutResultCorrectionRequest request = new BoutResultCorrectionRequest(
+                BoutSide.BLUE, DecisionType.POINTS, "Corrected after review", 20L
+        );
+        given(supervisorResultService.correctResult(eq(1L), any(BoutResultCorrectionRequest.class)))
+                .willReturn(BoutResultResponse.from(createBoutResult()));
+
+        mockMvc.perform(put("/api/supervisor/bouts/{boutId}/result", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.boutId").value(1));
     }
 
     private BoutResult createBoutResult() {

@@ -13,6 +13,8 @@ import java.util.Optional;
 
 public interface RingRepository extends JpaRepository<Ring, Long> {
 
+    boolean existsByTournamentId(Long tournamentId);
+
     List<Ring> findByTournamentIdOrderByIdAsc(Long tournamentId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

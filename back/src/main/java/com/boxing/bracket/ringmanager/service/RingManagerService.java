@@ -60,13 +60,15 @@ public class RingManagerService {
             throw new IllegalArgumentException("boutId is required");
         }
 
+        Long ringId = boutRepository.findRingIdById(boutId)
+                .orElseThrow(BoutNotFoundException::new);
+        Ring ring = ringRepository.findWithLockById(ringId)
+                .orElseThrow(RingNotFoundException::new);
         Bout bout = boutRepository.findWithLockById(boutId)
                 .orElseThrow(BoutNotFoundException::new);
         if (staffAssignmentService != null) {
             staffAssignmentService.requireRingAccess(bout.getRingId());
         }
-        Ring ring = ringRepository.findWithLockById(bout.getRingId())
-                .orElseThrow(RingNotFoundException::new);
 
         if (bout.getStatus() == BoutStatus.IN_PROGRESS) {
             if (boutId.equals(ring.getCurrentBoutId())) {
@@ -131,6 +133,8 @@ public class RingManagerService {
 
         Bout nextBout = findNextBout(currentBout, officialBouts)
                 .orElseThrow(() -> new WorkflowConflictException("NEXT_BOUT_NOT_FOUND"));
+        nextBout = boutRepository.findWithLockById(nextBout.getId())
+                .orElseThrow(BoutNotFoundException::new);
 
         boolean statusChanged = nextBout.transitionForRingManager(BoutStatus.READY);
         ring.prepareCurrentBout(nextBout.getId());
@@ -147,20 +151,26 @@ public class RingManagerService {
         }
         validateStatusUpdateRequest(request);
 
-        Bout bout = boutRepository.findWithLockById(boutId)
-                .orElseThrow(BoutNotFoundException::new);
+        Bout bout;
+        if (request.getStatus() == BoutStatus.CANCELED) {
+            Long ringId = boutRepository.findRingIdById(boutId)
+                    .orElseThrow(BoutNotFoundException::new);
+            Ring ring = ringRepository.findWithLockById(ringId)
+                    .orElseThrow(RingNotFoundException::new);
+            bout = boutRepository.findWithLockById(boutId)
+                    .orElseThrow(BoutNotFoundException::new);
+            if (boutId.equals(ring.getCurrentBoutId())) {
+                throw new WorkflowConflictException("INVALID_BOUT_TRANSITION");
+            }
+        } else {
+            bout = boutRepository.findWithLockById(boutId)
+                    .orElseThrow(BoutNotFoundException::new);
+        }
         if (staffAssignmentService != null) {
             staffAssignmentService.requireRingAccess(bout.getRingId());
         }
         if (request.getStatus() == BoutStatus.READY && bout.getStatus() == BoutStatus.SCHEDULED) {
             throw new WorkflowConflictException("INVALID_BOUT_TRANSITION");
-        }
-        if (request.getStatus() == BoutStatus.CANCELED && bout.getStatus() == BoutStatus.READY) {
-            Ring ring = ringRepository.findWithLockById(bout.getRingId())
-                    .orElseThrow(RingNotFoundException::new);
-            if (boutId.equals(ring.getCurrentBoutId())) {
-                throw new WorkflowConflictException("INVALID_BOUT_TRANSITION");
-            }
         }
         boolean statusChanged = bout.transitionForRingManager(request.getStatus());
         if (!statusChanged) {
