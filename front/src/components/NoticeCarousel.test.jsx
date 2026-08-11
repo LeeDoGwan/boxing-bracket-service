@@ -26,4 +26,16 @@ describe('NoticeCarousel', () => {
     fireEvent.click(screen.getAllByRole('button')[0]);
     expect(screen.getByRole('heading', { name: 'First notice' })).toBeInTheDocument();
   });
+
+  it('keeps rendering when the notice list shrinks', () => {
+    const { rerender } = render(<NoticeCarousel notices={[
+      { content: 'First content', noticeId: 1, title: 'First notice' },
+      { content: 'Second content', noticeId: 2, title: 'Second notice' },
+    ]} />);
+
+    fireEvent.click(screen.getAllByRole('button')[1]);
+    rerender(<NoticeCarousel notices={[{ content: 'First content', noticeId: 1, title: 'First notice' }]} />);
+
+    expect(screen.getByRole('heading', { name: 'First notice' })).toBeInTheDocument();
+  });
 });

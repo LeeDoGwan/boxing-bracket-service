@@ -28,7 +28,7 @@ Resolved in the current implementation:
   adds the transitional nullable column and index; legacy rows require backfill
   before the column can be made non-null.
 - The current local verification baseline is 74 backend test classes with 409
-  passed cases and 26 frontend test files with 92 passed cases.
+  passed cases and 27 frontend test files with 94 passed cases.
 - V5 adds composite indexes for tournament and ring schedule-order queries,
   reducing the primary scan cost for public bout and ring lookups.
 

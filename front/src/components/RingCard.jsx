@@ -6,18 +6,18 @@ function BoutSummary({ bout, sideLabel }) {
   }
   return (
     <div className="bout-summary">
-      <p className="summary-label">{sideLabel}</p>
-      <p className="bout-number">경기 {bout.boutNumber}</p>
-      <p className="match-type">{bout.matchType || '일반 경기'}</p>
-      <div className="fighter-pair">
-        <span className="red-label">홍</span>
-        <span>{bout.redAthleteName}</span>
-        <small>{bout.redAthleteAffiliation}</small>
+      <div className="bout-summary-heading">
+        <p className="summary-label">{sideLabel}</p>
+        <p className="bout-number">경기 {bout.boutNumber}</p>
       </div>
-      <div className="fighter-pair">
+      <p className="match-type">{bout.matchType || '일반 경기'}</p>
+      <div className="fighter-pair red-fighter">
+        <span className="red-label">홍</span>
+        <span><b>{bout.redAthleteName}</b><small>{bout.redAthleteAffiliation}</small></span>
+      </div>
+      <div className="fighter-pair blue-fighter">
         <span className="blue-label">청</span>
-        <span>{bout.blueAthleteName}</span>
-        <small>{bout.blueAthleteAffiliation}</small>
+        <span><b>{bout.blueAthleteName}</b><small>{bout.blueAthleteAffiliation}</small></span>
       </div>
       <p className="round-copy">{statusLabel(bout.boutStatus)} · {bout.currentRound ? `${bout.currentRound}라운드` : '라운드 대기'}</p>
     </div>
@@ -26,15 +26,19 @@ function BoutSummary({ bout, sideLabel }) {
 
 export function RingCard({ laterBouts = [], ring, onSelectBout }) {
   return (
-    <article className="ring-card">
+    <article className={`ring-card ring-card-${ring.ringStatus?.toLowerCase() || 'unknown'}`}>
       <div className="ring-card-header">
         <div>
           <p className="eyebrow">RING</p>
           <h3>{ring.ringName}</h3>
         </div>
-        <span className={`status-pill status-${ring.ringStatus?.toLowerCase()}`}>{statusLabel(ring.ringStatus)}</span>
+        <span className={`ring-status status-pill status-${ring.ringStatus?.toLowerCase()}`}>
+          <span aria-hidden="true" className="ring-status-dot" />
+          {statusLabel(ring.ringStatus)}
+        </span>
       </div>
       <button
+        aria-label={ring.currentBout ? `경기 ${ring.currentBout.boutNumber} 상세 보기` : '현재 경기가 없습니다'}
         className="current-bout-button"
         disabled={!ring.currentBout}
         onClick={() => onSelectBout(ring.currentBout?.boutId)}

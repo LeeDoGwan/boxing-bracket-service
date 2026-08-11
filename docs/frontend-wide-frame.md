@@ -299,19 +299,21 @@ having explicit 768, 1024, and 1440 media queries.
 The frontend uses a ringside control-room visual language: a paper-toned
 surface for the public canvas, charcoal for navigation and live-board context,
 red for action and urgency, blue for ring identity, teal for healthy live
-operation, and amber for notices or attention. The audience home leads with a
-live-board hero containing ring, active-bout, and waiting-bout counts. Results
-and schedule are grouped into a two-column secondary area on wide screens and
-collapse to one column on mobile. Panels remain lightly framed with small
-corner radii, restrained shadows, and clear top or side rules so repeated
-information remains scannable without becoming a collection of nested cards.
+operation, and amber for notices or attention. The audience home leads with
+the active-rings board rather than a marketing hero: a compact tournament
+toolbar and summary strip are followed immediately by ring cards ordered by
+live status. Results and schedule are grouped into a two-column secondary area
+on wide screens and collapse to one column on mobile. Panels remain lightly
+framed with small corner radii, restrained shadows, and clear top or side rules
+so repeated information remains scannable without becoming a collection of
+nested cards.
 
 | Viewport | Target | Current status | Acceptance rule |
 | --- | --- | --- | --- |
 | Mobile 360 | One column, grouped operations menu, core bout information first, no horizontal scroll | Implemented by mobile layout and overflow protection | No clipping in header, notices, rings, results, or schedule |
 | Tablet 768 | Two-column content where space allows | Implemented with a tablet breakpoint above 760px | No desktop row may escape the viewport |
 | Desktop 1024 | Two or three scannable columns | Implemented with capped fluid shell and tablet tuning | Current/next bout and ring details remain readable |
-| Wide 1440 | Centered max-width content and side margins | Implemented by 1220px page shell | Do not stretch long rows or shrink type for density |
+| Wide 1440 | Centered max-width content and side margins | Implemented by capped 1280px public board shell | Do not stretch long rows or shrink type for density |
 
 Rules:
 
@@ -345,7 +347,7 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 26 test files and 92 passing tests.
+The current frontend baseline is 27 test files and 94 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
@@ -432,6 +434,6 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 26 frontend test files and 92 tests unless coverage
+- Preserve the baseline of 27 frontend test files and 94 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.

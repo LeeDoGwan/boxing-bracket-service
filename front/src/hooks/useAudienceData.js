@@ -3,6 +3,7 @@ import { getBouts, getHome } from '../api/audience';
 
 const initialState = {
   bouts: [],
+  boutsError: null,
   dataTournamentId: null,
   home: null,
   loading: true,
@@ -18,7 +19,7 @@ export function useAudienceData(tournamentId) {
     const requestId = requestRef.current.id + 1;
     const controller = new AbortController();
     requestRef.current = { controller, id: requestId };
-    setState((current) => ({ ...current, loading: true, error: null }));
+    setState((current) => ({ ...current, boutsError: null, loading: true, error: null }));
     try {
       const [homeResult, boutsResult] = await Promise.allSettled([
         getHome(tournamentId, { signal: controller.signal }),
@@ -30,8 +31,10 @@ export function useAudienceData(tournamentId) {
       if (homeResult.status === 'rejected') {
         throw homeResult.reason;
       }
+      const partialError = boutsResult.status === 'rejected' ? boutsResult.reason : null;
       setState({
         bouts: boutsResult.status === 'fulfilled' ? boutsResult.value || [] : [],
+        boutsError: partialError,
         dataTournamentId: tournamentId,
         home: homeResult.value,
         loading: false,
@@ -41,7 +44,7 @@ export function useAudienceData(tournamentId) {
       if (error?.name === 'AbortError' || requestRef.current.id !== requestId) {
         return;
       }
-      setState((current) => ({ ...current, loading: false, error }));
+      setState((current) => ({ ...current, boutsError: null, loading: false, error }));
     }
   }, [tournamentId]);
 
