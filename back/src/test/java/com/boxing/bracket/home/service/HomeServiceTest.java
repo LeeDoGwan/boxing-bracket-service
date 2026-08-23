@@ -27,6 +27,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class HomeServiceTest {
@@ -60,8 +61,8 @@ class HomeServiceTest {
                 createAthlete(13L, "Lee Jun Ho")
         );
         NoticeResponse notice = NoticeResponse.from(createNotice(1L));
-        given(ringService.getRingStatuses(1L)).willReturn(List.of(ringStatus));
         given(boutService.getOfficialBouts(1L)).willReturn(List.of(confirmedBout, scheduledBout));
+        given(ringService.getRingStatuses(1L, List.of(confirmedBout, scheduledBout))).willReturn(List.of(ringStatus));
         given(noticeService.getActiveNotices(1L)).willReturn(List.of(notice));
         given(scheduleService.getSchedules(1L)).willReturn(List.of());
 
@@ -71,9 +72,11 @@ class HomeServiceTest {
         assertThat(response.getNotices()).hasSize(1);
         assertThat(response.getNotices().get(0).getNoticeId()).isEqualTo(1L);
         assertThat(response.getRingStatuses()).hasSize(1);
+        assertThat(response.getOfficialBouts()).hasSize(2);
         assertThat(response.getConfirmedResults()).hasSize(1);
         assertThat(response.getConfirmedResults().get(0).getBoutId()).isEqualTo(10L);
         assertThat(response.getSchedules()).isEmpty();
+        verify(ringService).getRingStatuses(1L, List.of(confirmedBout, scheduledBout));
     }
 
     @Test

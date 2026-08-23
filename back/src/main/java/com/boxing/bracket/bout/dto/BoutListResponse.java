@@ -18,6 +18,7 @@ public class BoutListResponse {
     private final BoutSide winnerSide;
     private final boolean resultConfirmed;
     private final BoutResultSummaryResponse result;
+    private final Integer currentRound;
     private final Integer scheduledOrder;
 
     private BoutListResponse(
@@ -31,6 +32,7 @@ public class BoutListResponse {
             BoutSide winnerSide,
             boolean resultConfirmed,
             BoutResultSummaryResponse result,
+            Integer currentRound,
             Integer scheduledOrder
     ) {
         this.boutId = boutId;
@@ -43,6 +45,7 @@ public class BoutListResponse {
         this.winnerSide = winnerSide == null ? BoutSide.NONE : winnerSide;
         this.resultConfirmed = resultConfirmed;
         this.result = result;
+        this.currentRound = currentRound;
         this.scheduledOrder = scheduledOrder;
     }
 
@@ -62,6 +65,7 @@ public class BoutListResponse {
                 bout.getWinnerSide(),
                 bout.isResultConfirmed(),
                 BoutResultSummaryResponse.from(boutResult),
+                bout.getCurrentRound(),
                 bout.getScheduledOrder()
         );
     }
@@ -104,6 +108,10 @@ public class BoutListResponse {
 
     public BoutResultSummaryResponse getResult() {
         return result;
+    }
+
+    public Integer getCurrentRound() {
+        return currentRound;
     }
 
     public Integer getScheduledOrder() {

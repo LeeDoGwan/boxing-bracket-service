@@ -100,13 +100,13 @@ describe('AudienceHome', () => {
     expect(reload).toHaveBeenCalledOnce();
   });
 
-  it('keeps home data visible when bouts fail and retries from the stale banner', () => {
+  it('keeps the last home data visible when refresh fails and retries from the stale banner', () => {
     const reload = vi.fn();
-    setAudienceState({ boutsError: new Error('bouts unavailable'), reload });
+    setAudienceState({ error: new Error('home unavailable'), reload });
 
     render(<AudienceHome tournamentId={1} />);
 
-    expect(screen.getByText(/경기 목록을 불러오지 못해 대기 경기 수/)).toBeInTheDocument();
+    expect(screen.getByText(/최신 현황을 갱신하지 못했습니다/)).toBeInTheDocument();
     expect(screen.getByText('Ring Live')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
     expect(reload).toHaveBeenCalledOnce();

@@ -133,7 +133,7 @@ App
 
 The frontend uses one `/staff/login` entry point and a shared `StaffAuthProvider`. At startup it revalidates a stored bearer session through `/api/auth/me`; while that check is pending protected routes wait, and a failed check clears both shared and legacy session keys. `StaffRoute` redirects unauthenticated users while preserving the return path and denies roles that are not allowed for the target route. `AppHeader` exposes public links to everyone and role-appropriate operational links only after login; legacy role session keys remain synchronized for page-level compatibility. API clients share `requestApi`, which adds JSON headers, optional bearer authorization, dispatches session cleanup on authenticated 401 responses, parses the common response envelope, and turns server failures into JavaScript errors.
 
-The public home aggregates notices, ring status, confirmed results, and schedules from `/api/home`. It opens bout details through the public bout detail API. SSE reconnects trigger a fresh audience data load, so the stream is an invalidation signal rather than the source of truth.
+The public home aggregates notices, ring status, official bouts, confirmed results, and schedules from `/api/home`. It opens bout details through the public bout detail API. SSE reconnects trigger a fresh audience data load, so the stream is an invalidation signal rather than the source of truth. The bracket page keeps the dedicated bout list and search APIs for its independent search workflow.
 
 Assigned staff screens reuse the same stream with `tournamentId` and the selected
 `ringId`. They keep one `EventSource` per screen, close it when the ring changes
@@ -337,7 +337,7 @@ API groups:
 | Group | Main endpoints | Access |
 | --- | --- | --- |
 | Auth | `/api/auth/login`, `/logout`, `/me` | Login public; logout/me authenticated |
-| Audience home | `/api/home`, `/api/bouts`, `/api/bouts/{boutId}`, `/api/events/stream` | Public; bout detail includes submitted round scores without judge IDs |
+| Audience home | `/api/home`, `/api/bouts/{boutId}`, `/api/events/stream` | Public; aggregate home includes official bouts and bout detail includes submitted round scores without judge IDs |
 | Live events | `/api/events/stream?tournamentId=&ringId=` | Public |
 | Judge | `/api/judge/bouts/{boutId}/scores`, score submit endpoint | `JUDGE` |
 | Supervisor | scores, penalties, result confirmation/correction endpoints | `SUPERVISOR` |
@@ -411,8 +411,8 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 74 local test classes, 409 passed cases, zero failures or errors, and one CI-only MariaDB smoke test skipped locally.
-- Frontend: 27 test files, 94 test cases, ESLint passed, and Vite production build passed.
+- Backend: 74 local test classes, 411 passed cases, zero failures or errors, and one CI-only MariaDB smoke test skipped locally.
+- Frontend: 28 test files, 99 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.

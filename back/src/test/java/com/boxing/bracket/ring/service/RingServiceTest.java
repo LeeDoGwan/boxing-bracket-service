@@ -6,6 +6,7 @@ import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutSide;
 import com.boxing.bracket.bout.domain.BoutStatus;
 import com.boxing.bracket.bout.dto.BoutDetailResponse;
+import com.boxing.bracket.bout.dto.BoutListResponse;
 import com.boxing.bracket.bout.repository.BoutRepository;
 import com.boxing.bracket.ring.domain.Ring;
 import com.boxing.bracket.ring.domain.RingStatus;
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,6 +66,25 @@ class RingServiceTest {
         List<RingStatusResponse> responses = ringService.getRingStatuses(1L);
 
         assertThat(responses).isEmpty();
+    }
+
+    @Test
+    void getRingStatusesFromOfficialBoutsAvoidsBoutAndAthleteQueries() {
+        Ring ring = createRing(1L, RingStatus.IN_PROGRESS, 10L);
+        Bout currentBout = createBout(10L, 3, 3, 10L, 11L, BoutStatus.IN_PROGRESS, false);
+        BoutListResponse currentSummary = BoutListResponse.of(
+                currentBout,
+                createAthlete(10L),
+                createAthlete(11L)
+        );
+
+        given(ringRepository.findByTournamentIdOrderByIdAsc(1L)).willReturn(List.of(ring));
+
+        List<RingStatusResponse> responses = ringService.getRingStatuses(1L, List.of(currentSummary));
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getCurrentBout().getBoutId()).isEqualTo(10L);
+        verifyNoInteractions(boutRepository, athleteRepository);
     }
 
     @Test

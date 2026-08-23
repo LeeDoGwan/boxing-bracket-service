@@ -40,14 +40,16 @@ public class HomeService {
             throw new IllegalArgumentException("tournamentId is required");
         }
 
-        List<BoutListResponse> confirmedResults = boutService.getOfficialBouts(tournamentId).stream()
+        List<BoutListResponse> officialBouts = boutService.getOfficialBouts(tournamentId);
+        List<BoutListResponse> confirmedResults = officialBouts.stream()
                 .filter(BoutListResponse::isResultConfirmed)
                 .collect(Collectors.toList());
 
         return HomeResponse.of(
                 tournamentId,
                 noticeService.getActiveNotices(tournamentId),
-                ringService.getRingStatuses(tournamentId),
+                ringService.getRingStatuses(tournamentId, officialBouts),
+                officialBouts,
                 confirmedResults,
                 scheduleService.getSchedules(tournamentId)
         );

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getBouts, getHome } from '../api/audience';
+import { getHome } from '../api/audience';
 
 const initialState = {
   bouts: [],
@@ -21,22 +21,15 @@ export function useAudienceData(tournamentId) {
     requestRef.current = { controller, id: requestId };
     setState((current) => ({ ...current, boutsError: null, loading: true, error: null }));
     try {
-      const [homeResult, boutsResult] = await Promise.allSettled([
-        getHome(tournamentId, { signal: controller.signal }),
-        getBouts(tournamentId, { signal: controller.signal }),
-      ]);
+      const home = await getHome(tournamentId, { signal: controller.signal });
       if (requestRef.current.id !== requestId) {
         return;
       }
-      if (homeResult.status === 'rejected') {
-        throw homeResult.reason;
-      }
-      const partialError = boutsResult.status === 'rejected' ? boutsResult.reason : null;
       setState({
-        bouts: boutsResult.status === 'fulfilled' ? boutsResult.value || [] : [],
-        boutsError: partialError,
+        bouts: home?.officialBouts || [],
+        boutsError: null,
         dataTournamentId: tournamentId,
-        home: homeResult.value,
+        home,
         loading: false,
         error: null,
       });
