@@ -412,7 +412,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 The latest documented verification is:
 
 - Backend: 74 local test classes, 411 passed cases, zero failures or errors, and one CI-only MariaDB smoke test skipped locally.
-- Frontend: 28 test files, 99 test cases, ESLint passed, and Vite production build passed.
+- Frontend: 25 test files, 91 test cases, ESLint passed, and Vite production build passed.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.

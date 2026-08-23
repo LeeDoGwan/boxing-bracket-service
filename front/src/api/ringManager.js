@@ -1,8 +1,4 @@
-import { getApi, postApi } from './client';
-
-export function getRingBouts(ringId, token) {
-  return getApi(`/api/ring-manager/rings/${ringId}/bouts`, undefined, { token });
-}
+import { postApi } from './client';
 
 export function startBout(boutId, token) {
   return postApi(`/api/ring-manager/bouts/${boutId}/start`, null, { token });
