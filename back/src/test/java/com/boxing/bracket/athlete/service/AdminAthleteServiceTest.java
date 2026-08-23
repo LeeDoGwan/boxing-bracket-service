@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -37,29 +36,6 @@ class AdminAthleteServiceTest {
     private AdminAthleteService adminAthleteService;
 
     @Test
-    void getAthletesReturnsAllAthletesWithoutKeyword() {
-        given(athleteRepository.findAll(Sort.by(Sort.Direction.ASC, "id")))
-                .willReturn(List.of(createAthlete(10L), createAthlete(11L)));
-
-        List<AthleteResponse> responses = adminAthleteService.getAthletes(null);
-
-        assertThat(responses).hasSize(2);
-        assertThat(responses.get(0).getAthleteId()).isEqualTo(10L);
-        assertThat(responses.get(1).getAthleteId()).isEqualTo(11L);
-    }
-
-    @Test
-    void getAthletesSearchesByKeyword() {
-        given(athleteRepository.findByNameContainingIgnoreCaseOrAffiliationContainingIgnoreCase("kim", "kim"))
-                .willReturn(List.of(createAthlete(10L)));
-
-        List<AthleteResponse> responses = adminAthleteService.getAthletes(" kim ");
-
-        assertThat(responses).hasSize(1);
-        assertThat(responses.get(0).getAthleteId()).isEqualTo(10L);
-    }
-
-    @Test
     void getAthletesScopesResultsToTournament() {
         Athlete athlete = createAthlete(10L);
         athlete.assignTournament(2L);
@@ -73,20 +49,42 @@ class AdminAthleteServiceTest {
     }
 
     @Test
-    void getAthleteReturnsAthlete() {
-        given(athleteRepository.findById(10L)).willReturn(Optional.of(createAthlete(10L)));
+    void getAthletesSearchesWithinTournament() {
+        Athlete athlete = createAthlete(10L);
+        athlete.assignTournament(2L);
+        given(athleteRepository.searchByTournamentId(2L, "kim"))
+                .willReturn(List.of(athlete));
 
-        AthleteResponse response = adminAthleteService.getAthlete(10L);
+        List<AthleteResponse> responses = adminAthleteService.getAthletes(2L, " kim ");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getTournamentId()).isEqualTo(2L);
+    }
+
+    @Test
+    void getAthletesRejectsMissingTournamentId() {
+        assertThatThrownBy(() -> adminAthleteService.getAthletes(null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("tournamentId is required");
+    }
+
+    @Test
+    void getAthleteReturnsAthleteWithinTournament() {
+        Athlete athlete = createAthlete(10L);
+        athlete.assignTournament(2L);
+        given(athleteRepository.findByIdAndTournamentId(10L, 2L)).willReturn(Optional.of(athlete));
+
+        AthleteResponse response = adminAthleteService.getAthlete(2L, 10L);
 
         assertThat(response.getAthleteId()).isEqualTo(10L);
         assertThat(response.getName()).isEqualTo("Kim Min");
     }
 
     @Test
-    void getAthleteRejectsMissingAthlete() {
-        given(athleteRepository.findById(99L)).willReturn(Optional.empty());
+    void getAthleteRejectsAthleteOutsideTournament() {
+        given(athleteRepository.findByIdAndTournamentId(99L, 2L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> adminAthleteService.getAthlete(99L))
+        assertThatThrownBy(() -> adminAthleteService.getAthlete(2L, 99L))
                 .isInstanceOf(AthleteNotFoundException.class)
                 .hasMessage("Athlete not found");
     }
@@ -110,11 +108,12 @@ class AdminAthleteServiceTest {
     @Test
     void updateAthleteChangesAthlete() {
         Athlete athlete = createAthlete(10L);
+        athlete.assignTournament(1L);
         AthleteRequest request = new AthleteRequest("Lee Jun", "Red Gym");
-        given(athleteRepository.findById(10L)).willReturn(Optional.of(athlete));
+        given(athleteRepository.findByIdAndTournamentId(10L, 1L)).willReturn(Optional.of(athlete));
         given(athleteRepository.save(any(Athlete.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        AthleteResponse response = adminAthleteService.updateAthlete(10L, request);
+        AthleteResponse response = adminAthleteService.updateAthlete(1L, 10L, request);
 
         assertThat(response.getAthleteId()).isEqualTo(10L);
         assertThat(response.getName()).isEqualTo("Lee Jun");
@@ -125,9 +124,9 @@ class AdminAthleteServiceTest {
     @Test
     void updateAthleteRejectsMissingAthlete() {
         AthleteRequest request = new AthleteRequest("Lee Jun", "Red Gym");
-        given(athleteRepository.findById(99L)).willReturn(Optional.empty());
+        given(athleteRepository.findByIdAndTournamentId(99L, 1L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> adminAthleteService.updateAthlete(99L, request))
+        assertThatThrownBy(() -> adminAthleteService.updateAthlete(1L, 99L, request))
                 .isInstanceOf(AthleteNotFoundException.class)
                 .hasMessage("Athlete not found");
     }
@@ -136,7 +135,7 @@ class AdminAthleteServiceTest {
     void updateAthleteRejectsBlankName() {
         AthleteRequest request = new AthleteRequest(" ", "Red Gym");
 
-        assertThatThrownBy(() -> adminAthleteService.updateAthlete(10L, request))
+        assertThatThrownBy(() -> adminAthleteService.updateAthlete(1L, 10L, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("name is required");
     }
@@ -145,35 +144,35 @@ class AdminAthleteServiceTest {
     void updateAthleteRejectsNullAthleteId() {
         AthleteRequest request = new AthleteRequest("Lee Jun", "Red Gym");
 
-        assertThatThrownBy(() -> adminAthleteService.updateAthlete(null, request))
+        assertThatThrownBy(() -> adminAthleteService.updateAthlete(1L, null, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("athleteId is required");
     }
 
     @Test
     void deleteAthleteDeletesExistingAthlete() {
-        given(athleteRepository.existsById(10L)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(10L, 1L)).willReturn(true);
 
-        adminAthleteService.deleteAthlete(10L);
+        adminAthleteService.deleteAthlete(1L, 10L);
 
         then(athleteRepository).should().deleteById(10L);
     }
 
     @Test
     void deleteAthleteRejectsMissingAthlete() {
-        given(athleteRepository.existsById(99L)).willReturn(false);
+        given(athleteRepository.existsByIdAndTournamentId(99L, 1L)).willReturn(false);
 
-        assertThatThrownBy(() -> adminAthleteService.deleteAthlete(99L))
+        assertThatThrownBy(() -> adminAthleteService.deleteAthlete(1L, 99L))
                 .isInstanceOf(AthleteNotFoundException.class)
                 .hasMessage("Athlete not found");
     }
 
     @Test
     void deleteAthleteRejectsReferencedAthlete() {
-        given(athleteRepository.existsById(10L)).willReturn(true);
+        given(athleteRepository.existsByIdAndTournamentId(10L, 1L)).willReturn(true);
         given(boutRepository.existsByRedAthleteIdOrBlueAthleteId(10L, 10L)).willReturn(true);
 
-        assertThatThrownBy(() -> adminAthleteService.deleteAthlete(10L))
+        assertThatThrownBy(() -> adminAthleteService.deleteAthlete(1L, 10L))
                 .isInstanceOf(WorkflowConflictException.class)
                 .hasMessage("ATHLETE_DELETE_NOT_ALLOWED");
     }
