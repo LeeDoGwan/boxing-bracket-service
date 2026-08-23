@@ -252,7 +252,7 @@ SSE invariants:
 | src/hooks/useEventRefresh.js | Debounce and in-flight coalescing for event invalidation refreshes | Queued refresh without write side effects | useEventRefresh.test.js |
 | src/api/client.js | URL, headers, JSON parsing, bearer token, errors | Shared transport | API page coverage |
 | src/api/audience.js | Audience endpoints and stream URL | Endpoint contract | Audience/bracket coverage |
-| src/pages/AudienceHome.jsx | Compose public home | Hook data, selected bout, stream status | Audience page tests |
+| src/pages/AudienceHome.jsx | Compose public home | Hook data, selected bout, stream status | AudienceHome.test.jsx: composition, loading/fatal/partial errors, stale retry, ring ordering, result/detail selection |
 | src/pages/BracketPage.jsx | Load, search, live refresh, select bracket | List, keyword, request cancellation/version, stream state | BracketPage.test.jsx |
 
 Role and admin pages follow the same page-to-API-module pattern. Keep domain
@@ -353,7 +353,7 @@ The current frontend baseline is 27 test files and 94 passing tests.
 | --- | --- | --- | --- |
 | Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, submitted round-score projection, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
 | Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
-| Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Composition, loading/error, live status, list/search/selection, request signal | Stale data and invalid query |
+| Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Public home composition, loading/fatal/partial errors, stale retry, ring ordering, result/detail selection, list/search/selection, request signal | Stale data and invalid query |
 | Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, 0-10 score validation/confirmation, Supervisor result readiness/round penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
 | Shared staff auth | auth/StaffAuthContext.test.jsx, api/client.test.js | Shared and legacy session write, recovery, startup revalidation, 401 cleanup, and logout | Login route rendering and browser-level token expiry |
 | Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error, refresh/retry | Responsive table and browser-level refresh timing |
