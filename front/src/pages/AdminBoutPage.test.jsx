@@ -1,14 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { createBout, deleteBout, getBouts, importBouts, updateBout } from '../api/adminBouts';
 import { getAthletes } from '../api/adminAthletes';
 import { getRings } from '../api/adminRings';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { AdminBoutPage } from './AdminBoutPage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/adminBouts', () => ({
   createBout: vi.fn(),
@@ -36,6 +33,7 @@ const bout = { blueAthleteId: 11, boutId: 12, boutNumber: 1, eventBout: false, m
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getBouts.mockResolvedValue([bout]);
   getAthletes.mockResolvedValue([{ athleteId: 10, name: 'Red Boxer' }, { athleteId: 11, name: 'Blue Boxer' }]);
   getRings.mockResolvedValue([{ name: 'Ring A', ringId: 1 }]);
@@ -43,17 +41,11 @@ beforeEach(() => {
   updateBout.mockResolvedValue({ ...bout, boutNumber: 3, matchType: 'Semi Final' });
   deleteBout.mockResolvedValue(undefined);
   importBouts.mockResolvedValue({ boutIds: [13, 14], importedCount: 2 });
-  logout.mockResolvedValue(undefined);
 });
 
 describe('AdminBoutPage', () => {
-  it('signs in an admin and loads tournament bouts', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads tournament bouts from the shared staff session', async () => {
     render(<AdminBoutPage tournamentId={1} />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'game01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '대진 관리' })).toBeInTheDocument();
     expect(getBouts).toHaveBeenCalledWith(1, 'admin-token');
@@ -61,8 +53,6 @@ describe('AdminBoutPage', () => {
   });
 
   it('creates a new bout and imports CSV rows', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminBoutPage tournamentId={1} />);
     expect(await screen.findByText('경기 1 · Final')).toBeInTheDocument();
     expect(screen.getByLabelText('대진 파일')).toHaveAttribute('accept', '.csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -83,7 +73,6 @@ describe('AdminBoutPage', () => {
   });
 
   it('downloads the CSV template', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;
     const createObjectUrl = vi.fn().mockReturnValue('blob:template');
@@ -105,8 +94,6 @@ describe('AdminBoutPage', () => {
   });
 
   it('updates and deletes a selected bout', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminBoutPage tournamentId={1} />);
     expect(await screen.findByText('경기 1 · Final')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('경기 유형'), { target: { value: 'Semi Final' } });

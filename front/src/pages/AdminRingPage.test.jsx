@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { createRing, deleteRing, getRings, updateRing } from '../api/adminRings';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { AdminRingPage } from './AdminRingPage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/adminRings', () => ({
   createRing: vi.fn(),
@@ -25,21 +22,16 @@ const ring = { currentBoutId: 12, name: 'Ring A', ringId: 1, status: 'READY', to
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getRings.mockResolvedValue([ring]);
   createRing.mockResolvedValue({ currentBoutId: null, name: 'Ring B', ringId: 2, status: 'READY', tournamentId: 1 });
   updateRing.mockResolvedValue({ ...ring, name: 'Main Ring', status: 'IN_PROGRESS' });
   deleteRing.mockResolvedValue(undefined);
-  logout.mockResolvedValue(undefined);
 });
 
 describe('AdminRingPage', () => {
-  it('signs in an admin and loads rings for the tournament', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads rings for the tournament from the shared staff session', async () => {
     render(<AdminRingPage tournamentId={1} />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'game01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '링 관리' })).toBeInTheDocument();
     expect(getRings).toHaveBeenCalledWith(1, 'admin-token');
@@ -47,8 +39,6 @@ describe('AdminRingPage', () => {
   });
 
   it('creates a new ring', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminRingPage tournamentId={1} />);
     expect(await screen.findByText('Ring A')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ 새 링' }));
@@ -60,8 +50,6 @@ describe('AdminRingPage', () => {
   });
 
   it('updates and deletes a selected ring', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminRingPage tournamentId={1} />);
     expect(await screen.findByText('Ring A')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('링 이름'), { target: { value: 'Main Ring' } });

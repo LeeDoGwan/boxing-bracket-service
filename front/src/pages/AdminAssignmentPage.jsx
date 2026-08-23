@@ -1,60 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { login, logout } from '../api/auth';
 import { getAccounts } from '../api/adminAccounts';
 import { getRings } from '../api/adminRings';
 import { getTournaments } from '../api/adminTournaments';
 import { changeAssignmentActive, createAssignment, getAssignments } from '../api/staffAssignments';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { StatePanel } from '../components/StatePanel';
 
-const SESSION_KEY = 'boxing.operations.session';
-const ALLOWED_ROLES = new Set(['GAME_MANAGER', 'SERVICE_MANAGER']);
 const STAFF_ROLES = { JUDGE: 'Judge', SUPERVISOR: 'Supervisor', RING_MANAGER: 'Ring Manager' };
-
-function readSession() {
-  try {
-    const stored = window.sessionStorage.getItem(SESSION_KEY);
-    const session = stored ? JSON.parse(stored) : null;
-    return session?.accessToken && ALLOWED_ROLES.has(session?.account?.role) ? session : null;
-  } catch {
-    return null;
-  }
-}
-
-function LoginForm({ onLogin }) {
-  const [form, setForm] = useState({ loginId: '', password: '' });
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setSubmitting(true);
-    setError('');
-    try {
-      const session = await login(form.loginId, form.password);
-      if (!ALLOWED_ROLES.has(session.account?.role)) throw new Error('ADMIN_ONLY');
-      onLogin(session);
-    } catch (requestError) {
-      setError(requestError.message === 'ADMIN_ONLY' ? 'Admin role is required.' : 'Login failed.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <main className="page-shell auth-shell">
-      <section className="auth-panel">
-        <p className="eyebrow">ASSIGNMENT ADMIN</p>
-        <h2>Staff assignments</h2>
-        <form onSubmit={handleSubmit}>
-          <label>Login ID<input autoComplete="username" onChange={(event) => setForm({ ...form, loginId: event.target.value })} required value={form.loginId} /></label>
-          <label>Password<input autoComplete="current-password" onChange={(event) => setForm({ ...form, password: event.target.value })} required type="password" value={form.password} /></label>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <button className="command-button" disabled={submitting} type="submit">{submitting ? 'Signing in...' : 'Sign in'}</button>
-        </form>
-      </section>
-    </main>
-  );
-}
 
 function AssignmentWorkspace({ onLogout, session }) {
   const [tournaments, setTournaments] = useState([]);
@@ -156,8 +108,7 @@ function AssignmentWorkspace({ onLogout, session }) {
 }
 
 export function AdminAssignmentPage() {
-  const [session, setSession] = useState(readSession);
-  function handleLogin(nextSession) { window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(nextSession)); setSession(nextSession); }
-  async function handleLogout() { if (session?.accessToken) await logout(session.accessToken).catch(() => undefined); window.sessionStorage.removeItem(SESSION_KEY); setSession(null); }
-  return session ? <AssignmentWorkspace onLogout={handleLogout} session={session} /> : <LoginForm onLogin={handleLogin} />;
+  const { session, signOut } = useStaffAuth();
+  if (!session || !['GAME_MANAGER', 'SERVICE_MANAGER'].includes(session.account.role)) return null;
+  return <AssignmentWorkspace onLogout={signOut} session={session} />;
 }

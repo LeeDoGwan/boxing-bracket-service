@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { getOperationStatus } from '../api/operations';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { OperationsPage } from './OperationsPage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/operations', () => ({
   getOperationStatus: vi.fn(),
@@ -30,27 +27,20 @@ const operationStatus = {
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getOperationStatus.mockResolvedValue(operationStatus);
-  logout.mockResolvedValue(undefined);
 });
 
 describe('OperationsPage', () => {
-  it('signs in an operations manager and loads the tournament summary', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads the tournament summary from the shared staff session', async () => {
     render(<OperationsPage tournamentId={1} />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'service01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '대회 운영 현황' })).toBeInTheDocument();
-    expect(login).toHaveBeenCalledWith('service01', 'password');
     expect(getOperationStatus).toHaveBeenCalledWith(1, 'operations-token');
     expect(await screen.findByText('지연 경기')).toBeInTheDocument();
   });
 
   it('refreshes the summary and retries after an API failure', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
     getOperationStatus.mockRejectedValueOnce(new Error('FORBIDDEN')).mockResolvedValueOnce(operationStatus);
 
     render(<OperationsPage tournamentId={1} />);
