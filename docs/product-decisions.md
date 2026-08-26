@@ -57,6 +57,9 @@ The following confirmed targets are implemented in the current baseline:
   the frontend sends the selected round for new entries.
 - A penalty assigned to one side is added to the opponent's effective total.
   The result API exposes `redEffectiveScore` and `blueEffectiveScore`.
+- Athlete administration exposes only tournament-scoped service methods. The
+  controller requires `tournamentId` for list, detail, and delete operations,
+  while create and update requests carry and validate the same tournament ID.
 - When effective totals tie, the Supervisor chooses the final Red win, Blue win,
   or Draw outcome.
 - The stored `RSC` decision code is displayed as `TKO` in all user-facing

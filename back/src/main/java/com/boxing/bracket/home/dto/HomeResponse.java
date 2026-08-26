@@ -12,6 +12,7 @@ public class HomeResponse {
     private final Long tournamentId;
     private final List<NoticeResponse> notices;
     private final List<RingStatusResponse> ringStatuses;
+    private final List<BoutListResponse> officialBouts;
     private final List<BoutListResponse> confirmedResults;
     private final List<ScheduleResponse> schedules;
 
@@ -19,12 +20,14 @@ public class HomeResponse {
             Long tournamentId,
             List<NoticeResponse> notices,
             List<RingStatusResponse> ringStatuses,
+            List<BoutListResponse> officialBouts,
             List<BoutListResponse> confirmedResults,
             List<ScheduleResponse> schedules
     ) {
         this.tournamentId = tournamentId;
         this.notices = notices;
         this.ringStatuses = ringStatuses;
+        this.officialBouts = officialBouts;
         this.confirmedResults = confirmedResults;
         this.schedules = schedules;
     }
@@ -35,7 +38,7 @@ public class HomeResponse {
             List<RingStatusResponse> ringStatuses,
             List<BoutListResponse> confirmedResults
     ) {
-        return new HomeResponse(tournamentId, notices, ringStatuses, confirmedResults, java.util.Collections.emptyList());
+        return new HomeResponse(tournamentId, notices, ringStatuses, java.util.Collections.emptyList(), confirmedResults, java.util.Collections.emptyList());
     }
 
     public static HomeResponse of(
@@ -45,7 +48,18 @@ public class HomeResponse {
             List<BoutListResponse> confirmedResults,
             List<ScheduleResponse> schedules
     ) {
-        return new HomeResponse(tournamentId, notices, ringStatuses, confirmedResults, schedules);
+        return new HomeResponse(tournamentId, notices, ringStatuses, java.util.Collections.emptyList(), confirmedResults, schedules);
+    }
+
+    public static HomeResponse of(
+            Long tournamentId,
+            List<NoticeResponse> notices,
+            List<RingStatusResponse> ringStatuses,
+            List<BoutListResponse> officialBouts,
+            List<BoutListResponse> confirmedResults,
+            List<ScheduleResponse> schedules
+    ) {
+        return new HomeResponse(tournamentId, notices, ringStatuses, officialBouts, confirmedResults, schedules);
     }
 
     public Long getTournamentId() {
@@ -58,6 +72,10 @@ public class HomeResponse {
 
     public List<RingStatusResponse> getRingStatuses() {
         return ringStatuses;
+    }
+
+    public List<BoutListResponse> getOfficialBouts() {
+        return officialBouts;
     }
 
     public List<BoutListResponse> getConfirmedResults() {

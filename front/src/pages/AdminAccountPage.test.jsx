@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { createAccount, deleteAccount, getAccounts, updateAccount } from '../api/adminAccounts';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { AdminAccountPage } from './AdminAccountPage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/adminAccounts', () => ({
   createAccount: vi.fn(),
@@ -26,21 +23,16 @@ const ringAccount = { accountId: 41, loginId: 'ring01', name: 'Ring One', role: 
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getAccounts.mockResolvedValue([account]);
   createAccount.mockResolvedValue({ accountId: 41, loginId: 'ring01', name: 'Ring One', role: 'RING_MANAGER', status: 'ACTIVE' });
   updateAccount.mockResolvedValue({ ...account, name: 'Judge Updated', status: 'INACTIVE' });
   deleteAccount.mockResolvedValue(undefined);
-  logout.mockResolvedValue(undefined);
 });
 
 describe('AdminAccountPage', () => {
-  it('requires a service manager and loads accounts without password data', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads accounts from the shared service manager session without password data', async () => {
     render(<AdminAccountPage />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'service01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '계정 관리' })).toBeInTheDocument();
     expect(getAccounts).toHaveBeenCalledWith({ keyword: '', role: '', status: '' }, 'service-token');
@@ -48,7 +40,6 @@ describe('AdminAccountPage', () => {
   });
 
   it('filters accounts by keyword, role, and status', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
     getAccounts.mockResolvedValueOnce([account]).mockResolvedValueOnce([ringAccount]);
 
     render(<AdminAccountPage />);
@@ -66,8 +57,6 @@ describe('AdminAccountPage', () => {
   });
 
   it('creates a new role account', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminAccountPage />);
     expect(await screen.findByText('judge01')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ 새 계정' }));
@@ -82,8 +71,6 @@ describe('AdminAccountPage', () => {
   });
 
   it('updates and deletes a selected account', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminAccountPage />);
     expect(await screen.findByText('judge01')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('이름'), { target: { value: 'Judge Updated' } });

@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { getAuditLogs } from '../api/auditLogs';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { AuditLogPage } from './AuditLogPage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/auditLogs', () => ({
   getAuditLogs: vi.fn(),
@@ -43,18 +40,13 @@ const pageResponse = {
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getAuditLogs.mockResolvedValue(pageResponse);
-  logout.mockResolvedValue(undefined);
 });
 
 describe('AuditLogPage', () => {
-  it('signs in an operations manager and loads masked audit records', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads masked audit records from the shared operations session', async () => {
     render(<AuditLogPage tournamentId={1} />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'service01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '관리자 감사 로그' })).toBeInTheDocument();
     expect(getAuditLogs).toHaveBeenCalledWith(expect.objectContaining({ page: 0, size: 20, tournamentId: '1' }), 'audit-token');
@@ -64,7 +56,6 @@ describe('AuditLogPage', () => {
   });
 
   it('applies filters and moves to the next page', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
     getAuditLogs.mockResolvedValueOnce(pageResponse).mockResolvedValueOnce({ ...pageResponse, page: 0, totalPages: 2 }).mockResolvedValueOnce({ ...pageResponse, page: 1 });
 
     render(<AuditLogPage tournamentId={1} />);
@@ -78,7 +69,6 @@ describe('AuditLogPage', () => {
   });
 
   it('shows an API error and retries the query', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
     getAuditLogs.mockRejectedValueOnce(new Error('FORBIDDEN')).mockResolvedValueOnce(pageResponse);
 
     render(<AuditLogPage tournamentId={1} />);

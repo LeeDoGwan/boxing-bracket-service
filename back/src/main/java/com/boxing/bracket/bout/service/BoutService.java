@@ -66,9 +66,10 @@ public class BoutService {
                 .filter(bout -> !bout.isEventBout())
                 .collect(Collectors.toList());
         Map<Long, BoutResult> resultByBoutId = getResultByBoutId(officialBouts);
+        Map<Long, Athlete> athleteById = getAthleteById(tournamentId, officialBouts);
 
         return officialBouts.stream()
-                .map(bout -> toListResponse(bout, resultByBoutId.get(bout.getId())))
+                .map(bout -> toListResponse(bout, athleteById, resultByBoutId.get(bout.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -102,9 +103,10 @@ public class BoutService {
                 .filter(bout -> matchesKeyword(bout, normalizedKeyword, boutNumber, athleteIds))
                 .collect(Collectors.toList());
         Map<Long, BoutResult> resultByBoutId = getResultByBoutId(matchedBouts);
+        Map<Long, Athlete> athleteById = getAthleteById(tournamentId, matchedBouts);
 
         return matchedBouts.stream()
-                .map(bout -> toListResponse(bout, resultByBoutId.get(bout.getId())))
+                .map(bout -> toListResponse(bout, athleteById, resultByBoutId.get(bout.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -146,13 +148,27 @@ public class BoutService {
                 .collect(Collectors.toList());
     }
 
-    private BoutListResponse toListResponse(Bout bout, BoutResult boutResult) {
+    private BoutListResponse toListResponse(Bout bout, Map<Long, Athlete> athleteById, BoutResult boutResult) {
         return BoutListResponse.of(
                 bout,
-                getAthlete(bout.getTournamentId(), bout.getRedAthleteId()),
-                getAthlete(bout.getTournamentId(), bout.getBlueAthleteId()),
+                athleteById.get(bout.getRedAthleteId()),
+                athleteById.get(bout.getBlueAthleteId()),
                 boutResult
         );
+    }
+
+    private Map<Long, Athlete> getAthleteById(Long tournamentId, List<Bout> bouts) {
+        Set<Long> athleteIds = bouts.stream()
+                .flatMap(bout -> java.util.stream.Stream.of(bout.getRedAthleteId(), bout.getBlueAthleteId()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Athlete> athleteById = athleteRepository.findAllById(athleteIds).stream()
+                .filter(athlete -> athlete.getTournamentId() == null || tournamentId.equals(athlete.getTournamentId()))
+                .collect(Collectors.toMap(Athlete::getId, Function.identity(), (first, second) -> first));
+        athleteIds.stream()
+                .filter(athleteId -> !athleteById.containsKey(athleteId))
+                .forEach(athleteId -> athleteById.put(athleteId, getAthlete(tournamentId, athleteId)));
+        return athleteById;
     }
 
     private Map<Long, BoutResult> getResultByBoutId(List<Bout> bouts) {

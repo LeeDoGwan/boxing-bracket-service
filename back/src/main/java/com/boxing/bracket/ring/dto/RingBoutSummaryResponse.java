@@ -3,6 +3,7 @@ package com.boxing.bracket.ring.dto;
 import com.boxing.bracket.athlete.domain.Athlete;
 import com.boxing.bracket.bout.domain.Bout;
 import com.boxing.bracket.bout.domain.BoutStatus;
+import com.boxing.bracket.bout.dto.BoutListResponse;
 
 public class RingBoutSummaryResponse {
 
@@ -50,6 +51,21 @@ public class RingBoutSummaryResponse {
                 redAthlete.getAffiliation(),
                 blueAthlete.getName(),
                 blueAthlete.getAffiliation(),
+                bout.getStatus(),
+                bout.getCurrentRound(),
+                bout.getScheduledOrder()
+        );
+    }
+
+    public static RingBoutSummaryResponse of(BoutListResponse bout) {
+        return new RingBoutSummaryResponse(
+                bout.getBoutId(),
+                bout.getBoutNumber(),
+                bout.getMatchType(),
+                bout.getRedAthlete().getName(),
+                bout.getRedAthlete().getAffiliation(),
+                bout.getBlueAthlete().getName(),
+                bout.getBlueAthlete().getAffiliation(),
                 bout.getStatus(),
                 bout.getCurrentRound(),
                 bout.getScheduledOrder()

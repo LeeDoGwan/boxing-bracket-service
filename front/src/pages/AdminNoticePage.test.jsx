@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { createNotice, deleteNotice, getNotices, updateNotice } from '../api/adminNotices';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { AdminNoticePage } from './AdminNoticePage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/adminNotices', () => ({
   createNotice: vi.fn(),
@@ -25,21 +22,16 @@ const notice = { active: true, content: 'Bring your accreditation.', displayOrde
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getNotices.mockResolvedValue([notice]);
   createNotice.mockResolvedValue({ ...notice, noticeId: 21, title: 'Venue notice' });
   updateNotice.mockResolvedValue({ ...notice, active: false, content: 'Updated content.', title: 'Updated notice' });
   deleteNotice.mockResolvedValue(undefined);
-  logout.mockResolvedValue(undefined);
 });
 
 describe('AdminNoticePage', () => {
-  it('signs in an admin and loads notices for the tournament', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads notices for the tournament from the shared staff session', async () => {
     render(<AdminNoticePage tournamentId={1} />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'game01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '공지 관리' })).toBeInTheDocument();
     expect(getNotices).toHaveBeenCalledWith(1, 'admin-token');
@@ -47,8 +39,6 @@ describe('AdminNoticePage', () => {
   });
 
   it('creates a new notice with display order and active state', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminNoticePage tournamentId={1} />);
     expect(await screen.findByText('Check-in notice')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ 새 공지' }));
@@ -62,8 +52,6 @@ describe('AdminNoticePage', () => {
   });
 
   it('updates and deletes a selected notice', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminNoticePage tournamentId={1} />);
     expect(await screen.findByText('Check-in notice')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('제목'), { target: { value: 'Updated notice' } });

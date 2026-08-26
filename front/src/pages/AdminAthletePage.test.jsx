@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { createAthlete, deleteAthlete, getAthletes, updateAthlete } from '../api/adminAthletes';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { AdminAthletePage } from './AdminAthletePage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/adminAthletes', () => ({
   createAthlete: vi.fn(),
@@ -25,21 +22,16 @@ const athlete = { affiliation: 'Red Gym', athleteId: 10, name: 'Red Boxer' };
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getAthletes.mockResolvedValue([athlete]);
   createAthlete.mockResolvedValue({ affiliation: 'Blue Gym', athleteId: 11, name: 'Blue Boxer' });
   updateAthlete.mockResolvedValue({ ...athlete, affiliation: 'Main Gym', name: 'Main Boxer' });
   deleteAthlete.mockResolvedValue(undefined);
-  logout.mockResolvedValue(undefined);
 });
 
 describe('AdminAthletePage', () => {
-  it('signs in an admin and loads athletes', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads athletes from the shared staff session', async () => {
     render(<AdminAthletePage />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'game01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '선수 관리' })).toBeInTheDocument();
     expect(getAthletes).toHaveBeenCalledWith(1, '', 'admin-token');
@@ -47,8 +39,6 @@ describe('AdminAthletePage', () => {
   });
 
   it('searches and creates a new athlete', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminAthletePage />);
     expect(await screen.findByText('Red Boxer')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('선수 검색'), { target: { value: 'Blue' } });
@@ -64,8 +54,6 @@ describe('AdminAthletePage', () => {
   });
 
   it('updates and deletes a selected athlete', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminAthletePage />);
     expect(await screen.findByText('Red Boxer')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('선수명'), { target: { value: 'Main Boxer' } });

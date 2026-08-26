@@ -55,7 +55,7 @@ Browser -> main.jsx -> App.jsx -> route page -> hook or API module -> backend ->
 
 | Screen | Route | Users | Purpose | Current APIs | Main components | State coverage |
 | --- | --- | --- | --- | --- | --- | --- |
-| Audience home | / | Audience | Notices, rings, current/next/later bout, confirmed results, schedule | /api/home, /api/bouts, /api/bouts/{boutId}, /api/events/stream | AudienceHome, NoticeCarousel, RingCard, ScheduleList, BoutDetailDialog, StatePanel | Loading, error, stale data/retry, empty sections, connected/reconnecting/offline |
+| Audience home | / | Audience | Notices, rings, current/next/later bout, confirmed results, schedule | /api/home, /api/bouts/{boutId}, /api/events/stream | AudienceHome, NoticeCarousel, RingCard, ScheduleList, BoutDetailDialog, StatePanel | Loading, error, stale data/retry, empty sections, connected/reconnecting/offline |
 | Bracket | /bracket | Audience | List, search, live refresh, highlight, and inspect bracket status/result | /api/bouts, /api/bouts/search, /api/events/stream | BracketPage, StatePanel | Loading, error, stale data/retry, empty, search, selected row |
 | Staff login | /staff/login | All staff roles | Shared credential entry and role-based workspace redirect | /api/auth/login, /api/auth/logout | StaffLoginPage, StaffAuthProvider, StaffRoute | Return-path redirect, invalid credentials, unsupported role, session cleanup |
 | Bout detail | Home dialog | Audience | Inspect a selected audience bout, submitted round scores, and confirmed totals | /api/bouts/{boutId} | BoutDetailDialog, StatePanel | Loading, error/retry, empty detail, score table, Escape/focus return |
@@ -128,15 +128,16 @@ front/src/api/client.js. This table maps screen behavior, not every DTO field.
 | --- | --- | --- | --- | --- |
 | GET /api/home?tournamentId= | Initial load and reload | Notices, ring statuses, current/next bout, results, schedule | StatePanel when no home; retain data on refresh failure | Called by audience event callback |
 | GET /api/schedules?tournamentId= | API capability for schedule flows | Schedule data when directly requested | Page retry | No direct audience stream call today |
-| GET /api/bouts?tournamentId= | Audience home and bracket load/reload | Later-bout preview and official bracket rows | Optional on home; bracket retry/stale panel | Called by bracket event callback |
+| GET /api/bouts?tournamentId= | Bracket load/reload | Official bracket rows | Bracket retry/stale panel | Called by bracket event callback |
 | GET /api/bouts/search?tournamentId=&keyword= | Bracket submit | Filtered rows | Search feedback and prior result where supported | No direct stream |
 | GET /api/bouts/{boutId} | Audience selection | BoutDetailDialog | Dialog loading/error | No direct dialog stream |
 | GET /api/events/stream?tournamentId= | Audience home and bracket mount | Connection status and REST invalidation | Reconnecting or offline status | Named events handled by hook |
 
 The audience reload is centralized in useAudienceData. It cancels the previous
 request, ignores stale responses, and treats the aggregate home response as the
-required source of truth; later bouts are loaded as optional preview data. The
-event payload is not rendered as the source of truth.
+source of truth for ring statuses, official bouts, results, notices, and schedules.
+The event payload is not rendered as the source of truth. Bracket search remains
+on the dedicated bouts APIs because it has an independent search workflow.
 
 ### 4.2 Authenticated and operations
 
@@ -247,12 +248,12 @@ SSE invariants:
 | src/components/ConfirmDialog.jsx | Shared destructive-action confirmation and focus return | Confirm/cancel, Escape, busy state | Administration page coverage |
 | src/components/ScheduleList.jsx | Schedule list and empty state | Presentation | ScheduleList.test.jsx |
 | src/components/BoutDetailDialog.jsx | Selected bout detail request and dialog | Selected id and request state | BoutDetailDialog.test.jsx |
-| src/hooks/useAudienceData.js | Aggregate home and optional later-bout loading | Audience data, cancellation, stale response guard, reload | Audience page coverage |
+| src/hooks/useAudienceData.js | Aggregate home data loading | Audience data, cancellation, stale response guard, reload | Audience page coverage |
 | src/hooks/useBoutEventStream.js | Audience/staff EventSource, ring scoping, parsing, filtering, dedupe, cleanup | connected, reconnecting, offline | useBoutEventStream.test.js |
 | src/hooks/useEventRefresh.js | Debounce and in-flight coalescing for event invalidation refreshes | Queued refresh without write side effects | useEventRefresh.test.js |
 | src/api/client.js | URL, headers, JSON parsing, bearer token, errors | Shared transport | API page coverage |
 | src/api/audience.js | Audience endpoints and stream URL | Endpoint contract | Audience/bracket coverage |
-| src/pages/AudienceHome.jsx | Compose public home | Hook data, selected bout, stream status | Audience page tests |
+| src/pages/AudienceHome.jsx | Compose public home | Hook data, selected bout, stream status | AudienceHome.test.jsx: composition, loading/fatal errors, stale retry, ring ordering, result/detail selection |
 | src/pages/BracketPage.jsx | Load, search, live refresh, select bracket | List, keyword, request cancellation/version, stream state | BracketPage.test.jsx |
 
 Role and admin pages follow the same page-to-API-module pattern. Keep domain
@@ -299,19 +300,21 @@ having explicit 768, 1024, and 1440 media queries.
 The frontend uses a ringside control-room visual language: a paper-toned
 surface for the public canvas, charcoal for navigation and live-board context,
 red for action and urgency, blue for ring identity, teal for healthy live
-operation, and amber for notices or attention. The audience home leads with a
-live-board hero containing ring, active-bout, and waiting-bout counts. Results
-and schedule are grouped into a two-column secondary area on wide screens and
-collapse to one column on mobile. Panels remain lightly framed with small
-corner radii, restrained shadows, and clear top or side rules so repeated
-information remains scannable without becoming a collection of nested cards.
+operation, and amber for notices or attention. The audience home leads with
+the active-rings board rather than a marketing hero: a compact tournament
+toolbar and summary strip are followed immediately by ring cards ordered by
+live status. Results and schedule are grouped into a two-column secondary area
+on wide screens and collapse to one column on mobile. Panels remain lightly
+framed with small corner radii, restrained shadows, and clear top or side rules
+so repeated information remains scannable without becoming a collection of
+nested cards.
 
 | Viewport | Target | Current status | Acceptance rule |
 | --- | --- | --- | --- |
 | Mobile 360 | One column, grouped operations menu, core bout information first, no horizontal scroll | Implemented by mobile layout and overflow protection | No clipping in header, notices, rings, results, or schedule |
 | Tablet 768 | Two-column content where space allows | Implemented with a tablet breakpoint above 760px | No desktop row may escape the viewport |
 | Desktop 1024 | Two or three scannable columns | Implemented with capped fluid shell and tablet tuning | Current/next bout and ring details remain readable |
-| Wide 1440 | Centered max-width content and side margins | Implemented by 1220px page shell | Do not stretch long rows or shrink type for density |
+| Wide 1440 | Centered max-width content and side margins | Implemented by capped 1280px public board shell | Do not stretch long rows or shrink type for density |
 
 Rules:
 
@@ -345,13 +348,13 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 26 test files and 92 passing tests.
+The current frontend baseline is 25 test files and 91 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
 | Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, submitted round-score projection, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
 | Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
-| Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Composition, loading/error, live status, list/search/selection, request signal | Stale data and invalid query |
+| Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Public home composition, loading/fatal errors, stale retry, ring ordering, result/detail selection, list/search/selection, request signal | Stale data and invalid query |
 | Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, 0-10 score validation/confirmation, Supervisor result readiness/round penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
 | Shared staff auth | auth/StaffAuthContext.test.jsx, api/client.test.js | Shared and legacy session write, recovery, startup revalidation, 401 cleanup, and logout | Login route rendering and browser-level token expiry |
 | Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error, refresh/retry | Responsive table and browser-level refresh timing |
@@ -432,6 +435,6 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 26 frontend test files and 92 tests unless coverage
+- Preserve the baseline of 25 frontend test files and 91 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.

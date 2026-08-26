@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { createTournament, deleteTournament, getTournaments, updateTournament } from '../api/adminTournaments';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { AdminTournamentPage } from './AdminTournamentPage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/adminTournaments', () => ({
   createTournament: vi.fn(),
@@ -33,21 +30,16 @@ const tournament = {
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getTournaments.mockResolvedValue([tournament]);
   createTournament.mockResolvedValue({ ...tournament, name: 'Winter Boxing Open', tournamentId: 2 });
   updateTournament.mockResolvedValue({ ...tournament, location: 'Busan Gym' });
   deleteTournament.mockResolvedValue(undefined);
-  logout.mockResolvedValue(undefined);
 });
 
 describe('AdminTournamentPage', () => {
-  it('signs in a game manager and loads tournaments', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads tournaments from the shared game manager session', async () => {
     render(<AdminTournamentPage />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'game01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '대회 관리' })).toBeInTheDocument();
     expect(getTournaments).toHaveBeenCalledWith('admin-token');
@@ -55,8 +47,6 @@ describe('AdminTournamentPage', () => {
   });
 
   it('creates a new tournament from the admin form', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminTournamentPage />);
     expect(await screen.findByText('Summer Boxing Open')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ 새 대회' }));
@@ -69,8 +59,6 @@ describe('AdminTournamentPage', () => {
   });
 
   it('updates and deletes a selected tournament', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminTournamentPage />);
     expect(await screen.findByText('Summer Boxing Open')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('장소'), { target: { value: 'Busan Gym' } });

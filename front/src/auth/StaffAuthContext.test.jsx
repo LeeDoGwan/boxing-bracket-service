@@ -7,7 +7,7 @@ import {
   writeStaffSession,
 } from './StaffAuthContext';
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 vi.mock('../api/auth', () => ({
   getCurrentAccount: vi.fn(),
@@ -76,6 +76,21 @@ describe('staff session validation', () => {
     getCurrentAccount.mockRejectedValue(new Error('Authentication required'));
 
     render(<StaffAuthProvider><SessionProbe /></StaffAuthProvider>);
+
+    await waitFor(() => expect(screen.getByTestId('session-probe')).toHaveTextContent('signed-out'));
+    expect(window.sessionStorage.length).toBe(0);
+  });
+
+  it('clears the active session when a shared logout event is dispatched', async () => {
+    writeStaffSession(session);
+    getCurrentAccount.mockResolvedValue(session.account);
+
+    render(<StaffAuthProvider><SessionProbe /></StaffAuthProvider>);
+
+    expect(await screen.findByText('Judge One')).toBeInTheDocument();
+    act(() => {
+      window.dispatchEvent(new Event('boxing:staff-logout'));
+    });
 
     await waitFor(() => expect(screen.getByTestId('session-probe')).toHaveTextContent('signed-out'));
     expect(window.sessionStorage.length).toBe(0);

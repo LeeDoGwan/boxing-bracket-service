@@ -1,13 +1,13 @@
 # Testing
 
-Last updated: 2026-08-09
+Last updated: 2026-08-23
 
 ## Latest Verification
 
 - Backend working directory: `back`
 - Command: `mvn test`
 - Verified at: 2026-08-09
-- Result: 409 passed, 0 failed, 0 errors, 1 skipped locally
+- Result: 411 passed, 0 failed, 0 errors, 1 skipped locally
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
 - Test classes: 74 local classes plus the CI-only `MariaDbMigrationSmokeIT`
 - Runtime profile: `test`
@@ -51,7 +51,7 @@ Last updated: 2026-08-09
 - Scalar-reference guard tests verify tournament, ring, athlete, account, and bout deletes reject orphan-producing mutations.
 - Import tests verify the required idempotency key, persistent key/row mapping, and repeated-key response reuse.
 - Auth tests verify sessions are rejected after account deletion, deactivation, identity changes, or role changes.
-- Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading and submitted public round-score display, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation and reasoned result correction, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
+- Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading and submitted public round-score display, public home composition/loading/fatal-error/stale-retry/ring-order/result-detail flows backed by the aggregate home response, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation and reasoned result correction, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
 
@@ -60,7 +60,7 @@ map is maintained in the
 [frontend wide-frame architecture guide](frontend-wide-frame.md).
 
 - Working directory: `front`
-- `npm test -- --run`: 92 passed across 26 test files
+- `npm test`: 91 passed across 25 test files
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
 - Automated frontend coverage includes the public home and bracket routes, API failure and empty states, public submitted round-score rendering, startup account revalidation, authenticated 401 session cleanup, the configured one-tournament context, bracket search, the shared `/staff/login` route, protected-route return paths, invalid-credential handling, and role-aware navigation. Authenticated score submission, result confirmation, ring commands, operator SSE-driven refetch, operations refresh/retry/auto-refresh, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by frontend page and session tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data. Manual browser verification remains a release smoke-test task and is tracked in [Deployment runbook](deployment-runbook.md).

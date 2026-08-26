@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getBouts, getHome } from '../api/audience';
+import { getHome } from '../api/audience';
 
 const initialState = {
   bouts: [],
+  boutsError: null,
   dataTournamentId: null,
   home: null,
   loading: true,
@@ -18,22 +19,17 @@ export function useAudienceData(tournamentId) {
     const requestId = requestRef.current.id + 1;
     const controller = new AbortController();
     requestRef.current = { controller, id: requestId };
-    setState((current) => ({ ...current, loading: true, error: null }));
+    setState((current) => ({ ...current, boutsError: null, loading: true, error: null }));
     try {
-      const [homeResult, boutsResult] = await Promise.allSettled([
-        getHome(tournamentId, { signal: controller.signal }),
-        getBouts(tournamentId, { signal: controller.signal }),
-      ]);
+      const home = await getHome(tournamentId, { signal: controller.signal });
       if (requestRef.current.id !== requestId) {
         return;
       }
-      if (homeResult.status === 'rejected') {
-        throw homeResult.reason;
-      }
       setState({
-        bouts: boutsResult.status === 'fulfilled' ? boutsResult.value || [] : [],
+        bouts: home?.officialBouts || [],
+        boutsError: null,
         dataTournamentId: tournamentId,
-        home: homeResult.value,
+        home,
         loading: false,
         error: null,
       });
@@ -41,7 +37,7 @@ export function useAudienceData(tournamentId) {
       if (error?.name === 'AbortError' || requestRef.current.id !== requestId) {
         return;
       }
-      setState((current) => ({ ...current, loading: false, error }));
+      setState((current) => ({ ...current, boutsError: null, loading: false, error }));
     }
   }, [tournamentId]);
 

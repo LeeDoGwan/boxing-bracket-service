@@ -28,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -73,6 +74,27 @@ class BoutServiceTest {
         assertThat(responses.get(0).getBlueAthlete().getAffiliation()).isEqualTo("Seoul Boxing Club");
         verify(athleteRepository, never()).findById(eq(12L));
         verify(athleteRepository, never()).findById(eq(13L));
+    }
+
+    @Test
+    void getOfficialBoutsLoadsAthletesWithOneBulkLookup() {
+        Bout officialBout = createBout(1L, 1, 1, 10L, 11L, false);
+        Athlete redAthlete = createAthlete(10L, "Hong Gil Dong", "Incheon Boxing Club");
+        Athlete blueAthlete = createAthlete(11L, "Kim Chul Soo", "Seoul Boxing Club");
+
+        given(boutRepository.findByTournamentIdOrderByScheduledOrderAsc(1L))
+                .willReturn(List.of(officialBout));
+        given(athleteRepository.findAllById(any(Iterable.class)))
+                .willReturn(List.of(redAthlete, blueAthlete));
+
+        List<BoutListResponse> responses = boutService.getOfficialBouts(1L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getRedAthlete().getName()).isEqualTo("Hong Gil Dong");
+        assertThat(responses.get(0).getBlueAthlete().getName()).isEqualTo("Kim Chul Soo");
+        verify(athleteRepository).findAllById(any(Iterable.class));
+        verify(athleteRepository, never()).findById(eq(10L));
+        verify(athleteRepository, never()).findById(eq(11L));
     }
 
     @Test

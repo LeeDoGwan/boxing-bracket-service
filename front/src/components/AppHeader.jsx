@@ -35,6 +35,7 @@ export function AppHeader({ tournamentId }) {
           <div>
             <p className="eyebrow">LIVE TOURNAMENT</p>
             <h1>복싱 대회 현황</h1>
+            <p className="brand-context">대회 {tournamentId}</p>
           </div>
         </div>
       </div>

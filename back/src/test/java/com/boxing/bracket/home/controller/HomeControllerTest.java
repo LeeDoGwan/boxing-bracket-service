@@ -37,16 +37,19 @@ class HomeControllerTest {
 
     @Test
     void getHomeReturnsHomeData() throws Exception {
+        BoutListResponse confirmedBout = BoutListResponse.of(
+                createConfirmedBout(10L),
+                createAthlete(10L, "Hong Gil Dong"),
+                createAthlete(11L, "Kim Chul Soo")
+        );
         given(homeService.getHome(1L))
                 .willReturn(HomeResponse.of(
                         1L,
                         List.of(NoticeResponse.from(createNotice(1L))),
                         List.of(RingStatusResponse.of(createRing(1L), null, null)),
-                        List.of(BoutListResponse.of(
-                                createConfirmedBout(10L),
-                                createAthlete(10L, "Hong Gil Dong"),
-                                createAthlete(11L, "Kim Chul Soo")
-                        ))
+                        List.of(confirmedBout),
+                        List.of(confirmedBout),
+                        List.of()
                 ));
 
         mockMvc.perform(get("/api/home")
@@ -56,6 +59,7 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.data.tournamentId").value(1))
                 .andExpect(jsonPath("$.data.notices[0].noticeId").value(1))
                 .andExpect(jsonPath("$.data.ringStatuses[0].ringId").value(1))
+                .andExpect(jsonPath("$.data.officialBouts[0].boutId").value(10))
                 .andExpect(jsonPath("$.data.confirmedResults[0].boutId").value(10));
     }
 

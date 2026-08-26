@@ -1,22 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { login, logout } from '../api/auth';
 import { createRing, deleteRing, getRings, updateRing } from '../api/adminRings';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
-const SESSION_KEY = 'boxing.operations.session';
-const ALLOWED_ROLES = new Set(['GAME_MANAGER', 'SERVICE_MANAGER']);
 const STATUS_LABELS = { CLOSED: '운영 종료', IN_PROGRESS: '진행 중', READY: '준비' };
-
-function readSession() {
-  try {
-    const stored = window.sessionStorage.getItem(SESSION_KEY);
-    const session = stored ? JSON.parse(stored) : null;
-    return session?.accessToken && ALLOWED_ROLES.has(session?.account?.role) ? session : null;
-  } catch {
-    return null;
-  }
-}
 
 function blankForm() {
   return { name: '', status: 'READY' };
@@ -28,47 +16,6 @@ function formFromRing(ring) {
 
 function statusLabel(status) {
   return STATUS_LABELS[status] || status || '상태 미정';
-}
-
-function LoginForm({ onLogin }) {
-  const [form, setForm] = useState({ loginId: '', password: '' });
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setError('');
-    setSubmitting(true);
-    try {
-      const session = await login(form.loginId, form.password);
-      if (!ALLOWED_ROLES.has(session.account?.role)) {
-        throw new Error('ADMIN_ONLY');
-      }
-      onLogin(session);
-    } catch (requestError) {
-      setError(requestError.message === 'ADMIN_ONLY'
-        ? '게임 매니저 또는 서비스 매니저 계정으로 로그인해 주세요.'
-        : '로그인 정보를 확인해 주세요.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <main className="page-shell auth-shell">
-      <section className="auth-panel">
-        <p className="eyebrow">RING ADMIN DESK</p>
-        <h2>링 관리 로그인</h2>
-        <p>대회 링 정보를 관리하려면 운영자 계정으로 로그인하세요.</p>
-        <form onSubmit={handleSubmit}>
-          <label>아이디<input autoComplete="username" onChange={(event) => setForm((current) => ({ ...current, loginId: event.target.value }))} required value={form.loginId} /></label>
-          <label>비밀번호<input autoComplete="current-password" onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} required type="password" value={form.password} /></label>
-          {error && <p aria-live="polite" className="form-error" role="alert">{error}</p>}
-          <button className="command-button" disabled={submitting} type="submit">{submitting ? '로그인 중...' : '로그인'}</button>
-        </form>
-      </section>
-    </main>
-  );
 }
 
 function RingWorkspace({ onLogout, session, tournamentId }) {
@@ -191,20 +138,7 @@ function RingWorkspace({ onLogout, session, tournamentId }) {
 }
 
 export function AdminRingPage({ tournamentId }) {
-  const [session, setSession] = useState(readSession);
-
-  function handleLogin(nextSession) {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(nextSession));
-    setSession(nextSession);
-  }
-
-  async function handleLogout() {
-    if (session?.accessToken) {
-      await logout(session.accessToken).catch(() => undefined);
-    }
-    window.sessionStorage.removeItem(SESSION_KEY);
-    setSession(null);
-  }
-
-  return session ? <RingWorkspace onLogout={handleLogout} session={session} tournamentId={tournamentId} /> : <LoginForm onLogin={handleLogin} />;
+  const { session, signOut } = useStaffAuth();
+  if (!session || !['GAME_MANAGER', 'SERVICE_MANAGER'].includes(session.account.role)) return null;
+  return <RingWorkspace onLogout={signOut} session={session} tournamentId={tournamentId} />;
 }

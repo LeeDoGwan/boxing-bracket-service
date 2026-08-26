@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { login, logout } from '../api/auth';
 import { createSchedule, deleteSchedule, getSchedules, updateSchedule } from '../api/adminSchedules';
+import { useStaffAuth } from '../auth/StaffAuthContext';
 import { AdminSchedulePage } from './AdminSchedulePage';
 
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
-}));
+vi.mock('../auth/StaffAuthContext', () => ({ useStaffAuth: vi.fn() }));
 
 vi.mock('../api/adminSchedules', () => ({
   createSchedule: vi.fn(),
@@ -35,21 +32,16 @@ const schedule = {
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  useStaffAuth.mockReturnValue({ session, signOut: vi.fn() });
   getSchedules.mockResolvedValue([schedule]);
   createSchedule.mockResolvedValue({ ...schedule, scheduleId: 21, title: 'Lunch' });
   updateSchedule.mockResolvedValue({ ...schedule, title: 'Updated ceremony' });
   deleteSchedule.mockResolvedValue(undefined);
-  logout.mockResolvedValue(undefined);
 });
 
 describe('AdminSchedulePage', () => {
-  it('signs in and loads schedules for the tournament', async () => {
-    login.mockResolvedValue(session);
-
+  it('loads schedules for the tournament from the shared staff session', async () => {
     render(<AdminSchedulePage tournamentId={1} />);
-    fireEvent.change(screen.getByLabelText('아이디'), { target: { value: 'game01' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password' } });
-    fireEvent.click(screen.getByRole('button', { name: '로그인' }));
 
     expect(await screen.findByRole('heading', { name: '일정 관리' })).toBeInTheDocument();
     expect(getSchedules).toHaveBeenCalledWith(1, 'admin-token');
@@ -57,8 +49,6 @@ describe('AdminSchedulePage', () => {
   });
 
   it('creates a schedule with date and type fields', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminSchedulePage tournamentId={1} />);
     expect(await screen.findByText('Opening ceremony')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ 새 일정' }));
@@ -81,8 +71,6 @@ describe('AdminSchedulePage', () => {
   });
 
   it('updates and deletes a selected schedule', async () => {
-    window.sessionStorage.setItem('boxing.operations.session', JSON.stringify(session));
-
     render(<AdminSchedulePage tournamentId={1} />);
     expect(await screen.findByText('Opening ceremony')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('제목'), { target: { value: 'Updated ceremony' } });
