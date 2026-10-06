@@ -8,6 +8,7 @@ export function AppFooter() {
   const returnTo = `${location.pathname}${location.search}`;
   return (
     <footer className="app-footer">
+      <span>© 2026 LeeDoGwan. All rights reserved.</span>
       <Link to={`/staff/login?returnTo=${encodeURIComponent(returnTo)}`}>스태프 로그인</Link>
     </footer>
   );

@@ -442,7 +442,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .staff-session small { color: #bfc4c6; font-size: 11px; white-space: nowrap; }
 .header-logout { min-height: 36px; border: 1px solid #73787c; border-radius: 2px; padding: 7px 10px; background: transparent; color: #ffffff; font-size: 12px; font-weight: 700; }
 .header-logout:hover { border-color: #ffffff; background: #30353a; }
-.app-footer { display: flex; justify-content: center; padding: 0 24px 34px; }
+.app-footer { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 24px 34px; }
+.app-footer span { color: var(--muted); font-size: 12px; }
 .app-footer a { color: var(--muted); font-size: 12px; font-weight: 700; text-decoration: none; }
 .app-footer a:hover { color: var(--red-dark); text-decoration: underline; }
 .staff-login-panel { width: min(100%, 480px); margin: 28px auto 0; }

@@ -2,6 +2,9 @@
 
 Boxing bracket and tournament advice service.
 
+Copyright (c) 2026 LeeDoGwan. All rights reserved. See [LICENSE](LICENSE) and
+[copyright and license policy](docs/copyright-and-licenses.md).
+
 ## Status
 
 Sprint 1 core backend flow and tournament schedule management are implemented.
@@ -47,6 +50,15 @@ Implemented core areas:
 - [Backend CI workflow](.github/workflows/backend-ci.yml)
 - [Frontend CI workflow](.github/workflows/frontend-ci.yml)
 - [Administrator audit log](docs/audit-log.md)
+- [Copyright and license policy](docs/copyright-and-licenses.md)
+- [Korean user guide index](docs/user-guide.md)
+- [Audience guide](docs/user-guide-audience.md)
+- [Participant guide](docs/user-guide-participant.md)
+- [Judge guide](docs/user-guide-judge.md)
+- [Supervisor guide](docs/user-guide-supervisor.md)
+- [Ring Manager guide](docs/user-guide-ring-manager.md)
+- [Game Manager guide](docs/user-guide-game-manager.md)
+- [Service Manager guide](docs/user-guide-service-manager.md)
 - [Frontend README](front/README.md)
 
 ## Repository Layout
