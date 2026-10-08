@@ -108,7 +108,7 @@ function RingWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">RING ADMIN DESK</p><h2>링 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
+        <div><p className="eyebrow">경기장 운영</p><h2>링 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
         <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadRings} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
       </div>
       {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
@@ -118,13 +118,13 @@ function RingWorkspace({ onLogout, session, tournamentId }) {
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">RINGS</p><h3>링 목록</h3></div><span>{rings.length}건</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">경기장</p><h3>링 목록</h3></div><span>{rings.length}건</span></div>
             <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 링</button>
             <div className="admin-entity-list">{rings.map((ring) => <button className={`admin-entity-option${selectedId === ring.ringId ? ' selected' : ''}`} key={ring.ringId} onClick={() => setSelectedId(ring.ringId)} type="button"><strong>{ring.name}</strong><span>{statusLabel(ring.status)} · 현재 경기 {ring.currentBoutId || '없음'}</span></button>)}</div>
             {!rings.length ? <p className="operation-empty">등록된 링이 없습니다.</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `RING ${selectedId}` : 'NEW RING'}</p><h3>{selectedId ? '링 정보 수정' : '링 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `링 ${selectedId}` : '새 링'}</p><h3>{selectedId ? '링 정보 수정' : '링 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid"><label>링 이름<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
               <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '링 저장' : '링 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">링 삭제</button> : null}</div>

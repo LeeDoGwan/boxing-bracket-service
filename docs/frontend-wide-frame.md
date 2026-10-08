@@ -1,6 +1,6 @@
 # Frontend Wide-Frame Architecture Guide
 
-Last updated: 2026-08-09
+Last updated: 2026-10-06
 
 This is the implementation-oriented wide frame for the frontend in front/.
 It connects screens, state, API calls, components, realtime events, tests,
@@ -88,6 +88,8 @@ screens are tablet-first, remain usable on mobile, and treat offline operation
 as out of scope while retaining reconnect, stale-data, retry, and conflict
 feedback.
 
+Known assignment-screen limitation: although `/admin/assignments` allows both manager roles, its account reference API allows only Service Managers. Game Managers receive a Korean explanation and must request assignment changes from a Service Manager. This is not a completed Game Manager browser workflow.
+
 ## 3. State model
 
 | State | Meaning | UI expression | Current status |
@@ -106,7 +108,7 @@ Important transitions:
 | Situation | Current behavior | Rule |
 | --- | --- | --- |
 | First load | Audience hook starts loading; page shows a loading panel | Do not show empty before the first response |
-| Partial audience failure | Home is required; later-bout preview is optional | Keep usable home data and expose stale/retry feedback |
+| Audience refresh failure | One `/api/home` request supplies the whole home screen, including `officialBouts` | Retain the last aggregate and expose stale/retry feedback |
 | SSE disconnect | Stream becomes reconnecting; content remains | Never clear last confirmed API data |
 | Event received | Event is parsed and deduplicated, then audience or selected-ring staff reload runs | No browser refresh |
 | Duplicate event | Key uses event type, bout id, round, and occurrence time | No duplicate reload |
@@ -348,14 +350,14 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 25 test files and 91 passing tests.
+The current frontend baseline is 25 test files and 94 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
 | Shared audience components | components/BoutDetailDialog.test.jsx, NoticeCarousel.test.jsx, RingCard.test.jsx, ScheduleList.test.jsx | Detail loading/error/content, submitted round-score projection, notice controls, ring rendering, schedule states | Keyboard and dialog focus assertions |
 | Realtime hooks | hooks/useBoutEventStream.test.js, hooks/useEventRefresh.test.js | Ring URL, event filtering, parsing, dedupe, state, cleanup, refresh coalescing | Browser-level network failure timing |
 | Audience and bracket | pages/AudienceHome.test.jsx, BracketPage.test.jsx | Public home composition, loading/fatal errors, stale retry, ring ordering, result/detail selection, list/search/selection, request signal | Stale data and invalid query |
-| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx plus legacy role coverage | Session guard, assigned-ring workflows, 0-10 score validation/confirmation, Supervisor result readiness/round penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
+| Role pages | pages/JudgeAssignedPage.test.jsx, SupervisorAssignedPage.test.jsx, RingManagerAssignedPage.test.jsx  | Session guard, assigned-ring workflows, 0-10 score validation/confirmation, Supervisor result readiness/round penalty validation/actor ownership/lock, input preservation, API feedback, live refresh | Expired token and browser-level stream failure |
 | Shared staff auth | auth/StaffAuthContext.test.jsx, api/client.test.js | Shared and legacy session write, recovery, startup revalidation, 401 cleanup, and logout | Login route rendering and browser-level token expiry |
 | Operations | pages/OperationsPage.test.jsx, AuditLogPage.test.jsx | Protected views, filters, empty/error, refresh/retry | Responsive table and browser-level refresh timing |
 | Administration | pages/AdminTournamentPage.test.jsx, AdminRingPage.test.jsx, AdminAthletePage.test.jsx, AdminNoticePage.test.jsx, AdminSchedulePage.test.jsx, AdminBoutPage.test.jsx, AdminAccountPage.test.jsx | CRUD, filters, import, role restrictions, errors | Field validation and retry-after-failure |
@@ -435,6 +437,16 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 25 frontend test files and 91 tests unless coverage
+- Preserve the baseline of 25 frontend test files and 94 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.
+
+## Korean Procedure Alignment (2026-10-06)
+
+- User-facing operator labels and accessible names are Korean; API enums and request contracts are unchanged.
+- Score readiness counts represent score records, not distinct Judges or missing Judge submissions. The server remains authoritative for the configured 3/5-Judge rule.
+- Penalty history displays opponent addition, matching effective-score calculation.
+- `DRAW` is a winner selection, not a decision type; it is accepted only with `POINTS` (판정).
+- Footer sign-in can return to the public route; staff open their workspace through the operations menu.
+- Bracket row selection highlights the row; it does not open a detail dialog. Home current-bout/recent-result entries open details.
+- Role guides document current limitations, including mandatory password entry on account edits and the Service Manager-only account lookup used by assignments.

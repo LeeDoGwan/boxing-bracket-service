@@ -1,6 +1,6 @@
 # Boxing Bracket Service Design
 
-Last updated: 2026-08-09
+Last updated: 2026-10-06
 
 ## 1. Purpose
 
@@ -411,8 +411,9 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 
 The latest documented verification is:
 
-- Backend: 74 local test classes, 411 passed cases, zero failures or errors, and one CI-only MariaDB smoke test skipped locally.
-- Frontend: 25 test files, 91 test cases, ESLint passed, and Vite production build passed.
+- Backend (2026-10-06): 73 test classes, 410 passed cases, zero failures/errors/skips from `mvn -q clean test`. The MariaDB smoke test is selected separately in CI and was not run locally.
+- Frontend (2026-10-06): 25 test files, 94 test cases, ESLint passed, and Vite production build passed.
+- Current UI limitation: assignment routes and APIs admit Game Managers, but the account reference request used by the screen is Service Manager-only. Until that contract is reconciled, Service Managers perform ring assignments.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 
 The test profile does not seed production accounts or tournament data. Authenticated desks require test fixtures or a running local database with active accounts.

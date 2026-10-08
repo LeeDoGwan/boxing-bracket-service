@@ -52,9 +52,8 @@ export function StaffLoginPage() {
   return (
     <main className="page-shell auth-shell staff-login-shell">
       <section className="auth-panel staff-login-panel">
-        <p className="eyebrow">STAFF ACCESS</p>
+        <p className="eyebrow">관계자 전용</p>
         <h2>스태프 로그인</h2>
-        <p>로그인 후 담당 역할과 링에 맞는 운영 화면으로 이동합니다.</p>
         <form onSubmit={handleSubmit}>
           <label htmlFor="staff-login-id">아이디<input autoComplete="username" id="staff-login-id" onChange={(event) => setLoginId(event.target.value)} required value={loginId} /></label>
           <label htmlFor="staff-login-password">비밀번호<input autoComplete="current-password" id="staff-login-password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>

@@ -29,10 +29,10 @@ describe('RingManagerAssignedPage', () => {
   it('loads assigned rings and does not expose arbitrary ring or status inputs', async () => {
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
 
-    expect(await screen.findByRole('heading', { name: 'Bout 12' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Assigned ring')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Ring ID')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '경기 12' })).toBeInTheDocument();
+    expect(screen.getByLabelText('배정된 링')).toBeInTheDocument();
+    expect(screen.queryByLabelText('링 ID')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('상태')).not.toBeInTheDocument();
     expect(getAssignedRings).toHaveBeenCalledWith(1, 'ring-manager-token');
     expect(getAssignedBouts).toHaveBeenCalledWith(4, 'ring-manager-token');
   });
@@ -40,12 +40,12 @@ describe('RingManagerAssignedPage', () => {
   it('only enables the next round in sequence', async () => {
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
 
-    const roundInput = await screen.findByLabelText('Next round');
+    const roundInput = await screen.findByLabelText('다음 라운드');
     await waitFor(() => expect(roundInput).toHaveValue(2));
     fireEvent.change(roundInput, { target: { value: '3' } });
-    expect(screen.getByRole('button', { name: 'Start round' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '라운드 시작' })).toBeDisabled();
     fireEvent.change(roundInput, { target: { value: '2' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Start round' }));
+    fireEvent.click(screen.getByRole('button', { name: '라운드 시작' }));
 
     await waitFor(() => expect(startRound).toHaveBeenCalledWith(12, 2, 'ring-manager-token'));
   });
@@ -55,10 +55,10 @@ describe('RingManagerAssignedPage', () => {
     getAssignedBouts.mockResolvedValue([{ ...bout, currentRound: 0, status: 'READY' }]);
 
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Start bout' }));
-    expect(screen.getByRole('dialog', { name: 'Confirm ring operation' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('dialog', { name: 'Confirm ring operation' })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: '경기 시작' }));
+    expect(screen.getByRole('dialog', { name: '링 운영 확인' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '취소' }));
+    expect(screen.queryByRole('dialog', { name: '링 운영 확인' })).not.toBeInTheDocument();
     expect(startBout).not.toHaveBeenCalled();
   });
 
@@ -67,8 +67,8 @@ describe('RingManagerAssignedPage', () => {
     getAssignedBouts.mockResolvedValue([{ ...bout, currentRound: 0, status: 'READY' }]);
 
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Start bout' }));
-    const confirmButton = screen.getByRole('button', { name: 'Confirm' });
+    fireEvent.click(await screen.findByRole('button', { name: '경기 시작' }));
+    const confirmButton = screen.getByRole('button', { name: '확인' });
     fireEvent.click(confirmButton);
     fireEvent.click(confirmButton);
 
@@ -80,12 +80,12 @@ describe('RingManagerAssignedPage', () => {
     getAssignedBouts.mockResolvedValue([{ ...bout, currentRound: 0, status: 'SCHEDULED' }]);
 
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Prepare next bout' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    fireEvent.click(await screen.findByRole('button', { name: '다음 경기 준비' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(moveToNextBout).toHaveBeenCalledWith(4, 'ring-manager-token'));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel bout' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    fireEvent.click(screen.getByRole('button', { name: '경기 취소' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
     await waitFor(() => expect(updateBoutStatus).toHaveBeenCalledWith(12, 'CANCELED', 'ring-manager-token'));
   });
 
@@ -93,8 +93,8 @@ describe('RingManagerAssignedPage', () => {
     getAssignedBouts.mockResolvedValue([{ ...bout, currentRound: 3, status: 'IN_PROGRESS' }]);
 
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Send to scoring' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    fireEvent.click(await screen.findByRole('button', { name: '채점 단계로 전환' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
 
     await waitFor(() => expect(updateBoutStatus).toHaveBeenCalledWith(12, 'SCORING', 'ring-manager-token'));
   });
@@ -104,10 +104,10 @@ describe('RingManagerAssignedPage', () => {
     getAssignedBouts.mockResolvedValue([{ ...bout, currentRound: 0, status: 'READY' }]);
 
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Start bout' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    fireEvent.click(await screen.findByRole('button', { name: '경기 시작' }));
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Another bout is already active on this ring.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('이 링에서 다른 경기가 진행 중입니다.');
     expect(screen.queryByText('BOUT_ALREADY_IN_PROGRESS')).not.toBeInTheDocument();
   });
 
@@ -115,14 +115,14 @@ describe('RingManagerAssignedPage', () => {
     let currentBouts = [bout];
     getAssignedBouts.mockImplementation(() => Promise.resolve(currentBouts));
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
-    expect(await screen.findByRole('heading', { name: 'Bout 12' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '경기 12' })).toBeInTheDocument();
     currentBouts = [{ ...bout, resultConfirmed: true, status: 'FINISHED' }];
     const streamOptions = useBoutEventStream.mock.calls.slice(-1)[0][1];
 
     act(() => streamOptions.onEvent({ boutId: 12, eventType: 'RESULT_CONFIRMED' }));
 
-    await waitFor(() => expect(screen.getByText('Result confirmed. Prepare the next bout when the ring is ready.')).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: 'Start bout' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('결과가 확정되었습니다. 링이 준비되면 다음 경기를 준비할 수 있습니다.')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: '경기 시작' })).not.toBeInTheDocument();
     expect(startBout).not.toHaveBeenCalled();
   });
 });

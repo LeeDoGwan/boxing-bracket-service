@@ -45,8 +45,8 @@ describe('BoutDetailDialog', () => {
 
     render(<BoutDetailDialog boutId={12} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('heading', { name: 'Round scores' })).toBeInTheDocument();
-    expect(screen.getByText('Judge 1')).toBeInTheDocument();
-    expect(screen.getByText('Judge 2')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '라운드별 점수' })).toBeInTheDocument();
+    expect(screen.getByText('심판 1')).toBeInTheDocument();
+    expect(screen.getByText('심판 2')).toBeInTheDocument();
   });
 });

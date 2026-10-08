@@ -1,4 +1,4 @@
-import { athleteLabel, decisionLabel, effectiveResultScores, statusLabel, winnerLabel, winnerText } from './utils';
+import { athleteLabel, decisionLabel, effectiveResultScores, statusLabel, streamStateLabel, winnerLabel, winnerText } from './utils';
 
 describe('display helpers', () => {
   it('formats athlete affiliation and fallback values', () => {
@@ -17,6 +17,23 @@ describe('display helpers', () => {
     expect(decisionLabel('RSC')).toBe('TKO');
     expect(effectiveResultScores({ bluePenaltyTotal: 2, blueTotalScore: 19, redPenaltyTotal: 1, redTotalScore: 19 }))
       .toEqual({ blue: 20, red: 21 });
+  });
+
+  it('displays the supported result decisions in Korean', () => {
+    expect(decisionLabel('POINTS')).toBe('판정');
+    expect(decisionLabel('KO')).toBe('KO');
+    expect(decisionLabel('ABD')).toBe('기권');
+    expect(decisionLabel('DSQ')).toBe('실격');
+    expect(decisionLabel('WALKOVER')).toBe('부전승');
+    expect(decisionLabel(null)).toBe('판정');
+  });
+
+  it('displays each stream state in Korean', () => {
+    expect(streamStateLabel('connected')).toBe('연결됨');
+    expect(streamStateLabel('connecting')).toBe('연결 중');
+    expect(streamStateLabel('reconnecting')).toBe('재연결 중');
+    expect(streamStateLabel('offline')).toBe('연결 안 됨');
+    expect(streamStateLabel(null)).toBe('연결 안 됨');
   });
 
   it('returns the confirmed winner only', () => {

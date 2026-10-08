@@ -39,9 +39,9 @@ const TARGET_LABELS = {
 const ROLE_LABELS = {
   GAME_MANAGER: '게임 매니저',
   JUDGE: '심판',
-  RING_MANAGER: '링 운영자',
+  RING_MANAGER: '링 매니저',
   SERVICE_MANAGER: '서비스 매니저',
-  SUPERVISOR: '감독',
+  SUPERVISOR: '감독관',
 };
 const INITIAL_FILTERS = {
   actionType: '',
@@ -87,7 +87,7 @@ function formatSnapshot(value) {
 function FilterForm({ filters, onChange, onClear, onSubmit }) {
   return (
     <form className="audit-filter-panel" onSubmit={onSubmit}>
-      <div className="operation-panel-heading"><div><p className="eyebrow">FILTERS</p><h3>감사 로그 필터</h3></div><span>최대 100건</span></div>
+      <div className="operation-panel-heading"><div><p className="eyebrow">검색 조건</p><h3>감사 로그 필터</h3></div><span>최대 100건</span></div>
       <div className="audit-filter-grid">
         <label>대회 ID<input min="1" onChange={(event) => onChange('tournamentId', event.target.value)} type="number" value={filters.tournamentId} /></label>
         <label>행위자 계정 ID<input min="1" onChange={(event) => onChange('actorAccountId', event.target.value)} type="number" value={filters.actorAccountId} /></label>
@@ -174,7 +174,7 @@ function AuditLogWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell audit-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">AUDIT LOG DESK</p><h2>관리자 감사 로그</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
+        <div><p className="eyebrow">운영 기록</p><h2>관리자 감사 로그</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
         <button className="secondary-button" onClick={onLogout} type="button">로그아웃</button>
       </div>
       <FilterForm filters={formFilters} onChange={updateFilter} onClear={clearFilters} onSubmit={applyFilters} />
@@ -182,7 +182,7 @@ function AuditLogWorkspace({ onLogout, session, tournamentId }) {
       {error && !loading ? <StatePanel action={<button className="command-button" onClick={loadLogs} type="button">다시 시도</button>} title="감사 로그를 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
       {!loading && !error ? (
         <section className="operation-panel audit-results-panel">
-          <div className="operation-panel-heading"><div><p className="eyebrow">RESULTS</p><h3>변경 기록</h3></div><span>{response?.totalElements || 0}건</span></div>
+          <div className="operation-panel-heading"><div><p className="eyebrow">조회 결과</p><h3>변경 기록</h3></div><span>{response?.totalElements || 0}건</span></div>
           {logs.length ? <div aria-label="감사 로그 목록" className="audit-log-table" role="table"><div className="audit-log-header" role="row"><span>일시</span><span>행위자</span><span>행위·대상</span><span>결과</span><span>상세</span></div>{logs.map((log) => <AuditLogRow key={log.id} log={log} />)}</div> : <p className="operation-empty audit-empty">조건에 맞는 감사 로그가 없습니다.</p>}
           {totalPages > 1 ? <div className="audit-pagination"><button className="secondary-button" disabled={currentPage <= 0 || loading} onClick={() => movePage(currentPage - 1)} type="button">이전</button><span>{currentPage + 1} / {totalPages}</span><button className="secondary-button" disabled={currentPage >= totalPages - 1 || loading} onClick={() => movePage(currentPage + 1)} type="button">다음</button></div> : null}
         </section>

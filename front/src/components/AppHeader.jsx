@@ -33,7 +33,7 @@ export function AppHeader({ tournamentId }) {
         <div className="brand-lockup">
           <span aria-hidden="true" className="brand-mark">BX</span>
           <div>
-            <p className="eyebrow">LIVE TOURNAMENT</p>
+            <p className="eyebrow">실시간 대회 현황</p>
             <h1>복싱 대회 현황</h1>
             <p className="brand-context">대회 {tournamentId}</p>
           </div>

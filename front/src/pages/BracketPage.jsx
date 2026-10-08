@@ -66,7 +66,7 @@ export function BracketPage({ tournamentId }) {
     <main className="page-shell bracket-page">
       <section className="page-heading bracket-heading">
         <div>
-          <p className="eyebrow">OFFICIAL BRACKET</p>
+          <p className="eyebrow">공식 대진</p>
           <h2>전체 대진표</h2>
         </div>
         <form className="bracket-search" onSubmit={handleSearch}>

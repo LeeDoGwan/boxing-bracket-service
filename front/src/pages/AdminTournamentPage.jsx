@@ -113,7 +113,7 @@ function TournamentWorkspace({ onLogout, session }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">TOURNAMENT ADMIN DESK</p><h2>대회 관리</h2><p>로그인 계정: {session.account.name}</p></div>
+        <div><p className="eyebrow">대회 설정</p><h2>대회 관리</h2><p>로그인 계정: {session.account.name}</p></div>
         <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadTournaments} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
       </div>
       {error && <p aria-live="polite" className="form-error admin-action-message" role="alert">{error}</p>}
@@ -122,13 +122,13 @@ function TournamentWorkspace({ onLogout, session }) {
       {!loading && !error ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">TOURNAMENTS</p><h3>대회 목록</h3></div><span>{tournaments.length}건</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">등록 대회</p><h3>대회 목록</h3></div><span>{tournaments.length}건</span></div>
             <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 대회</button>
             <div className="admin-entity-list">{tournaments.map((tournament) => <button className={`admin-entity-option${selectedId === tournament.tournamentId ? ' selected' : ''}`} key={tournament.tournamentId} onClick={() => setSelectedId(tournament.tournamentId)} type="button"><strong>{tournament.name}</strong><span>{statusLabel(tournament.status)} · {tournament.location || '장소 미정'}</span></button>)}</div>
             {!tournaments.length ? <p className="operation-empty">등록된 대회가 없습니다.</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `TOURNAMENT ${selectedId}` : 'NEW TOURNAMENT'}</p><h3>{selectedId ? '대회 정보 수정' : '대회 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `대회 ${selectedId}` : '새 대회'}</p><h3>{selectedId ? '대회 정보 수정' : '대회 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid">
                 <label>대회명<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label>
@@ -136,7 +136,7 @@ function TournamentWorkspace({ onLogout, session }) {
                 <label>시작일<input onChange={(event) => updateField('startDate', event.target.value)} type="date" value={form.startDate} /></label>
                 <label>종료일<input onChange={(event) => updateField('endDate', event.target.value)} type="date" value={form.endDate} /></label>
                 <label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                <label>Judge count<select onChange={(event) => updateField('judgeCount', event.target.value)} value={form.judgeCount}><option value="3">3</option><option value="5">5</option></select></label>
+                <label>심판 수<select onChange={(event) => updateField('judgeCount', event.target.value)} value={form.judgeCount}><option value="3">3</option><option value="5">5</option></select></label>
               </div>
               <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '대회 저장' : '대회 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">대회 삭제</button> : null}</div>
             </form>

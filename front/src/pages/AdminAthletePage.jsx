@@ -116,7 +116,7 @@ function AthleteWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">ATHLETE ADMIN DESK</p><h2>선수 관리</h2><p>로그인 계정: {session.account.name}</p></div>
+        <div><p className="eyebrow">참가 선수</p><h2>선수 관리</h2><p>로그인 계정: {session.account.name}</p></div>
         <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadAthletes} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
       </div>
       {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
@@ -126,7 +126,7 @@ function AthleteWorkspace({ onLogout, session, tournamentId }) {
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">ATHLETES</p><h3>선수 목록</h3></div><span>{athletes.length}건</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">등록 선수</p><h3>선수 목록</h3></div><span>{athletes.length}건</span></div>
             <form className="athlete-search" onSubmit={handleSearch}><input aria-label="선수 검색" onChange={(event) => setSearchInput(event.target.value)} placeholder="이름 또는 소속" value={searchInput} /><button className="command-button" type="submit">검색</button></form>
             {keyword ? <button className="secondary-button athlete-clear-search" onClick={clearSearch} type="button">검색 초기화: {keyword}</button> : null}
             <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 선수</button>
@@ -134,7 +134,7 @@ function AthleteWorkspace({ onLogout, session, tournamentId }) {
             {!athletes.length ? <p className="operation-empty">조건에 맞는 선수가 없습니다.</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `ATHLETE ${selectedId}` : 'NEW ATHLETE'}</p><h3>{selectedId ? '선수 정보 수정' : '선수 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `선수 ${selectedId}` : '새 선수'}</p><h3>{selectedId ? '선수 정보 수정' : '선수 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid"><label>선수명<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>소속<input onChange={(event) => updateField('affiliation', event.target.value)} value={form.affiliation} /></label></div>
               <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '선수 저장' : '선수 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">선수 삭제</button> : null}</div>

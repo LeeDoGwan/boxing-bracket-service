@@ -28,17 +28,17 @@ describe('JudgeAssignedPage', () => {
   it('shows an explicit empty state when no ring is assigned', async () => {
     getAssignedRings.mockResolvedValue([]);
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
-    expect(await screen.findByText('No assigned rings')).toBeInTheDocument();
+    expect(await screen.findByText('배정된 링이 없습니다')).toBeInTheDocument();
     expect(getAssignedBouts).not.toHaveBeenCalled();
   });
 
   it('loads assigned bouts and does not send judgeId in the score payload', async () => {
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Red score'), { target: { value: '10' } });
-    fireEvent.change(screen.getByLabelText('Blue score'), { target: { value: '9' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Submit round' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm score' }));
+    fireEvent.change(screen.getByLabelText('빨강 점수'), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText('파랑 점수'), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: '라운드 제출' }));
+    fireEvent.click(screen.getByRole('button', { name: '점수 제출 확정' }));
     await waitFor(() => expect(submitRoundScore).toHaveBeenCalledWith(12, 1, { blueScore: 9, redScore: 10 }, 'judge-token'));
     expect(submitRoundScore.mock.calls[0][2]).not.toHaveProperty('judgeId');
   });
@@ -46,57 +46,57 @@ describe('JudgeAssignedPage', () => {
   it('requires confirmation and preserves input when confirmation is cancelled', async () => {
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Red score'), { target: { value: '10' } });
-    fireEvent.change(screen.getByLabelText('Blue score'), { target: { value: '9' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Submit round' }));
-    expect(screen.getByRole('dialog', { name: 'Confirm round 1 score' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.getByLabelText('Red score')).toHaveValue(10);
-    expect(screen.getByLabelText('Blue score')).toHaveValue(9);
+    fireEvent.change(screen.getByLabelText('빨강 점수'), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText('파랑 점수'), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: '라운드 제출' }));
+    expect(screen.getByRole('dialog', { name: '라운드 1 점수 확인' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '취소' }));
+    expect(screen.getByLabelText('빨강 점수')).toHaveValue(10);
+    expect(screen.getByLabelText('파랑 점수')).toHaveValue(9);
     expect(submitRoundScore).not.toHaveBeenCalled();
   });
 
   it('shows validation error for negative or non-integer input', async () => {
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Red score'), { target: { value: '-1' } });
-    fireEvent.change(screen.getByLabelText('Blue score'), { target: { value: '9.5' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Submit round' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Scores must be whole numbers from 0 to 10.');
+    fireEvent.change(screen.getByLabelText('빨강 점수'), { target: { value: '-1' } });
+    fireEvent.change(screen.getByLabelText('파랑 점수'), { target: { value: '9.5' } });
+    fireEvent.click(screen.getByRole('button', { name: '라운드 제출' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('점수는 0점부터 10점 사이의 정수로 입력해 주세요.');
     expect(submitRoundScore).not.toHaveBeenCalled();
   });
 
   it('rejects scores above the confirmed maximum of 10', async () => {
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Red score'), { target: { value: '11' } });
-    fireEvent.change(screen.getByLabelText('Blue score'), { target: { value: '9' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Submit round' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Scores must be whole numbers from 0 to 10.');
+    fireEvent.change(screen.getByLabelText('빨강 점수'), { target: { value: '11' } });
+    fireEvent.change(screen.getByLabelText('파랑 점수'), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: '라운드 제출' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('점수는 0점부터 10점 사이의 정수로 입력해 주세요.');
     expect(submitRoundScore).not.toHaveBeenCalled();
   });
 
   it('keeps an unsubmitted score while a live refresh completes', async () => {
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Red score'), { target: { value: '10' } });
-    fireEvent.change(screen.getByLabelText('Blue score'), { target: { value: '9' } });
+    fireEvent.change(screen.getByLabelText('빨강 점수'), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText('파랑 점수'), { target: { value: '9' } });
     const streamOptions = useBoutEventStream.mock.calls.slice(-1)[0][1];
 
     act(() => streamOptions.onEvent({ boutId: 12, eventType: 'ROUND_STARTED' }));
 
     await waitFor(() => expect(getAssignedBouts).toHaveBeenCalledTimes(2));
-    expect(screen.getByLabelText('Red score')).toHaveValue(10);
-    expect(screen.getByLabelText('Blue score')).toHaveValue(9);
+    expect(screen.getByLabelText('빨강 점수')).toHaveValue(10);
+    expect(screen.getByLabelText('파랑 점수')).toHaveValue(9);
   });
 
   it('marks the current round and disables future round submission', async () => {
     getBoutDetail.mockResolvedValue({ ...bout, totalRounds: 3 });
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
-    expect(screen.getByText('Current round')).toBeInTheDocument();
-    expect(screen.getAllByText('Not started')).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: 'Submit round' })[1]).toBeDisabled();
+    expect(screen.getByText('현재 라운드')).toBeInTheDocument();
+    expect(screen.getAllByText('시작 전')).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: '라운드 제출' })[1]).toBeDisabled();
   });
 
   it('sends only one request when confirmation is double-clicked', async () => {
@@ -104,10 +104,10 @@ describe('JudgeAssignedPage', () => {
     submitRoundScore.mockImplementation(() => new Promise((resolve) => { resolveSubmission = resolve; }));
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Red score'), { target: { value: '10' } });
-    fireEvent.change(screen.getByLabelText('Blue score'), { target: { value: '9' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Submit round' }));
-    const confirmButton = screen.getByRole('button', { name: 'Confirm score' });
+    fireEvent.change(screen.getByLabelText('빨강 점수'), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText('파랑 점수'), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: '라운드 제출' }));
+    const confirmButton = screen.getByRole('button', { name: '점수 제출 확정' });
     fireEvent.click(confirmButton);
     fireEvent.click(confirmButton);
     expect(submitRoundScore).toHaveBeenCalledTimes(1);

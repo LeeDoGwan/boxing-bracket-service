@@ -30,15 +30,28 @@ beforeEach(() => {
 describe('AdminAssignmentPage', () => {
   it('creates a ring assignment from active role-matched references', async () => {
     render(<AdminAssignmentPage />);
-    expect(await screen.findByRole('button', { name: 'Create assignment' })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Account'), { target: { value: '7' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create assignment' }));
+    expect(await screen.findByRole('button', { name: '배정 생성' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('계정'), { target: { value: '7' } });
+    fireEvent.click(screen.getByRole('button', { name: '배정 생성' }));
     await waitFor(() => expect(createAssignment).toHaveBeenCalledWith({ accountId: 7, ringId: 4, role: 'JUDGE', tournamentId: 1 }, 'service-token'));
+  });
+
+  it('explains the account lookup restriction to a game manager', async () => {
+    useStaffAuth.mockReturnValue({
+      session: { ...session, account: { ...session.account, role: 'GAME_MANAGER' } },
+      signOut: vi.fn(),
+    });
+    getAccounts.mockRejectedValue({ status: 403, message: 'FORBIDDEN' });
+    render(<AdminAssignmentPage />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('서비스 매니저에게 배정을 요청해 주세요.');
+    expect(screen.getByRole('button', { name: '배정 생성' })).toBeDisabled();
+    expect(createAssignment).not.toHaveBeenCalled();
   });
 
   it('deactivates an existing assignment', async () => {
     render(<AdminAssignmentPage />);
-    const button = await screen.findByRole('button', { name: 'Deactivate' });
+    const button = await screen.findByRole('button', { name: '비활성화' });
     fireEvent.click(button);
     await waitFor(() => expect(changeAssignmentActive).toHaveBeenCalledWith(9, false, 'service-token'));
   });

@@ -1,6 +1,6 @@
 # Supervisor Result Confirmation Policy
 
-Last updated: 2026-08-09
+Last updated: 2026-10-06
 
 This document defines the current server and frontend contract for Supervisor
 review and bout result confirmation. It complements [Staff ring assignment](staff-assignment.md)
@@ -85,9 +85,11 @@ same `reason` in its after snapshot.
 | Existing score records for every assigned Judge are submitted | Eligible for the next checks |
 | Confirmed result correction without a reason | `400 reason is required` |
 
-The implementation does not invent a minimum Judge count. If the tournament
-model later gains a required Judge-count field, confirmation must use that
-field instead of a hard-coded number.
+The server uses the tournament\'s configured `judgeCount` (3 or 5) and verifies
+active assigned Judges for every started round. Frontend submitted/draft counts
+represent existing score rows only; they do not enumerate Judges with no row.
+The review button is a preliminary check, not proof that server readiness checks
+will pass.
 
 ## Decision and Penalty Rules
 
@@ -110,9 +112,9 @@ field instead of a hard-coded number.
 - Duplicate penalty reasons are not blocked because the venue policy is not
   yet defined.
 
-The current MVP display/code mapping is `POINTS` (points decision),
-`KO`, `RSC` (displayed as `TKO` for technical knockout), `ABD` (withdrawal),
-`DSQ` (disqualification), and `WALKOVER` (walkover). `UNKNOWN` is storage-only
+The current MVP display/code mapping is `POINTS` (displayed as `판정`),
+`KO`, `RSC` (displayed as `TKO` for technical knockout), `ABD` (displayed as `기권`),
+`DSQ` (displayed as `실격`), and `WALKOVER` (displayed as `부전승`). `UNKNOWN` is storage-only
 and cannot be confirmed.
 The association-specific labels and allowed winner combinations still require
 venue confirmation before expanding the catalog. This does not block the
@@ -132,7 +134,7 @@ from public responses. Draft rows are never published to the audience.
 then assigned official bouts. It does not use the public bout list as the
 permission source. The page:
 
-- shows submitted and draft score counts, score totals, penalty totals, and
+- shows submitted and draft score-record counts (not distinct Judge counts), score totals, penalty totals, and
   effective comparison values;
 - blocks result review until the bout is started and all existing scores are
   submitted;

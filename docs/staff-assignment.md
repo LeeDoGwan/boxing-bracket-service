@@ -1,6 +1,6 @@
 # Staff Ring Assignment
 
-Last updated: 2026-07-16
+Last updated: 2026-10-06
 
 ## Purpose
 
@@ -109,3 +109,13 @@ current form state remains intact. A ring change closes the previous
 `EventSource`; unmount and disabled/no-ring states close or avoid the connection.
 SSE failure preserves the current data and does not block write APIs. Audience
 SSE behavior remains unchanged.
+
+## Current Frontend Permission Limitation (2026-10-06)
+
+The assignment route and assignment API accept both manager roles, but
+`AdminAssignmentPage` loads account choices from `/api/admin/accounts`, which
+requires `SERVICE_MANAGER`. A Game Manager therefore cannot complete the
+current UI workflow. Service Managers must create or change assignments until
+a scoped account-reference API or an explicitly reviewed permission change is
+implemented. The UI reports this restriction in Korean; the user guides do not
+present it as a working Game Manager feature.

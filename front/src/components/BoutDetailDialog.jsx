@@ -71,26 +71,26 @@ export function BoutDetailDialog({ boutId, onClose }) {
         )}
         {detail && (
           <>
-            <p className="eyebrow">BOUT {detail.boutNumber}</p>
+            <p className="eyebrow">경기 {detail.boutNumber}</p>
             <p className="dialog-status">{statusLabel(detail.status)} · {detail.currentRound || 0}/{detail.totalRounds || '-'} 라운드</p>
             <div className="detail-fighters">
               <p><span className="red-label">홍</span>{athleteLabel(detail.redAthlete)}</p>
               <p><span className="blue-label">청</span>{athleteLabel(detail.blueAthlete)}</p>
             </div>
             {detail.roundScores?.length > 0 && (
-              <section aria-label="Round scores" className="public-round-scores">
-                <h3>Round scores</h3>
+              <section aria-label="라운드별 점수" className="public-round-scores">
+                <h3>라운드별 점수</h3>
                 <div className="public-round-score-table" role="table">
                   <div className="public-round-score-row public-round-score-header" role="row">
-                    <span>Round</span>
-                    <span>Judge</span>
-                    <span className="red-score-text">Red</span>
-                    <span className="blue-score-text">Blue</span>
+                    <span>라운드</span>
+                    <span>심판</span>
+                    <span className="red-score-text">빨강</span>
+                    <span className="blue-score-text">파랑</span>
                   </div>
                   {detail.roundScores.map((score) => (
                     <div className="public-round-score-row" key={`${score.roundNo}-${score.judgeNo}`} role="row">
                       <span>R{score.roundNo}</span>
-                      <span>Judge {score.judgeNo}</span>
+                      <span>심판 {score.judgeNo}</span>
                       <strong className="red-score-text">{score.redScore}</strong>
                       <strong className="blue-score-text">{score.blueScore}</strong>
                     </div>
@@ -102,7 +102,7 @@ export function BoutDetailDialog({ boutId, onClose }) {
               <div className="confirmed-result">
                 <p>확정 결과</p>
                 <strong>{winnerText(detail)}</strong>
-                <span className="confirmed-score-summary">Effective score {effectiveScores?.red ?? '-'} : {effectiveScores?.blue ?? '-'}</span>
+                <span className="confirmed-score-summary">유효 점수 {effectiveScores?.red ?? '-'} : {effectiveScores?.blue ?? '-'}</span>
                 <span>{decisionLabel(detail.result?.decisionType)}</span>
               </div>
             )}

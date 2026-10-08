@@ -52,6 +52,7 @@ Implemented core areas:
 - [Administrator audit log](docs/audit-log.md)
 - [Copyright and license policy](docs/copyright-and-licenses.md)
 - [Korean user guide index](docs/user-guide.md)
+- [Restart verification and remaining work](docs/restart-status.md)
 - [Audience guide](docs/user-guide-audience.md)
 - [Participant guide](docs/user-guide-participant.md)
 - [Judge guide](docs/user-guide-judge.md)
@@ -94,7 +95,7 @@ npm run lint
 npm run build
 ```
 
-Current documented suite: 74 backend test classes, 411 backend test cases, and 91 frontend test cases across 25 frontend test files.
+Verified on 2026-10-06: 410 backend tests across 73 classes and 94 frontend tests across 25 files passed. The separate MariaDB smoke test was not run locally; see [Testing](docs/testing.md) for commands and scope.
 
 The local backend profile connects to MariaDB and runs Flyway migrations before
 Hibernate validates the schema. Create the `boxing_bracket` database and a

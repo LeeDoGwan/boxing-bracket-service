@@ -44,10 +44,10 @@ describe('AdminAccountPage', () => {
 
     render(<AdminAccountPage />);
     expect(await screen.findByText('judge01')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Account search'), { target: { value: 'ring' } });
-    fireEvent.change(screen.getByLabelText('Role filter'), { target: { value: 'RING_MANAGER' } });
-    fireEvent.change(screen.getByLabelText('Status filter'), { target: { value: 'INACTIVE' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Filter' }));
+    fireEvent.change(screen.getByLabelText('계정 검색'), { target: { value: 'ring' } });
+    fireEvent.change(screen.getByLabelText('역할 필터'), { target: { value: 'RING_MANAGER' } });
+    fireEvent.change(screen.getByLabelText('상태 필터'), { target: { value: 'INACTIVE' } });
+    fireEvent.click(screen.getByRole('button', { name: '필터 적용' }));
 
     await waitFor(() => expect(getAccounts).toHaveBeenCalledWith(
       { keyword: 'ring', role: 'RING_MANAGER', status: 'INACTIVE' },

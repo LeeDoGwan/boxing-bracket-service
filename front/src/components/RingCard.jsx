@@ -29,7 +29,7 @@ export function RingCard({ laterBouts = [], ring, onSelectBout }) {
     <article className={`ring-card ring-card-${ring.ringStatus?.toLowerCase() || 'unknown'}`}>
       <div className="ring-card-header">
         <div>
-          <p className="eyebrow">RING</p>
+          <p className="eyebrow">링</p>
           <h3>{ring.ringName}</h3>
         </div>
         <span className={`ring-status status-pill status-${ring.ringStatus?.toLowerCase()}`}>

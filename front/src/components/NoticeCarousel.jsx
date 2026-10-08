@@ -36,7 +36,7 @@ export function NoticeCarousel({ notices }) {
       }}
     >
       <div aria-live="polite">
-        <p className="eyebrow">NOTICE</p>
+        <p className="eyebrow">공지</p>
         <h2>{notice.title}</h2>
         <p>{notice.content}</p>
       </div>

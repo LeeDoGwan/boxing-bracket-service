@@ -4,7 +4,7 @@ import { useStaffAuth } from '../auth/StaffAuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
-const ROLE_LABELS = { GAME_MANAGER: '게임 매니저', JUDGE: '심판', RING_MANAGER: '링 운영자', SERVICE_MANAGER: '서비스 매니저', SUPERVISOR: '감독' };
+const ROLE_LABELS = { GAME_MANAGER: '게임 매니저', JUDGE: '심판', RING_MANAGER: '링 매니저', SERVICE_MANAGER: '서비스 매니저', SUPERVISOR: '감독관' };
 const STATUS_LABELS = { ACTIVE: '활성', INACTIVE: '비활성' };
 
 function blankForm() {
@@ -121,7 +121,7 @@ function AccountWorkspace({ onLogout, session }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">ACCOUNT ADMIN DESK</p><h2>계정 관리</h2><p>서비스 매니저: {session.account.name}</p></div>
+        <div><p className="eyebrow">계정 운영</p><h2>계정 관리</h2><p>서비스 매니저: {session.account.name}</p></div>
         <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadAccounts} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
       </div>
       {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
@@ -132,18 +132,18 @@ function AccountWorkspace({ onLogout, session }) {
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
             <form className="account-search" onSubmit={handleFilterSubmit}>
-              <label>Search<input aria-label="Account search" onChange={(event) => setFilterForm((current) => ({ ...current, keyword: event.target.value }))} placeholder="Login ID or name" value={filterForm.keyword} /></label>
-              <label>Role<select aria-label="Role filter" onChange={(event) => setFilterForm((current) => ({ ...current, role: event.target.value }))} value={filterForm.role}><option value="">All roles</option>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-              <label>Status<select aria-label="Status filter" onChange={(event) => setFilterForm((current) => ({ ...current, status: event.target.value }))} value={filterForm.status}><option value="">All statuses</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-              <div className="account-search-actions"><button className="command-button" type="submit">Filter</button><button className="secondary-button" onClick={handleFilterReset} type="button">Reset</button></div>
+              <label>검색<input aria-label="계정 검색" onChange={(event) => setFilterForm((current) => ({ ...current, keyword: event.target.value }))} placeholder="로그인 ID 또는 이름" value={filterForm.keyword} /></label>
+              <label>역할 필터<select aria-label="역할 필터" onChange={(event) => setFilterForm((current) => ({ ...current, role: event.target.value }))} value={filterForm.role}><option value="">전체 역할</option>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <label>상태 필터<select aria-label="상태 필터" onChange={(event) => setFilterForm((current) => ({ ...current, status: event.target.value }))} value={filterForm.status}><option value="">전체 상태</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <div className="account-search-actions"><button className="command-button" type="submit">필터 적용</button><button className="secondary-button" onClick={handleFilterReset} type="button">초기화</button></div>
             </form>
-            <div className="operation-panel-heading"><div><p className="eyebrow">ACCOUNTS</p><h3>계정 목록</h3></div><span>{accounts.length}건</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">관계자 계정</p><h3>계정 목록</h3></div><span>{accounts.length}건</span></div>
             <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 계정</button>
             <div className="admin-entity-list">{accounts.map((account) => <button className={`admin-entity-option${selectedId === account.accountId ? ' selected' : ''}`} key={account.accountId} onClick={() => setSelectedId(account.accountId)} type="button"><strong>{account.loginId}</strong><span>{account.name} · {ROLE_LABELS[account.role] || account.role} · {STATUS_LABELS[account.status] || account.status}</span></button>)}</div>
             {!accounts.length ? <p className="operation-empty">등록된 계정이 없습니다.</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `ACCOUNT ${selectedId}` : 'NEW ACCOUNT'}</p><h3>{selectedId ? '계정 정보 수정' : '계정 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `계정 ${selectedId}` : '새 계정'}</p><h3>{selectedId ? '계정 정보 수정' : '계정 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}><div className="admin-form-grid"><label>로그인 ID<input autoComplete="username" onChange={(event) => updateField('loginId', event.target.value)} required value={form.loginId} /></label><label>이름<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>비밀번호<input autoComplete="new-password" onChange={(event) => updateField('passwordHash', event.target.value)} required type="password" value={form.passwordHash} /></label><label>역할<select onChange={(event) => updateField('role', event.target.value)} value={form.role}>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div><div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '계정 저장' : '계정 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">계정 삭제</button> : null}</div></form>
           </section>
         </div>

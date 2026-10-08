@@ -38,14 +38,14 @@ describe('SupervisorAssignedPage', () => {
   it('refreshes scores and penalties without clearing an in-progress penalty input', async () => {
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     expect(await screen.findByText('Red vs Blue')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'hold' } });
+    fireEvent.change(screen.getByLabelText('패널티 사유'), { target: { value: 'hold' } });
     const streamOptions = useBoutEventStream.mock.calls.slice(-1)[0][1];
 
     act(() => streamOptions.onEvent({ boutId: 12, eventType: 'SCORE_SUBMITTED' }));
 
     await waitFor(() => expect(getSupervisorScores).toHaveBeenCalledTimes(2));
     expect(getPenalties).toHaveBeenCalledTimes(2);
-    expect(screen.getByLabelText('Reason')).toHaveValue('hold');
+    expect(screen.getByLabelText('패널티 사유')).toHaveValue('hold');
   });
 
   it('shows draft scores and prevents result confirmation until scores are submitted', async () => {
@@ -56,8 +56,8 @@ describe('SupervisorAssignedPage', () => {
 
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
 
-    expect(await screen.findByText('Submitted 1 · Draft 1')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Review result' })).toBeDisabled();
+    expect(await screen.findByText('제출 완료 1건 · 작성 중 1건')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '결과 검토' })).toBeDisabled();
   });
 
   it('adds a penalty to the opponent effective total', async () => {
@@ -71,8 +71,10 @@ describe('SupervisorAssignedPage', () => {
 
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
 
-    expect(await screen.findByText('Blue penalty +2 | Effective 12')).toBeInTheDocument();
-    expect(screen.getByText('Red penalty +1 | Effective 10')).toBeInTheDocument();
+    expect(await screen.findByText('파랑 패널티 +2 | 유효 점수 12')).toBeInTheDocument();
+    expect(screen.getByText('빨강 패널티 +1 | 유효 점수 10')).toBeInTheDocument();
+    expect(screen.getByText(/빨강 패널티 → 파랑 \+1점/)).toBeInTheDocument();
+    expect(screen.getByText(/파랑 패널티 → 빨강 \+2점/)).toBeInTheDocument();
   });
 
   it('leaves a tied effective total for the Supervisor to decide', async () => {
@@ -83,21 +85,21 @@ describe('SupervisorAssignedPage', () => {
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     await screen.findByText('Red vs Blue');
 
-    fireEvent.change(screen.getByLabelText('Winner'), { target: { value: 'BLUE' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Review result' }));
+    fireEvent.change(screen.getByLabelText('승자'), { target: { value: 'BLUE' } });
+    fireEvent.click(screen.getByRole('button', { name: '결과 검토' }));
 
-    expect(screen.getByText('Effective totals are tied. Supervisor decides the final winner.')).toBeInTheDocument();
-    expect(screen.getByText('BLUE | POINTS | effective scores 10-10')).toBeInTheDocument();
+    expect(screen.getByText('유효 점수가 동점입니다. 감독관이 승자 또는 무승부를 결정합니다.')).toBeInTheDocument();
+    expect(screen.getByText('파랑 승 · 판정 | 유효 점수 10-10')).toBeInTheDocument();
   });
 
   it('blocks zero penalty points without calling the API', async () => {
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     await screen.findByText('Red vs Blue');
 
-    fireEvent.change(screen.getByLabelText('Points'), { target: { value: '0' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add penalty' }));
+    fireEvent.change(screen.getByLabelText('패널티 점수'), { target: { value: '0' } });
+    fireEvent.click(screen.getByRole('button', { name: '패널티 추가' }));
 
-    expect(await screen.findByText('Penalty points must be a positive whole number.')).toBeInTheDocument();
+    expect(await screen.findByText('패널티 점수는 1 이상의 정수로 입력해 주세요.')).toBeInTheDocument();
     expect(createPenalty).not.toHaveBeenCalled();
   });
 
@@ -106,15 +108,15 @@ describe('SupervisorAssignedPage', () => {
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     await screen.findByText('Red vs Blue');
 
-    fireEvent.change(screen.getByLabelText('Winner'), { target: { value: 'BLUE' } });
-    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'KO' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Review result' }));
-    expect(screen.getByRole('dialog', { name: 'Confirm result' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('승자'), { target: { value: 'BLUE' } });
+    fireEvent.change(screen.getByLabelText('결과 방식'), { target: { value: 'KO' } });
+    fireEvent.click(screen.getByRole('button', { name: '결과 검토' }));
+    expect(screen.getByRole('dialog', { name: '결과 확정' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: '취소' }));
 
-    expect(screen.getByLabelText('Winner')).toHaveValue('BLUE');
-    expect(screen.getByLabelText('Decision')).toHaveValue('KO');
+    expect(screen.getByLabelText('승자')).toHaveValue('BLUE');
+    expect(screen.getByLabelText('결과 방식')).toHaveValue('KO');
     expect(confirmResult).not.toHaveBeenCalled();
   });
 
@@ -123,17 +125,17 @@ describe('SupervisorAssignedPage', () => {
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     await screen.findByText('Red vs Blue');
 
-    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'hold' } });
-    fireEvent.change(screen.getByLabelText('Points'), { target: { value: '1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add penalty' }));
+    fireEvent.change(screen.getByLabelText('패널티 사유'), { target: { value: 'hold' } });
+    fireEvent.change(screen.getByLabelText('패널티 점수'), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: '패널티 추가' }));
     await waitFor(() => expect(createPenalty).toHaveBeenCalledWith(
       12,
       { penaltyPoint: 1, reason: 'hold', roundNo: 1, targetSide: 'RED' },
       'supervisor-token',
     ));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Review result' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm result' }));
+    fireEvent.click(screen.getByRole('button', { name: '결과 검토' }));
+    fireEvent.click(screen.getByRole('button', { name: '결과 확정' }));
     await waitFor(() => expect(confirmResult).toHaveBeenCalledWith(
       12,
       { decisionType: 'POINTS', winnerSide: 'RED' },
@@ -148,14 +150,14 @@ describe('SupervisorAssignedPage', () => {
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
     await screen.findByText('Red vs Blue');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Review result' }));
-    const confirmButton = screen.getByRole('button', { name: 'Confirm result' });
+    fireEvent.click(screen.getByRole('button', { name: '결과 검토' }));
+    const confirmButton = screen.getByRole('button', { name: '결과 확정' });
     fireEvent.click(confirmButton);
     fireEvent.click(confirmButton);
 
     expect(confirmResult).toHaveBeenCalledTimes(1);
     resolveRequest({ decisionType: 'POINTS', winnerSide: 'RED' });
-    await waitFor(() => expect(screen.getByText('Result confirmed. A Supervisor may correct it with a required reason.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('결과가 확정되었습니다. 감독관은 사유를 입력하여 결과를 수정할 수 있습니다.')).toBeInTheDocument());
   });
 
   it('locks penalty actions when a result confirmation event refreshes the bout', async () => {
@@ -167,23 +169,23 @@ describe('SupervisorAssignedPage', () => {
 
     act(() => streamOptions.onEvent({ boutId: 12, eventType: 'RESULT_CONFIRMED' }));
 
-    await waitFor(() => expect(screen.getByText('Result confirmed. A Supervisor may correct it with a required reason.')).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Add penalty' })).toBeDisabled();
+    await waitFor(() => expect(screen.getByText('결과가 확정되었습니다. 감독관은 사유를 입력하여 결과를 수정할 수 있습니다.')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: '패널티 추가' })).toBeDisabled();
   });
 
   it('allows a supervisor to correct a confirmed result with a reason', async () => {
     getSupervisorScores.mockResolvedValue([{ blueScore: 9, judgeId: 10, redScore: 10, roundNo: 1, status: 'SUBMITTED' }]);
     getBoutDetail.mockResolvedValue({ ...bout, result: { decisionType: 'POINTS', winnerSide: 'RED' }, resultConfirmed: true, status: 'FINISHED' });
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
-    await screen.findByText('Result confirmed. A Supervisor may correct it with a required reason.');
+    await screen.findByText('결과가 확정되었습니다. 감독관은 사유를 입력하여 결과를 수정할 수 있습니다.');
 
-    fireEvent.change(screen.getByLabelText('Correction reason'), { target: { value: 'Supervisor reviewed tie evidence' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Review correction' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm correction' }));
+    fireEvent.change(screen.getByLabelText('수정 사유'), { target: { value: '감독관 작업실ed tie evidence' } });
+    fireEvent.click(screen.getByRole('button', { name: '수정 내용 검토' }));
+    fireEvent.click(screen.getByRole('button', { name: '수정 확정' }));
 
     await waitFor(() => expect(correctResult).toHaveBeenCalledWith(
       12,
-      { decisionType: 'POINTS', reason: 'Supervisor reviewed tie evidence', winnerSide: 'RED' },
+      { decisionType: 'POINTS', reason: '감독관 작업실ed tie evidence', winnerSide: 'RED' },
       'supervisor-token',
     ));
   });

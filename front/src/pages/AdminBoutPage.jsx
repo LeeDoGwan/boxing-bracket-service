@@ -156,7 +156,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
     event.preventDefault();
     const formElement = event.currentTarget;
     if (!file) {
-      setActionError('CSV 파일을 선택해 주세요.');
+      setActionError('CSV 또는 Excel 파일을 선택해 주세요.');
       return;
     }
     setSaving(true);
@@ -170,7 +170,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       formElement.reset();
       setMessage(`${result.importedCount}건의 경기를 가져왔습니다.`);
     } catch (requestError) {
-      setActionError(requestError.message || 'CSV 가져오기에 실패했습니다.');
+      setActionError(requestError.message || '파일 가져오기에 실패했습니다.');
     } finally {
       setSaving(false);
     }
@@ -189,7 +189,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">BOUT ADMIN DESK</p><h2>대진 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
+        <div><p className="eyebrow">경기 운영</p><h2>대진 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
         <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadBouts} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
       </div>
       {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
@@ -201,13 +201,13 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">BOUTS</p><h3>경기 목록</h3></div><span>{bouts.length}건</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">대진</p><h3>경기 목록</h3></div><span>{bouts.length}건</span></div>
             <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 경기</button>
             <div className="admin-entity-list">{bouts.map((bout) => <button className={`admin-entity-option${selectedId === bout.boutId ? ' selected' : ''}`} key={bout.boutId} onClick={() => setSelectedId(bout.boutId)} type="button"><strong>경기 {bout.boutNumber} · {bout.matchType || '일반'}</strong><span>링 {bout.ringId} · {statusLabel(bout.status)} · {bout.redAthleteId} vs {bout.blueAthleteId}</span></button>)}</div>
             {!bouts.length ? <p className="operation-empty">등록된 경기가 없습니다.</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `BOUT ${selectedId}` : 'NEW BOUT'}</p><h3>{selectedId ? '경기 정보 수정' : '경기 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `경기 ${selectedId}` : '새 경기'}</p><h3>{selectedId ? '경기 정보 수정' : '경기 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid"><label>링<select aria-label="링" onChange={(event) => updateField('ringId', event.target.value)} required value={form.ringId}><option value="">링을 선택하세요</option>{form.ringId && !rings.some((ring) => String(ring.ringId) === form.ringId) ? <option value={form.ringId}>링 #{form.ringId}</option> : null}{rings.map((ring) => <option key={ring.ringId} value={ring.ringId}>{ring.name} · #{ring.ringId}</option>)}</select></label><label>빨강 선수<select aria-label="빨강 선수" onChange={(event) => updateField('redAthleteId', event.target.value)} required value={form.redAthleteId}><option value="">선수를 선택하세요</option>{form.redAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.redAthleteId) ? <option value={form.redAthleteId}>선수 #{form.redAthleteId}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>파랑 선수<select aria-label="파랑 선수" onChange={(event) => updateField('blueAthleteId', event.target.value)} required value={form.blueAthleteId}><option value="">선수를 선택하세요</option>{form.blueAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.blueAthleteId) ? <option value={form.blueAthleteId}>선수 #{form.blueAthleteId}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>경기 유형<input onChange={(event) => updateField('matchType', event.target.value)} value={form.matchType} /></label><label>라운드 수<input min="1" onChange={(event) => updateField('totalRounds', event.target.value)} required type="number" value={form.totalRounds} /></label><label>진행 순서<input min="1" onChange={(event) => updateField('scheduledOrder', event.target.value)} required type="number" value={form.scheduledOrder} /></label><label className="admin-toggle-field"><input checked={form.eventBout} onChange={(event) => updateField('eventBout', event.target.checked)} type="checkbox" /> 이벤트 경기</label></div>
               <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '경기 저장' : '경기 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">경기 삭제</button> : null}</div>

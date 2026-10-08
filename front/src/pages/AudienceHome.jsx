@@ -62,7 +62,7 @@ export function AudienceHome({ tournamentId }) {
 
       <section aria-label="대회 현황" className="board-toolbar">
         <div className="board-title">
-          <p className="eyebrow">TOURNAMENT {tournamentId} · PUBLIC BOARD</p>
+          <p className="eyebrow">대회 {tournamentId} · 공개 현황</p>
           <h2>링별 경기 현황</h2>
           <p>현재 진행 중인 경기와 다음 순서를 한눈에 확인하세요.</p>
         </div>
@@ -98,7 +98,7 @@ export function AudienceHome({ tournamentId }) {
         <section aria-labelledby="live-rings-title" className="live-rings-section">
           <div className="board-section-heading">
             <div>
-              <p className="eyebrow">LIVE RINGS</p>
+              <p className="eyebrow">링별 현황</p>
               <h2 id="live-rings-title">현재 경기</h2>
             </div>
             <span>{activeRingCount ? `${activeRingCount}개 링 진행 중` : '진행 중인 링 없음'}</span>
@@ -117,7 +117,7 @@ export function AudienceHome({ tournamentId }) {
         <section aria-labelledby="confirmed-results-title" className="result-section">
           <div className="board-section-heading">
             <div>
-              <p className="eyebrow">CONFIRMED RESULTS</p>
+              <p className="eyebrow">확정 결과</p>
               <h2 id="confirmed-results-title">최근 확정 결과</h2>
             </div>
             <span>{results.length}경기</span>
@@ -140,7 +140,7 @@ export function AudienceHome({ tournamentId }) {
         <section aria-labelledby="schedule-title" className="schedule-section">
           <div className="board-section-heading">
             <div>
-              <p className="eyebrow">SCHEDULE</p>
+              <p className="eyebrow">진행 일정</p>
               <h2 id="schedule-title">오늘의 일정</h2>
             </div>
           </div>

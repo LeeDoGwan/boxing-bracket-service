@@ -137,7 +137,7 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">SCHEDULE ADMIN DESK</p><h2>일정 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
+        <div><p className="eyebrow">대회 일정</p><h2>일정 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
         <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadSchedules} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
       </div>
       {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
@@ -147,13 +147,13 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">SCHEDULES</p><h3>일정 목록</h3></div><span>{schedules.length}건</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">진행 일정</p><h3>일정 목록</h3></div><span>{schedules.length}건</span></div>
             <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 일정</button>
             <div className="admin-entity-list">{schedules.map((schedule) => <button className={`admin-entity-option${selectedId === schedule.scheduleId ? ' selected' : ''}`} key={schedule.scheduleId} onClick={() => setSelectedId(schedule.scheduleId)} type="button"><strong>{schedule.title}</strong><span>{schedule.type} · {schedule.startTime.replace('T', ' ')} · {schedule.status}</span></button>)}</div>
             {!schedules.length ? <p className="operation-empty">등록된 일정이 없습니다.</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `SCHEDULE ${selectedId}` : 'NEW SCHEDULE'}</p><h3>{selectedId ? '일정 정보 수정' : '일정 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `일정 ${selectedId}` : '새 일정'}</p><h3>{selectedId ? '일정 정보 수정' : '일정 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid">
                 <label>일정 유형<select onChange={(event) => updateField('type', event.target.value)} value={form.type}>{TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>

@@ -55,7 +55,7 @@ function RingStatusCard({ ring }) {
   return (
     <article className="operation-ring-card">
       <div className="operation-ring-heading">
-        <div><p className="eyebrow">RING {ring.ringId}</p><h3>{ring.ringName}</h3></div>
+        <div><p className="eyebrow">링 {ring.ringId}</p><h3>{ring.ringName}</h3></div>
         <span className="status-pill">{ringStatusLabel(ring.ringStatus)}</span>
       </div>
       <div className="operation-bout-block"><span>현재 경기</span><BoutSummary bout={ring.currentBout} emptyLabel="진행 중인 경기 없음" /></div>
@@ -81,7 +81,7 @@ function JudgeProgress({ progress }) {
 function BoutAlertList({ bouts, title, emptyLabel }) {
   return (
     <section className="operation-panel operation-alert-panel">
-      <div className="operation-panel-heading"><div><p className="eyebrow">ATTENTION</p><h3>{title}</h3></div><span>{bouts.length}건</span></div>
+      <div className="operation-panel-heading"><div><p className="eyebrow">확인 필요</p><h3>{title}</h3></div><span>{bouts.length}건</span></div>
       {bouts.length ? <ul className="operation-alert-list">{bouts.map((bout) => <li key={bout.boutId}><strong>경기 {bout.boutNumber}</strong><span>{statusLabel(bout.status)} · 링 {bout.ringId || '-'}</span></li>)}</ul> : <p className="operation-empty">{emptyLabel}</p>}
     </section>
   );
@@ -121,7 +121,7 @@ function OperationsWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell operations-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">OPERATIONS DESK</p><h2>대회 운영 현황</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
+        <div><p className="eyebrow">대회 운영</p><h2>대회 운영 현황</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
         <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadStatus} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
       </div>
 
@@ -131,18 +131,18 @@ function OperationsWorkspace({ onLogout, session, tournamentId }) {
       {status ? (
         <>
           <section className="operation-panel operation-summary-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">TOURNAMENT {status.tournamentId}</p><h3>경기 진행 요약</h3></div><span className="operation-refresh-state" aria-live="polite">자동 갱신 · {formatUpdatedAt(lastUpdatedAt)}{loading ? ' · 갱신 중' : ''}</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">대회 {status.tournamentId}</p><h3>경기 진행 요약</h3></div><span className="operation-refresh-state" aria-live="polite">자동 갱신 · {formatUpdatedAt(lastUpdatedAt)}{loading ? ' · 갱신 중' : ''}</span></div>
             <div className="operation-stat-grid">{statusMetrics.map((metric) => <Metric key={metric.statusKey} label={metric.label} tone={metric.statusKey === 'IN_PROGRESS' ? 'active' : ''} value={metric.count} />)}</div>
           </section>
 
           <section className="operation-panel operation-rings-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">RINGS</p><h3>링별 진행 상태</h3></div><span>{status.rings?.length || 0}개 링</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">경기장</p><h3>링별 진행 상태</h3></div><span>{status.rings?.length || 0}개 링</span></div>
             {status.rings?.length ? <div className="operation-ring-grid">{status.rings.map((ring) => <RingStatusCard key={ring.ringId} ring={ring} />)}</div> : <p className="operation-empty">등록된 링이 없습니다.</p>}
           </section>
 
           <div className="operations-two-column">
             <section className="operation-panel operation-progress-panel">
-              <div className="operation-panel-heading"><div><p className="eyebrow">JUDGE SUBMISSIONS</p><h3>심판 제출 현황</h3></div><span>{incompleteProgress.length}건 대기</span></div>
+              <div className="operation-panel-heading"><div><p className="eyebrow">라운드별 제출</p><h3>심판 제출 현황</h3></div><span>{incompleteProgress.length}건 대기</span></div>
               {incompleteProgress.length ? <div className="operation-progress-list">{incompleteProgress.map((progress) => <JudgeProgress key={`${progress.boutId}-${progress.roundNo}`} progress={progress} />)}</div> : <p className="operation-empty">미완료 심판 제출이 없습니다.</p>}
             </section>
             <BoutAlertList bouts={status.pendingResultBouts || []} emptyLabel="미확정 결과가 없습니다." title="결과 확정 대기" />

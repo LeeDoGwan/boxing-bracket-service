@@ -13,7 +13,13 @@ export function statusLabel(status) {
 }
 
 export function decisionLabel(decisionType) {
-  return decisionType === 'RSC' ? 'TKO' : decisionType || '판정';
+  const labels = { POINTS: '판정', KO: 'KO', RSC: 'TKO', ABD: '기권', DSQ: '실격', WALKOVER: '부전승' };
+  return labels[decisionType] || decisionType || '판정';
+}
+
+export function streamStateLabel(state) {
+  const labels = { connected: '연결됨', connecting: '연결 중', reconnecting: '재연결 중', offline: '연결 안 됨' };
+  return labels[state] || '연결 안 됨';
 }
 
 export function effectiveResultScores(result) {

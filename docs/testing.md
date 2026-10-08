@@ -1,17 +1,19 @@
 # Testing
 
-Last updated: 2026-08-23
+Last updated: 2026-10-06
 
 ## Latest Verification
 
 - Backend working directory: `back`
-- Command: `mvn test`
-- Verified at: 2026-08-09
-- Result: 411 passed, 0 failed, 0 errors, 1 skipped locally
+- Command: `mvn -q clean test`
+- Verified at: 2026-10-06
+- Result: 410 passed, 0 failed, 0 errors, 0 skipped
 - `AccountRepositoryTest` also verifies that JPA auditing populates both `createdAt` and `updatedAt`.
-- Test classes: 74 local classes plus the CI-only `MariaDbMigrationSmokeIT`
+- Test classes: 73 from fresh Surefire XML reports. The separate `MariaDbMigrationSmokeIT` is outside the default `*Test` discovery pattern and was not executed locally.
 - Runtime profile: `test`
 - Test database: H2 in-memory database configured by `back/src/test/resources/application-test.yml`
+
+Old Surefire XML files can survive `mvn test` and inflate aggregate counts. The clean run above replaces the earlier incorrectly documented 411-case/74-class local baseline. The inventory below contains the 73 default test classes; the MariaDB smoke class is tracked separately.
 
 ## Continuous Integration
 
@@ -20,7 +22,7 @@ Last updated: 2026-08-23
 - The repository has no Maven Wrapper or Node version file; the workflow pins Java 11 and Node.js 24 explicitly, while Maven is supplied by the GitHub-hosted runner.
 - Triggers: relevant `back/` or `front/` branch pushes, future pull requests, and manual dispatch. Documentation-only changes do not trigger these source workflows.
 - Both workflows use read-only repository permissions, a 15-minute job timeout, and cancel older runs for the same workflow and ref. Backend and frontend jobs remain independent.
-- Success requires command exit codes to pass, no failed or errored tests, no ESLint errors, and a successful production build. The local Maven run skips only the CI-only MariaDB smoke test. Test counts are intentionally not hard-coded.
+- Success requires command exit codes to pass, no failed or errored tests, no ESLint errors, and a successful production build. The default local Maven run does not select the MariaDB smoke test; CI selects it explicitly with `-Dtest=MariaDbMigrationSmokeIT`. Test counts are intentionally not hard-coded.
 - These workflows verify source changes only. Deployment, Docker, infrastructure, production database credentials, performance tests, and pull request creation remain outside this stage. The backend test profile does apply the checked-in Flyway migration to H2.
 
 ## Database Migration Verification
@@ -29,7 +31,7 @@ Last updated: 2026-08-23
 - `back/src/main/resources/application-local.yml` enables MariaDB migration and sets `ddl-auto: validate`; it does not create or alter tables through Hibernate.
 - `back/src/test/resources/application-test.yml` uses the same migration location with H2 MySQL compatibility mode and `ddl-auto: validate`.
 - `DatabaseMigrationIntegrationTest` verifies V1 through V6 history records, no pending or duplicate migration, entity tables, optimistic-lock columns, the tournament `judge_count` column, MariaDB-compatible audit payload mapping, the `penalties.round_no` column, the per-tournament bout-number unique constraint, import idempotency columns and constraint, bout schedule indexes, the athlete tournament-scope column/index, and operational unique constraints.
-- `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dmariadb.integration=true` and verifies the database product plus the current Flyway V6 version.
+- `mvn test` remains the fast H2 migration test command. The CI-only `MariaDbMigrationSmokeIT` runs against the MariaDB service with `-Dtest=MariaDbMigrationSmokeIT -Dmariadb.integration=true` and verifies the database product plus the current Flyway V6 version.
 - Existing `docs/database-migration-*.sql` files are historical pointers only. They contain no executable duplicate DDL; the Flyway directory is the single execution source.
 
 ## Test Scope
@@ -51,7 +53,7 @@ Last updated: 2026-08-23
 - Scalar-reference guard tests verify tournament, ring, athlete, account, and bout deletes reject orphan-producing mutations.
 - Import tests verify the required idempotency key, persistent key/row mapping, and repeated-key response reuse.
 - Auth tests verify sessions are rejected after account deletion, deactivation, identity changes, or role changes.
-- Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading and submitted public round-score display, public home composition/loading/fatal-error/stale-retry/ring-order/result-detail flows backed by the aggregate home response, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, judge login, supervisor login, ring manager login, operations manager login, audit log login, tournament admin login, ring admin login, athlete admin login, notice admin login, schedule admin login, bout admin login, account admin login, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation and reasoned result correction, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
+- Frontend tests for utility formatting, staff session persistence and cleanup, notice rotation, schedule rendering, ring cards, bout detail loading and submitted public round-score display, public home composition/loading/fatal-error/stale-retry/ring-order/result-detail flows backed by the aggregate home response, bracket search, audience and staff SSE filtering/deduplication/cleanup, coalesced event refresh, shared staff authentication and role-aware navigation, score validation and confirmation including the 0-10 maximum, score input preservation during refresh, penalty round selection/history/creation, result confirmation and reasoned result correction, Ring Manager assigned-ring selection, current-bout mismatch protection, state-specific command visibility, exact next-round input, confirmation/cancel, double-click prevention, server error mapping, live command recalculation, and server-selected next-bout operations, operations refresh/retry/auto-refresh, audit filters/pagination/retry, tournament create/update/delete, ring create/update/delete, athlete search/create/update/delete, notice create/update/delete, schedule create/update/delete, bout create/update/delete, CSV/Excel import/template download, account search/filter/create/update/delete, and empty states.
 
 ## Frontend Verification
 
@@ -60,7 +62,9 @@ map is maintained in the
 [frontend wide-frame architecture guide](frontend-wide-frame.md).
 
 - Working directory: `front`
-- `npm test`: 91 passed across 25 test files
+- Verified at: 2026-10-06
+- `npm test`: 94 passed across 25 test files
+- Added regression coverage for Korean decision/connection labels and the Game Manager assignment-account lookup restriction; penalty history assertions verify opponent addition rather than subtraction.
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
 - Automated frontend coverage includes the public home and bracket routes, API failure and empty states, public submitted round-score rendering, startup account revalidation, authenticated 401 session cleanup, the configured one-tournament context, bracket search, the shared `/staff/login` route, protected-route return paths, invalid-credential handling, and role-aware navigation. Authenticated score submission, result confirmation, ring commands, operator SSE-driven refetch, operations refresh/retry/auto-refresh, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by frontend page and session tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data. Manual browser verification remains a release smoke-test task and is tracked in [Deployment runbook](deployment-runbook.md).
@@ -89,7 +93,7 @@ map is maintained in the
 | Bout | `BoutTest` | 7 |
 | Bout | `BoutRepositoryTest` | 1 |
 | Bout | `BoutOptimisticLockTest` | 1 |
-| Bout | `BoutServiceTest` | 14 |
+| Bout | `BoutServiceTest` | 15 |
 | Event | `BoutEventStreamControllerTest` | 3 |
 | Event | `BoutEventResponseTest` | 2 |
 | Event | `BoutEventPublisherTest` | 2 |
@@ -115,20 +119,22 @@ map is maintained in the
 | Ring | `RingControllerTest` | 4 |
 | Ring | `RingTest` | 5 |
 | Ring | `RingRepositoryTest` | 1 |
-| Ring | `RingServiceTest` | 11 |
+| Ring | `RingServiceTest` | 12 |
 | Ring Manager | `RingManagerControllerTest` | 8 |
 | Ring Manager | `RingManagerServiceTest` | 26 |
 | Scoring | `JudgeScoreControllerTest` | 7 |
 | Scoring | `SupervisorPenaltyControllerTest` | 4 |
 | Scoring | `SupervisorResultControllerTest` | 4 |
 | Scoring | `SupervisorScoreControllerTest` | 2 |
-| Scoring | `RoundScoreTest` | 4 |
+| Scoring | `RoundScoreTest` | 5 |
 | Scoring | `RoundScoreRepositoryTest` | 2 |
 | Scoring | `BoutResultRepositoryTest` | 1 |
-| Scoring | `JudgeScoreServiceTest` | 13 |
+| Scoring | `JudgeScoreServiceTest` | 14 |
 | Scoring | `ScoreQueryServiceTest` | 4 |
 | Assignment | `AssignedRingControllerTest` | 1 |
-| Scoring | `SupervisorPenaltyServiceTest` | 10 |
+| Assignment | `StaffAssignmentServiceTest` | 4 |
+| Database | `DatabaseMigrationIntegrationTest` | 2 |
+| Scoring | `SupervisorPenaltyServiceTest` | 11 |
 | Scoring | `SupervisorResultServiceTest` | 13 |
 | Scoring | `SupervisorJudgeReadinessTest` | 1 |
 | Tournament | `AdminTournamentControllerTest` | 9 |
@@ -159,4 +165,4 @@ map is maintained in the
 - Game managers can import bout schedules from CSV or Excel files using the admin bout import endpoint.
 - Game managers and service managers can read a tournament's read-only operation summary, including status counts, ring progress, registered judge score submissions, pending results, and bouts in progress for more than 15 minutes.
 - Authorized administrators can filter immutable audit logs for operational, admin, and authentication mutations; sensitive credentials and session material are masked, and idempotent workflow retries retain one audit record.
-- Administrators can create and deactivate staff ring assignments; Judge, Supervisor, and Ring Manager screens load assigned rings before scoped operations. Ring Manager uses the assigned ring's `currentBoutId`, command-specific state guards, confirmation steps, and SSE-driven command recalculation; Judge payloads omit `judgeId`.
+- The assignment API permits Game Managers and Service Managers, but the current UI account lookup requires a Service Manager; this UI limitation is documented rather than treated as a successful Game Manager flow. Service Managers can create and deactivate staff ring assignments; Judge, Supervisor, and Ring Manager screens load assigned rings before scoped operations. Ring Manager uses the assigned ring's `currentBoutId`, command-specific state guards, confirmation steps, and SSE-driven command recalculation; Judge payloads omit `judgeId`.
