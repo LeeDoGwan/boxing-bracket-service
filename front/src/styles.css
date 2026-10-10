@@ -690,6 +690,25 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .live-board-secondary .result-row strong { color: #a83236; font-size: 16px; }
 .live-board-secondary .schedule-item { grid-template-columns: 128px 62px minmax(0, 1fr) auto; border-color: #cfd7da; padding: 11px 13px; }
 
+/* Language labels can be considerably longer than their Korean equivalents. */
+.app-header.is-public { grid-template-columns: minmax(0, 1fr) auto auto; }
+.app-header.is-staff { grid-template-columns: minmax(180px, 1fr) auto auto auto auto; gap: 16px; }
+.language-selector { display: grid; gap: 4px; min-width: 0; font-size: 12px; color: #c9cdd0; }
+.language-selector select { width: 210px; max-width: 100%; min-height: 44px; padding: 8px; border: 1px solid #677178; border-radius: 4px; background: #ffffff; color: #18242b; font: inherit; }
+.brand-block { min-width: 0; overflow-wrap: anywhere; }
+.main-nav a, .operations-menu summary, button { overflow-wrap: anywhere; }
+.live-board-page .red-label, .live-board-page .blue-label { width: auto; min-width: 26px; height: auto; min-height: 26px; padding: 2px 4px; }
+.live-board-page .fighter-pair, .live-board-page .ring-card > .bout-summary .fighter-pair { grid-template-columns: minmax(34px, max-content) minmax(0, 1fr); }
+.live-board-secondary .schedule-item { grid-template-columns: minmax(0, 150px) minmax(0, 90px) minmax(0, 1fr) auto; }
+
+@media (max-width: 1100px) {
+  .app-header.is-staff { grid-template-columns: minmax(0, 1fr) auto; }
+  .app-header.is-staff .language-selector { grid-column: 2; grid-row: 1; }
+  .app-header.is-staff .staff-session { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; }
+  .app-header.is-staff .main-nav { grid-column: 1; grid-row: 3; }
+  .app-header.is-staff .operations-menu { grid-column: 2; grid-row: 3; }
+}
+
 @media (max-width: 760px) {
   .app-header.is-public { grid-template-columns: 1fr auto; min-height: 72px; padding: 14px 16px; }
   .app-header.is-public .brand-mark { width: 34px; height: 34px; }
@@ -708,4 +727,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .live-board-secondary { grid-template-columns: 1fr; gap: 34px; margin-top: 34px; }
   .live-board-secondary .schedule-item { grid-template-columns: 1fr auto; }
   .live-board-secondary .schedule-item time { grid-column: 1 / -1; }
+  .app-header.is-public, .app-header.is-staff { grid-template-columns: minmax(0, 1fr); }
+  .app-header .language-selector, .app-header.is-staff .language-selector { grid-column: 1; grid-row: 2; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
+  .language-selector select { width: 100%; }
+  .app-header.is-public .main-nav { grid-column: 1; grid-row: 3; }
+  .app-header.is-staff .staff-session { grid-column: 1; grid-row: 3; }
+  .app-header.is-staff .main-nav { grid-column: 1; grid-row: 4; }
+  .app-header.is-staff .operations-menu { grid-column: 1; grid-row: 5; }
 }

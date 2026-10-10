@@ -50,6 +50,15 @@ authorized staff and a clear distinction between discoverability and security.
 
 ## Implementation Notes
 
+Multilingual requirements confirmed and implemented on 2026-10-10:
+
+- Korean, English, and Japanese UI; browser-preferred language by default.
+- An explicit per-browser setting overrides automatic detection.
+- Semantic phrase/sentence keys resolve to language resource files; individual
+  words are not concatenated to construct translated sentences.
+- Unsupported preferred languages fall back to Korean. User-created data and
+  backend/CSV codes are not translated. See [i18n design](i18n-design.md).
+
 The following confirmed targets are implemented in the current baseline:
 
 - Maximum score `10` is enforced by backend validation and browser validation.

@@ -1,6 +1,11 @@
 # Boxing Bracket Service Design
 
-Last updated: 2026-10-06
+Last updated: 2026-10-10
+
+Multilingual UI architecture and compatibility constraints are described in
+[i18n design](i18n-design.md). Korean, English, and Japanese use semantic resource
+keys, browser-language defaults, and explicit per-browser overrides. Backend
+enums, user content, authorization, and database schema remain unchanged.
 
 ## 1. Purpose
 
@@ -412,7 +417,7 @@ Server log viewing is intentionally deferred. The current operational UI reads s
 The latest documented verification is:
 
 - Backend (2026-10-06): 73 test classes, 410 passed cases, zero failures/errors/skips from `mvn -q clean test`. The MariaDB smoke test is selected separately in CI and was not run locally.
-- Frontend (2026-10-06): 25 test files, 94 test cases, ESLint passed, and Vite production build passed.
+- Frontend (2026-10-10): 28 test files, 123 test cases, ESLint passed, and Vite production build passed. Browser language smoke checks passed; authenticated database workflows remain unverified. The npm dependency audit reports 15 flagged entries and needs separate remediation.
 - Current UI limitation: assignment routes and APIs admit Game Managers, but the account reference request used by the screen is Service Manager-only. Until that contract is reconciled, Service Managers perform ring assignments.
 - Test inventory and user-flow coverage: [Testing](testing.md).
 

@@ -1,14 +1,17 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t, resolveMessage } from '../i18n';
 import { useEffect, useRef } from 'react';
 
 export function ConfirmDialog({
-  cancelLabel = '취소',
-  confirmLabel = '확인',
+  cancelLabel = t('common:cancel'),
+  confirmLabel = t('common:confirm'),
   description,
   onCancel,
   onConfirm,
   title,
   busy = false,
 }) {
+  useTranslation();
   const dialogRef = useRef(null);
   const confirmRef = useRef(null);
   const onCancelRef = useRef(onCancel);
@@ -41,14 +44,14 @@ export function ConfirmDialog({
         ref={dialogRef}
         role="dialog"
       >
-        <h2 id="confirm-dialog-title">{title}</h2>
-        <p>{description}</p>
+        <h2 id="confirm-dialog-title">{resolveMessage(title)}</h2>
+        <p>{resolveMessage(description)}</p>
         <div className="confirm-dialog-actions">
           <button className="secondary-button" disabled={busy} onClick={onCancel} type="button">
-            {cancelLabel}
+            {resolveMessage(cancelLabel)}
           </button>
           <button className="danger-button" disabled={busy} onClick={onConfirm} ref={confirmRef} type="button">
-            {busy ? '처리 중...' : confirmLabel}
+            {busy ? t('common:processing') : resolveMessage(confirmLabel)}
           </button>
         </div>
       </section>

@@ -1,6 +1,10 @@
 # Frontend Wide-Frame Architecture Guide
 
-Last updated: 2026-10-06
+Last updated: 2026-10-10
+
+All screens now use ko/en/ja resources with browser-language detection and a header
+language selector. Language changes preserve form values and pending confirmations.
+See [multilingual UI design](i18n-design.md) for resource ownership and verification.
 
 This is the implementation-oriented wide frame for the frontend in front/.
 It connects screens, state, API calls, components, realtime events, tests,
@@ -350,7 +354,7 @@ should announce a meaningful state change, not every transport event.
 
 ## 10. Test map
 
-The current frontend baseline is 25 test files and 94 passing tests.
+The current frontend baseline is 28 test files and 123 passing tests.
 
 | Area | Actual files | Current assertions | Additional coverage |
 | --- | --- | --- | --- |
@@ -437,7 +441,7 @@ realtime needs, responsive behavior, and tests before marking it complete.
 - Keep README.md, docs/design.md, docs/testing.md, and front/README.md linked
   to this guide instead of duplicating detailed frontend architecture.
 - Mark partial or future behavior explicitly.
-- Preserve the baseline of 25 frontend test files and 94 tests unless coverage
+- Preserve the baseline of 28 frontend test files and 123 tests unless coverage
   is intentionally changed.
 - Run link checks, frontend test/lint/build, and backend tests before commit.
 

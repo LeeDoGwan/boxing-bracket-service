@@ -1,10 +1,13 @@
+import { apiErrorMessage } from '../i18n/errors';
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { createTournament, deleteTournament, getTournaments, updateTournament } from '../api/adminTournaments';
 import { useStaffAuth } from '../auth/StaffAuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
-const STATUS_LABELS = { FINISHED: '종료', IN_PROGRESS: '진행 중', READY: '준비' };
+const STATUS_LABELS = { FINISHED: localizedMessage('common:finished'), IN_PROGRESS: localizedMessage('common:inProgress'), READY: localizedMessage('common:ready') };
 
 function blankForm() {
   return { endDate: '', judgeCount: '3', location: '', name: '', startDate: '', status: 'READY' };
@@ -22,10 +25,11 @@ function formFromTournament(tournament) {
 }
 
 function statusLabel(status) {
-  return STATUS_LABELS[status] || status || '상태 미정';
+  return STATUS_LABELS[status] || status || localizedMessage('common:statusUnknown');
 }
 
 function TournamentWorkspace({ onLogout, session }) {
+  useTranslation();
   const [tournaments, setTournaments] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(blankForm);
@@ -45,7 +49,7 @@ function TournamentWorkspace({ onLogout, session }) {
         ? current
         : nextTournaments[0]?.tournamentId || null);
     } catch {
-      setError('대회 목록을 불러오지 못했습니다. 권한을 확인해 주세요.');
+      setError(localizedMessage('errors:tournament.listPermission'));
     } finally {
       setLoading(false);
     }
@@ -75,15 +79,15 @@ function TournamentWorkspace({ onLogout, session }) {
       if (selectedId) {
         const updated = await updateTournament(selectedId, payload, session.accessToken);
         setTournaments((current) => current.map((tournament) => tournament.tournamentId === selectedId ? updated : tournament));
-        setMessage('대회 정보를 수정했습니다.');
+        setMessage(localizedMessage('admin:tournament.updated'));
       } else {
         const created = await createTournament(payload, session.accessToken);
         setTournaments((current) => [...current, created]);
         setSelectedId(created.tournamentId);
-        setMessage('대회를 생성했습니다.');
+        setMessage(localizedMessage('admin:tournament.created'));
       }
     } catch (requestError) {
-      setError(requestError.message || '대회 저장에 실패했습니다.');
+      setError(apiErrorMessage(requestError, localizedMessage('errors:tournament.save')));
     } finally {
       setSaving(false);
     }
@@ -101,10 +105,10 @@ function TournamentWorkspace({ onLogout, session }) {
       const remaining = tournaments.filter((tournament) => tournament.tournamentId !== selectedId);
       setTournaments(remaining);
       setSelectedId(remaining[0]?.tournamentId || null);
-      setMessage('대회를 삭제했습니다.');
+      setMessage(localizedMessage('admin:tournament.deleted'));
       setConfirmingDelete(false);
     } catch (requestError) {
-      setError(requestError.message || '대회 삭제에 실패했습니다.');
+      setError(apiErrorMessage(requestError, localizedMessage('errors:tournament.delete')));
     } finally {
       setSaving(false);
     }
@@ -113,42 +117,43 @@ function TournamentWorkspace({ onLogout, session }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">대회 설정</p><h2>대회 관리</h2><p>로그인 계정: {session.account.name}</p></div>
-        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadTournaments} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
+        <div><p className="eyebrow">{t('admin:tournament.desk')}</p><h2>{t('admin:tournament.title')}</h2><p>{t('common:signedInAs', { value1: session.account.name })}</p></div>
+        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadTournaments} type="button">{t('common:refresh')}</button><button className="secondary-button" onClick={onLogout} type="button">{t('common:signOut')}</button></div>
       </div>
-      {error && <p aria-live="polite" className="form-error admin-action-message" role="alert">{error}</p>}
-      {message && <p aria-live="polite" className="admin-success-message">{message}</p>}
-      {loading ? <StatePanel title="대회 목록을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
+      {error && <p aria-live="polite" className="form-error admin-action-message" role="alert">{resolveMessage(error)}</p>}
+      {message && <p aria-live="polite" className="admin-success-message">{resolveMessage(message)}</p>}
+      {loading ? <StatePanel title={t('admin:tournament.loading')}>{t('common:wait')}</StatePanel> : null}
       {!loading && !error ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">등록 대회</p><h3>대회 목록</h3></div><span>{tournaments.length}건</span></div>
-            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 대회</button>
-            <div className="admin-entity-list">{tournaments.map((tournament) => <button className={`admin-entity-option${selectedId === tournament.tournamentId ? ' selected' : ''}`} key={tournament.tournamentId} onClick={() => setSelectedId(tournament.tournamentId)} type="button"><strong>{tournament.name}</strong><span>{statusLabel(tournament.status)} · {tournament.location || '장소 미정'}</span></button>)}</div>
-            {!tournaments.length ? <p className="operation-empty">등록된 대회가 없습니다.</p> : null}
+            <div className="operation-panel-heading"><div><p className="eyebrow">{t('admin:tournament.registered')}</p><h3>{t('admin:tournament.list')}</h3></div><span>{t('common:recordCount', { value1: tournaments.length })}</span></div>
+            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">{t('admin:tournament.add')}</button>
+            <div className="admin-entity-list">{tournaments.map((tournament) => <button className={`admin-entity-option${selectedId === tournament.tournamentId ? ' selected' : ''}`} key={tournament.tournamentId} onClick={() => setSelectedId(tournament.tournamentId)} type="button"><strong>{tournament.name}</strong><span>{resolveMessage(statusLabel(tournament.status))} · {tournament.location || t('common:venueUnknown')}</span></button>)}</div>
+            {!tournaments.length ? <p className="operation-empty">{t('admin:tournament.empty')}</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `대회 ${selectedId}` : '새 대회'}</p><h3>{selectedId ? '대회 정보 수정' : '대회 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? t('common:tournamentNumber', { value1: selectedId }) : t('admin:tournament.new')}</p><h3>{selectedId ? t('admin:tournament.edit') : t('admin:tournament.create')}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid">
-                <label>대회명<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label>
-                <label>장소<input onChange={(event) => updateField('location', event.target.value)} value={form.location} /></label>
-                <label>시작일<input onChange={(event) => updateField('startDate', event.target.value)} type="date" value={form.startDate} /></label>
-                <label>종료일<input onChange={(event) => updateField('endDate', event.target.value)} type="date" value={form.endDate} /></label>
-                <label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                <label>심판 수<select onChange={(event) => updateField('judgeCount', event.target.value)} value={form.judgeCount}><option value="3">3</option><option value="5">5</option></select></label>
+                <label>{t('common:tournamentName')}<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label>
+                <label>{t('common:venue')}<input onChange={(event) => updateField('location', event.target.value)} value={form.location} /></label>
+                <label>{t('common:startDate')}<input onChange={(event) => updateField('startDate', event.target.value)} type="date" value={form.startDate} /></label>
+                <label>{t('common:endDate')}<input onChange={(event) => updateField('endDate', event.target.value)} type="date" value={form.endDate} /></label>
+                <label>{t('common:status')}<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{resolveMessage(label)}</option>)}</select></label>
+                <label>{t('common:judgeCount')}<select onChange={(event) => updateField('judgeCount', event.target.value)} value={form.judgeCount}><option value="3">3</option><option value="5">5</option></select></label>
               </div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '대회 저장' : '대회 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">대회 삭제</button> : null}</div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? t('admin:tournament.save') : t('admin:tournament.create')}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">{t('admin:tournament.delete')}</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
-      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 대회를 삭제합니다. 연결된 링, 경기, 일정 데이터가 있으면 서버에서 거절될 수 있습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="대회 삭제 확인" /> : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description={t('admin:tournament.deleteWarning')} onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title={t('admin:tournament.deleteConfirm')} /> : null}
     </main>
   );
 }
 
 export function AdminTournamentPage() {
+  useTranslation();
   const { session, signOut } = useStaffAuth();
   if (!session || !['GAME_MANAGER', 'SERVICE_MANAGER'].includes(session.account.role)) return null;
   return <TournamentWorkspace onLogout={signOut} session={session} />;

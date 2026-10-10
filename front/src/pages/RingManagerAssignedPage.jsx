@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage } from '../i18n';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { login, logout } from '../api/auth';
 import { moveToNextBout, startBout, startRound, updateBoutStatus } from '../api/ringManager';
@@ -11,17 +13,17 @@ const SESSION_KEY = 'boxing.ring-manager.session';
 const RING_MANAGER_EVENT_TYPES = ['BOUT_STARTED', 'BOUT_STATUS_CHANGED', 'ROUND_STARTED', 'NEXT_BOUT_READY', 'RESULT_CONFIRMED'];
 
 const ERROR_MESSAGES = {
-  BOUT_ALREADY_IN_PROGRESS: '이 링에서 다른 경기가 진행 중입니다.',
-  BOUT_ALREADY_STARTED: '이 경기는 이미 진행 중입니다.',
-  BOUT_RESULT_REQUIRED: '경기를 종료하려면 감독관의 결과 확정이 필요합니다.',
-  CONCURRENT_MODIFICATION: '다른 운영자가 경기를 변경했습니다. 새로고침 후 확인해 주세요.',
-  CURRENT_BOUT_NOT_FINISHED: '현재 경기를 종료해야 다음 경기를 준비할 수 있습니다.',
-  INVALID_BOUT_STATE: '현재 경기 상태에서는 처리할 수 없습니다.',
-  INVALID_BOUT_TRANSITION: '현재 경기 상태에서는 해당 상태로 변경할 수 없습니다.',
-  NEXT_BOUT_NOT_FOUND: '이 링에는 다음 공식 경기가 없습니다.',
-  RING_ALREADY_HAS_CURRENT_BOUT: '다른 경기를 시작하기 전에 링의 현재 경기를 확인해 주세요.',
-  ROUND_OUT_OF_RANGE: '경기의 라운드 범위를 벗어났습니다.',
-  ROUND_SEQUENCE_INVALID: '라운드는 순서대로 시작해 주세요.',
+  BOUT_ALREADY_IN_PROGRESS: localizedMessage('errors:ring.anotherBoutActive'),
+  BOUT_ALREADY_STARTED: localizedMessage('errors:bout.alreadyStarted'),
+  BOUT_RESULT_REQUIRED: localizedMessage('errors:bout.resultRequired'),
+  CONCURRENT_MODIFICATION: localizedMessage('errors:concurrentModification'),
+  CURRENT_BOUT_NOT_FINISHED: localizedMessage('errors:ring.currentNotFinished'),
+  INVALID_BOUT_STATE: localizedMessage('errors:bout.invalidState'),
+  INVALID_BOUT_TRANSITION: localizedMessage('errors:bout.invalidTransition'),
+  NEXT_BOUT_NOT_FOUND: localizedMessage('errors:ring.nextNotFound'),
+  RING_ALREADY_HAS_CURRENT_BOUT: localizedMessage('errors:ring.currentMismatch'),
+  ROUND_OUT_OF_RANGE: localizedMessage('errors:round.outOfRange'),
+  ROUND_SEQUENCE_INVALID: localizedMessage('errors:round.sequence'),
 };
 
 function readSession() {
@@ -34,8 +36,8 @@ function readSession() {
 }
 
 function actionErrorMessage(error, fallback) {
-  if (error?.status === 401) return '세션이 만료되었습니다. 다시 로그인해 주세요.';
-  if (error?.status === 403) return '배정 권한이 없습니다. 관리자에게 확인해 주세요.';
+  if (error?.status === 401) return localizedMessage('errors:session.expired');
+  if (error?.status === 403) return localizedMessage('errors:assignment.denied');
   return ERROR_MESSAGES[error?.message] || fallback;
 }
 
@@ -48,6 +50,7 @@ function isActiveStatus(status) {
 }
 
 export function RingManagerAssignedPage({ session, onLogout, tournamentId }) {
+  useTranslation();
   const [rings, setRings] = useState([]);
   const [ringId, setRingId] = useState(null);
   const [bouts, setBouts] = useState([]);
@@ -96,7 +99,7 @@ export function RingManagerAssignedPage({ session, onLogout, tournamentId }) {
     } catch (requestError) {
       setRings([]);
       setRingId(null);
-      setError(actionErrorMessage(requestError, '배정된 링을 불러오지 못했습니다.'));
+      setError(actionErrorMessage(requestError, localizedMessage('errors:assignment.rings')));
     } finally {
       setLoading(false);
     }
@@ -118,7 +121,7 @@ export function RingManagerAssignedPage({ session, onLogout, tournamentId }) {
     } catch (requestError) {
       setBouts([]);
       setBoutId(null);
-      setError(actionErrorMessage(requestError, '선택한 링에 접근할 수 없습니다. 배정을 확인해 주세요.'));
+      setError(actionErrorMessage(requestError, localizedMessage('errors:assignment.revoked')));
       return [];
     }
   }, [ringId, selectedRing?.currentBoutId, session.accessToken]);
@@ -153,7 +156,7 @@ export function RingManagerAssignedPage({ session, onLogout, tournamentId }) {
       await Promise.all([loadRings(), loadBouts()]);
       setActionMessage(successMessage);
     } catch (requestError) {
-      setActionError(actionErrorMessage(requestError, '링 운영 처리에 실패했습니다.'));
+      setActionError(actionErrorMessage(requestError, localizedMessage('errors:ring.action')));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -173,100 +176,100 @@ export function RingManagerAssignedPage({ session, onLogout, tournamentId }) {
     await run(action.action, action.successMessage);
   }
 
-  if (loading) return <main className="page-shell"><StatePanel title="배정된 링을 불러오는 중">잠시 기다려 주세요.</StatePanel></main>;
+  if (loading) return <main className="page-shell"><StatePanel title={t('operations:assignment.loading')}>{t('common:waitBriefly')}</StatePanel></main>;
 
   return <main className="page-shell ring-manager-shell">
     <div className="judge-heading">
       <div>
-        <p className="eyebrow">링 매니저</p>
-        <h2>링 운영</h2>
-        <p>{session.account.name} | 대회 {tournamentId}</p>
-        <p aria-live="polite" className="stream-status" data-testid="stream-status">실시간 연결: {streamStateLabel(streamState)}</p>
+        <p className="eyebrow">{t('common:role.ringManager')}</p>
+        <h2>{t('operations:ring.title')}</h2>
+        <p>{t('operations:assignment.operator', { value1: session.account.name, value2: tournamentId })}</p>
+        <p aria-live="polite" className="stream-status" data-testid="stream-status">{t('operations:connection', { value1: streamStateLabel(streamState) })}</p>
       </div>
-      <button className="secondary-button" onClick={onLogout} type="button">로그아웃</button>
+      <button className="secondary-button" onClick={onLogout} type="button">{t('common:signOut')}</button>
     </div>
 
-    {error && <StatePanel action={<button className="command-button" onClick={loadRings} type="button">다시 시도</button>} title={error} tone="error">활성 상태로 배정된 링에만 접근할 수 있습니다.</StatePanel>}
-    {!error && !rings.length && <StatePanel title="배정된 링이 없습니다">관리자에게 링 배정을 요청해 주세요.</StatePanel>}
+    {error && <StatePanel action={<button className="command-button" onClick={loadRings} type="button">{t('common:retry')}</button>} title={resolveMessage(error)} tone="error">{t('operations:assignment.scope')}</StatePanel>}
+    {!error && !rings.length && <StatePanel title={t('operations:assignment.noRings')}>{t('operations:assignment.request')}</StatePanel>}
 
     {!error && rings.length > 0 && <div className="ring-manager-layout">
       <aside>
-        <label>배정된 링<select aria-label="배정된 링" onChange={(event) => { setRingId(Number(event.target.value)); setBoutId(null); }} value={ringId || ''}>{rings.map((ring) => <option key={ring.ringId} value={ring.ringId}>{ring.name} #{ring.ringId}</option>)}</select></label>
-        {bouts.length ? bouts.map((item) => <button className={`judge-bout-option${boutId === item.boutId ? ' selected' : ''}`} key={item.boutId} onClick={() => { setBoutId(item.boutId); setRound(nextRoundValue(item)); }} type="button"><strong>경기 {item.boutNumber}</strong><small>{statusLabel(item.status)} · 라운드 {item.currentRound || 0}{item.totalRounds ? `/${item.totalRounds}` : ''}</small></button>) : <StatePanel title="경기가 없습니다">이 링에는 공식 경기가 없습니다.</StatePanel>}
+        <label>{t('operations:assignment.ring')}<select aria-label={t('operations:assignment.ring')} onChange={(event) => { setRingId(Number(event.target.value)); setBoutId(null); }} value={ringId || ''}>{rings.map((ring) => <option key={ring.ringId} value={ring.ringId}>{ring.name} #{ring.ringId}</option>)}</select></label>
+        {bouts.length ? bouts.map((item) => <button className={`judge-bout-option${boutId === item.boutId ? ' selected' : ''}`} key={item.boutId} onClick={() => { setBoutId(item.boutId); setRound(nextRoundValue(item)); }} type="button"><strong>{t('common:boutNumber', { value1: item.boutNumber })}</strong><small>{t('operations:ring.boutStatusRound', { value1: statusLabel(item.status), value2: item.currentRound || 0, value3: item.totalRounds ? `/${item.totalRounds}` : '' })}</small></button>) : <StatePanel title={t('operations:assignment.noBouts')}>{t('operations:assignment.emptyRing')}</StatePanel>}
       </aside>
 
       <section className="ring-manager-panel">
         <div className="ring-current-card">
-          <p className="eyebrow">현재 경기</p>
-          <h3>{currentBout ? `경기 ${currentBout.boutNumber}` : '진행 중인 경기가 없습니다'}</h3>
-          <p>{currentBout ? `${currentBout.matchType || '공식 경기'} · ${statusLabel(currentBout.status)}` : '준비된 경기가 없습니다.'}</p>
+          <p className="eyebrow">{t('common:currentBout')}</p>
+          <h3>{currentBout ? t('common:boutNumber', { value1: currentBout.boutNumber }) : t('operations:ring.noActiveBout')}</h3>
+          <p>{currentBout ? `${currentBout.matchType || t('common:officialBout')} · ${statusLabel(currentBout.status)}` : t('operations:ring.noPreparedBout')}</p>
         </div>
 
         {selected ? <>
           <div className="ring-selected-heading">
             <div>
-              <p className="eyebrow">선택한 경기 {selected.boutNumber}</p>
-              <h3>{selected.matchType || '공식 경기'}</h3>
-              <p>현재 상태: {statusLabel(selected.status)} · 라운드 {selected.currentRound || 0}{selected.totalRounds ? `/${selected.totalRounds}` : ''}</p>
+              <p className="eyebrow">{t('operations:ring.selectedBout', { value1: selected.boutNumber })}</p>
+              <h3>{selected.matchType || t('common:officialBout')}</h3>
+              <p>{t('operations:ring.currentStatus', { value1: statusLabel(selected.status), value2: selected.currentRound || 0, value3: selected.totalRounds ? `/${selected.totalRounds}` : '' })}</p>
             </div>
-            <span className="status-pill">{statusLabel(selected.status)}</span>
+            <span className="status-pill">{resolveMessage(statusLabel(selected.status))}</span>
           </div>
 
-          {currentBout && currentBout.boutId !== selected.boutId && <p className="form-error" role="status">선택한 경기가 링의 현재 경기와 다릅니다. 현재 경기로 지정될 때까지 시작할 수 없습니다.</p>}
-          {actionError && <p aria-live="polite" className="form-error" role="alert">{actionError}</p>}
-          {actionMessage && <p aria-live="polite" className="ring-success-message">{actionMessage}</p>}
+          {currentBout && currentBout.boutId !== selected.boutId && <p className="form-error" role="status">{t('operations:ring.selectionMismatch')}</p>}
+          {actionError && <p aria-live="polite" className="form-error" role="alert">{resolveMessage(actionError)}</p>}
+          {actionMessage && <p aria-live="polite" className="ring-success-message">{resolveMessage(actionMessage)}</p>}
 
           <div className="ring-command-grid">
             {selected.status === 'SCHEDULED' && <button className="secondary-button" disabled={busy} onClick={() => askForConfirmation(
               () => updateBoutStatus(selected.boutId, 'CANCELED', session.accessToken),
-              '경기 취소',
-              `경기 ${selected.boutNumber} · 예정 → 취소`,
-              '경기를 취소했습니다.'
-            )} type="button">경기 취소</button>}
+              localizedMessage('operations:bout.cancel'),
+              localizedMessage('operations:bout.cancelDetails', { value1: selected.boutNumber }),
+              localizedMessage('operations:bout.canceled')
+            )} type="button">{t('operations:bout.cancel')}</button>}
 
             {selected.status === 'READY' && <button className="command-button" disabled={busy || !selectedIsCurrent} onClick={() => askForConfirmation(
               () => startBout(selected.boutId, session.accessToken),
-              '경기 시작',
-              `경기 ${selected.boutNumber} · 준비 → 진행 중`,
-              '경기를 시작했습니다.'
-            )} type="button">경기 시작</button>}
+              localizedMessage('operations:bout.start'),
+              localizedMessage('operations:bout.startDetails', { value1: selected.boutNumber }),
+              localizedMessage('operations:bout.started')
+            )} type="button">{t('operations:bout.start')}</button>}
 
             {selected.status === 'IN_PROGRESS' && <>
-              <label>다음 라운드<input aria-label="다음 라운드" disabled={busy || !selectedIsCurrent} max={selected.totalRounds || undefined} min="1" onChange={(event) => setRound(event.target.value)} type="number" value={round} /></label>
+              <label>{t('operations:round.next')}<input aria-label={t('operations:round.next')} disabled={busy || !selectedIsCurrent} max={selected.totalRounds || undefined} min="1" onChange={(event) => setRound(event.target.value)} type="number" value={round} /></label>
               <button className="command-button" disabled={busy || !canStartRound} onClick={() => run(
                 () => startRound(selected.boutId, parsedRound, session.accessToken),
-                `라운드 ${parsedRound}를 시작했습니다.`
-              )} type="button">라운드 시작</button>
+                localizedMessage('operations:round.started', { value1: parsedRound })
+              )} type="button">{t('operations:round.start')}</button>
               <button className="secondary-button" disabled={busy || !canSendToScoring} onClick={() => askForConfirmation(
                 () => updateBoutStatus(selected.boutId, 'SCORING', session.accessToken),
-                '채점 단계로 전환',
-                `경기 ${selected.boutNumber} · 진행 중 → 채점 중`,
-                '채점 단계로 전환했습니다.'
-              )} type="button">채점 단계로 전환</button>
+                localizedMessage('operations:bout.sendToScoring'),
+                localizedMessage('operations:bout.scoringDetails', { value1: selected.boutNumber }),
+                localizedMessage('operations:bout.sentToScoring')
+              )} type="button">{t('operations:bout.sendToScoring')}</button>
             </>}
 
-            {selected.status === 'SCORING' && <p className="dialog-state">감독관의 결과 확정을 기다리고 있습니다.</p>}
-            {selected.status === 'FINISHED' && <p className="dialog-state">결과가 확정되었습니다. 링이 준비되면 다음 경기를 준비할 수 있습니다.</p>}
-            {selected.status === 'CANCELED' && <p className="dialog-state">취소된 경기는 변경할 수 없습니다.</p>}
+            {selected.status === 'SCORING' && <p className="dialog-state">{t('operations:ring.waitingResult')}</p>}
+            {selected.status === 'FINISHED' && <p className="dialog-state">{t('operations:ring.resultConfirmed')}</p>}
+            {selected.status === 'CANCELED' && <p className="dialog-state">{t('operations:ring.canceledReadOnly')}</p>}
 
             <button className="secondary-button" disabled={busy || !canPrepareNext} onClick={() => askForConfirmation(
               () => moveToNextBout(ringId, session.accessToken),
-              '다음 경기 준비',
-              `링 ${selectedRing?.name || ringId} · 진행 순서에 따른 다음 공식 경기`,
-              '다음 경기를 준비했습니다.'
-            )} type="button">다음 경기 준비</button>
+              localizedMessage('operations:bout.prepareNext'),
+              localizedMessage('operations:bout.prepareDetails', { value1: selectedRing?.name || ringId }),
+              localizedMessage('operations:bout.prepared')
+            )} type="button">{t('operations:bout.prepareNext')}</button>
           </div>
-        </> : <StatePanel title="경기를 선택하세요">배정된 경기 중 운영할 경기를 선택해 주세요.</StatePanel>}
+        </> : <StatePanel title={t('operations:selectBout')}>{t('operations:ring.selectHint')}</StatePanel>}
       </section>
     </div>}
 
-    {pendingAction && <div aria-modal="true" className="dialog-backdrop" role="dialog" aria-label="링 운영 확인">
+    {pendingAction && <div aria-modal="true" className="dialog-backdrop" role="dialog" aria-label={t('operations:ring.confirmOperation')}>
       <section className="bout-dialog">
-        <p className="eyebrow">운영 확인</p>
-        <h2>{pendingAction.title}</h2>
-        <p className="dialog-status">{pendingAction.details}</p>
+        <p className="eyebrow">{t('operations:ring.confirmHeading')}</p>
+        <h2>{resolveMessage(pendingAction.title)}</h2>
+        <p className="dialog-status">{resolveMessage(pendingAction.details)}</p>
         <div className="score-confirmation">
-          <div><button className="command-button" disabled={busy} onClick={confirmPendingAction} type="button">확인</button><button className="secondary-button" disabled={busy} onClick={() => setPendingAction(null)} type="button">취소</button></div>
+          <div><button className="command-button" disabled={busy} onClick={confirmPendingAction} type="button">{t('common:confirm')}</button><button className="secondary-button" disabled={busy} onClick={() => setPendingAction(null)} type="button">{t('common:cancel')}</button></div>
         </div>
       </section>
     </div>}
@@ -274,6 +277,7 @@ export function RingManagerAssignedPage({ session, onLogout, tournamentId }) {
 }
 
 export function AssignedRingManagerRoute({ tournamentId }) {
+  useTranslation();
   const [session, setSession] = useState(readSession);
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
@@ -288,7 +292,7 @@ export function AssignedRingManagerRoute({ tournamentId }) {
       window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
       setSession(next);
     } catch (requestError) {
-      setError(requestError.message === 'RING_MANAGER_ONLY' ? '링 매니저 권한이 필요합니다.' : '로그인에 실패했습니다.');
+      setError(requestError.message === 'RING_MANAGER_ONLY' ? localizedMessage('errors:role.ringManager') : localizedMessage('errors:auth.login'));
     }
   }
 
@@ -298,6 +302,6 @@ export function AssignedRingManagerRoute({ tournamentId }) {
     setSession(null);
   }
 
-  if (!session) return <main className="page-shell auth-shell"><section className="auth-panel"><h2>링 운영</h2><form onSubmit={signIn}><label>로그인 ID<input required value={loginId} onChange={(event) => setLoginId(event.target.value)} /></label><label>비밀번호<input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>{error && <p className="form-error" role="alert">{error}</p>}<button className="command-button" type="submit">로그인</button></form></section></main>;
+  if (!session) return <main className="page-shell auth-shell"><section className="auth-panel"><h2>{t('operations:ring.title')}</h2><form onSubmit={signIn}><label>{t('common:loginId')}<input required value={loginId} onChange={(event) => setLoginId(event.target.value)} /></label><label>{t('common:password')}<input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>{error && <p className="form-error" role="alert">{resolveMessage(error)}</p>}<button className="command-button" type="submit">{t('common:signIn')}</button></form></section></main>;
   return <RingManagerAssignedPage onLogout={signOut} session={session} tournamentId={tournamentId} />;
 }

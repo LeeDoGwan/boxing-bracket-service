@@ -1,6 +1,9 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t } from './i18n';
 import { lazy, Suspense, useMemo } from 'react';
 import { Route, Routes, useSearchParams } from 'react-router-dom';
 import { StaffAuthProvider } from './auth/StaffAuthContext';
+import { LanguageProvider } from './i18n/LanguageProvider';
 import { AppFooter } from './components/AppFooter';
 import { AppHeader } from './components/AppHeader';
 import { StaffRoute } from './components/StaffRoute';
@@ -33,13 +36,14 @@ function readTournamentId(searchParams) {
 }
 
 function AppRoutes() {
+  useTranslation();
   const [searchParams] = useSearchParams();
   const tournamentId = useMemo(() => readTournamentId(searchParams), [searchParams]);
 
   return (
     <div className="app-shell">
       <AppHeader tournamentId={tournamentId} />
-      <Suspense fallback={<main className="page-shell"><p className="dialog-state">화면을 불러오는 중입니다.</p></main>}>
+      <Suspense fallback={<main className="page-shell"><p className="dialog-state">{t('common:loadingScreen')}</p></main>}>
         <Routes>
         <Route element={<AudienceHome tournamentId={tournamentId} />} path="/" />
         <Route element={<BracketPage tournamentId={tournamentId} />} path="/bracket" />
@@ -65,5 +69,5 @@ function AppRoutes() {
 }
 
 export default function App() {
-  return <StaffAuthProvider><AppRoutes /></StaffAuthProvider>;
+  return <LanguageProvider><StaffAuthProvider><AppRoutes /></StaffAuthProvider></LanguageProvider>;
 }

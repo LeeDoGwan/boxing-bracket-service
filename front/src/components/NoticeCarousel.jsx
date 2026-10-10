@@ -1,6 +1,9 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t } from '../i18n';
 import { useEffect, useState } from 'react';
 
 export function NoticeCarousel({ notices }) {
+  useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -26,7 +29,7 @@ export function NoticeCarousel({ notices }) {
   const notice = notices[safeActiveIndex];
   return (
     <section
-      aria-label="대회 공지"
+      aria-label={t('audience:notice.title')}
       className="notice-banner"
       onFocus={() => setIsPaused(true)}
       onMouseEnter={() => setIsPaused(true)}
@@ -36,15 +39,15 @@ export function NoticeCarousel({ notices }) {
       }}
     >
       <div aria-live="polite">
-        <p className="eyebrow">공지</p>
+        <p className="eyebrow">{t('common:notice')}</p>
         <h2>{notice.title}</h2>
         <p>{notice.content}</p>
       </div>
       {notices.length > 1 && (
-        <div aria-label="공지 선택" className="notice-dots">
+        <div aria-label={t('audience:notice.select')} className="notice-dots">
           {notices.map((item, index) => (
             <button
-              aria-label={`${index + 1}번째 공지 보기`}
+              aria-label={t('audience:notice.show', { value1: index + 1 })}
               aria-pressed={index === safeActiveIndex}
               className={index === safeActiveIndex ? 'active' : ''}
               key={item.noticeId}

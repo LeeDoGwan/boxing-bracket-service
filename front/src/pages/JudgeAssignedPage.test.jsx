@@ -4,6 +4,7 @@ import { getJudgeScores, submitRoundScore } from '../api/judge';
 import { getAssignedBouts, getAssignedRings } from '../api/staffAssignments';
 import { useBoutEventStream } from '../hooks/useBoutEventStream';
 import { JudgeAssignedPage } from './JudgeAssignedPage';
+import { setLanguagePreference, translate as t } from '../i18n';
 
 vi.mock('../api/audience', () => ({ getBoutDetail: vi.fn() }));
 vi.mock('../api/judge', () => ({ getJudgeScores: vi.fn(), submitRoundScore: vi.fn() }));
@@ -25,6 +26,36 @@ beforeEach(() => {
 });
 
 describe('JudgeAssignedPage', () => {
+  it('preserves scores and the pending confirmation while switching between all languages', async () => {
+    render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    await screen.findByText('Red vs Blue');
+    fireEvent.change(screen.getByLabelText('빨강 점수'), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText('파랑 점수'), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: '라운드 제출' }));
+    for (const language of ['en', 'ja', 'ko']) {
+      await act(() => setLanguagePreference(language, { persist: false }));
+      expect(screen.getByLabelText(t('operations:score.red'))).toHaveValue(10);
+      expect(screen.getByLabelText(t('operations:score.blue'))).toHaveValue(9);
+      expect(screen.getByRole('dialog', { name: t('operations:score.confirmRound', { value1: 1 }) })).toBeInTheDocument();
+      expect(submitRoundScore).not.toHaveBeenCalled();
+    }
+    expect(getAssignedRings).toHaveBeenCalledTimes(1);
+    expect(getJudgeScores).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: '점수 제출 확정' }));
+    await waitFor(() => expect(submitRoundScore).toHaveBeenCalledWith(12, 1, { blueScore: 9, redScore: 10 }, 'judge-token'));
+  });
+
+  it('retranslates an already displayed validation error', async () => {
+    render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    await screen.findByText('Red vs Blue');
+    fireEvent.change(screen.getByLabelText('빨강 점수'), { target: { value: '11' } });
+    fireEvent.change(screen.getByLabelText('파랑 점수'), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: '라운드 제출' }));
+    await act(() => setLanguagePreference('en', { persist: false }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter whole-number scores from 0 to 10.');
+    expect(screen.getByLabelText('Red score')).toHaveValue(11);
+  });
+
   it('shows an explicit empty state when no ring is assigned', async () => {
     getAssignedRings.mockResolvedValue([]);
     render(<JudgeAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);

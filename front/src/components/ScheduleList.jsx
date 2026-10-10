@@ -1,34 +1,37 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage, formatVenueDateTime } from '../i18n';
 const TYPE_LABELS = {
-  BOUT: '경기',
-  BREAK: '휴식',
-  LUNCH: '점심',
-  PERFORMANCE: '공연',
-  EVENT: '행사',
+  BOUT: localizedMessage('common:bout'),
+  BREAK: localizedMessage('common:break'),
+  LUNCH: localizedMessage('common:lunch'),
+  PERFORMANCE: localizedMessage('common:performance'),
+  EVENT: localizedMessage('common:event'),
 };
 
 const STATUS_LABELS = {
-  SCHEDULED: '예정',
-  IN_PROGRESS: '진행 중',
-  COMPLETED: '종료',
+  SCHEDULED: localizedMessage('common:scheduled'),
+  IN_PROGRESS: localizedMessage('common:inProgress'),
+  COMPLETED: localizedMessage('common:finished'),
 };
 
 function formatScheduleTime(value) {
-  return value ? value.replace('T', ' ').slice(0, 16) : '-';
+  return formatVenueDateTime(value, { second: undefined });
 }
 
 export function ScheduleList({ schedules }) {
+  useTranslation();
   if (!schedules.length) {
-    return <p className="empty-copy">등록된 일정 정보가 없습니다.</p>;
+    return <p className="empty-copy">{t('audience:schedule.empty')}</p>;
   }
 
   return (
-    <ol aria-label="대회 일정" className="schedule-list">
+    <ol aria-label={t('admin:schedule.desk')} className="schedule-list">
       {schedules.map((schedule) => (
         <li className={`schedule-item schedule-${schedule.status?.toLowerCase() || 'scheduled'}`} key={schedule.scheduleId}>
-          <time dateTime={schedule.startTime}>{formatScheduleTime(schedule.startTime)}</time>
-          <span className="schedule-type">{TYPE_LABELS[schedule.type] || schedule.type}</span>
+          <time dateTime={schedule.startTime}>{resolveMessage(formatScheduleTime(schedule.startTime))}</time>
+          <span className="schedule-type">{resolveMessage(TYPE_LABELS[schedule.type] || schedule.type)}</span>
           <strong>{schedule.title}</strong>
-          <span className="schedule-status">{STATUS_LABELS[schedule.status] || schedule.status}</span>
+          <span className="schedule-status">{resolveMessage(STATUS_LABELS[schedule.status] || schedule.status)}</span>
         </li>
       ))}
     </ol>

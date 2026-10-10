@@ -15,6 +15,7 @@ src/
   api/         API modules and shared request client
   components/  Shared audience and state UI
   hooks/       Audience/staff data, SSE lifecycle, and refresh-coalescing hooks
+  i18n/        Language preferences, error mapping, and ko/en/ja translation files
   pages/       Audience, role, operations, and admin screens
   test/        Vitest and Testing Library setup
 ~~~
@@ -95,6 +96,8 @@ The UI handles initial loading, API failure, empty data, dialog loading, audienc
 
 The test profile does not seed accounts or tournament data. Use active `JUDGE`, `SUPERVISOR`, `RING_MANAGER`, `GAME_MANAGER`, and `SERVICE_MANAGER` accounts with registered bouts to exercise authenticated desks end to end. Supervisor penalty history is loaded from the API when a bout is selected.
 
-## Korean UI And Guides
+## Multilingual UI And Guides
 
-The current screens use Korean operational labels, including scoring, result review, ring commands, assignments, account filters, and public score details. API enums remain unchanged; `RSC` is displayed as `TKO`. Procedures and known limitations are recorded in the [role-specific Korean guides](../docs/user-guide.md). Public footer login may return to the original public route; use the role-aware operations menu after signing in.
+Screens support Korean, English, and Japanese. The default follows the browser's preferred languages; the header selector overrides this per browser, and Auto removes the override. Unsupported languages fall back to Korean. User-entered content remains unchanged. API enums remain unchanged; `RSC` is displayed as `TKO`. Procedures and known limitations are recorded in the [role-specific Korean guides](../docs/user-guide.md). Public footer login may return to the original public route; use the role-aware operations menu after signing in.
+
+See [multilingual design](../docs/i18n-design.md) for semantic translation keys, state preservation, error mapping, and date/time assumptions. `npm run check:i18n` checks translation completeness; these checks also run in `npm test`. Verified on 2026-10-10: 123 tests across 28 files, lint and production build passed. Real account/database browser workflows still require an integration rehearsal.

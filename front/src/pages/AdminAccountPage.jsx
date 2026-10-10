@@ -1,11 +1,14 @@
+import { apiErrorMessage } from '../i18n/errors';
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { createAccount, deleteAccount, getAccounts, updateAccount } from '../api/adminAccounts';
 import { useStaffAuth } from '../auth/StaffAuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
-const ROLE_LABELS = { GAME_MANAGER: '게임 매니저', JUDGE: '심판', RING_MANAGER: '링 매니저', SERVICE_MANAGER: '서비스 매니저', SUPERVISOR: '감독관' };
-const STATUS_LABELS = { ACTIVE: '활성', INACTIVE: '비활성' };
+const ROLE_LABELS = { GAME_MANAGER: localizedMessage('common:role.gameManager'), JUDGE: localizedMessage('common:role.judge'), RING_MANAGER: localizedMessage('common:role.ringManager'), SERVICE_MANAGER: localizedMessage('common:role.serviceManager'), SUPERVISOR: localizedMessage('common:role.supervisor') };
+const STATUS_LABELS = { ACTIVE: localizedMessage('common:active'), INACTIVE: localizedMessage('common:inactive') };
 
 function blankForm() {
   return { loginId: '', name: '', passwordHash: '', role: 'JUDGE', status: 'ACTIVE' };
@@ -20,6 +23,7 @@ function formFromAccount(account) {
 }
 
 function AccountWorkspace({ onLogout, session }) {
+  useTranslation();
   const [accounts, setAccounts] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(blankForm);
@@ -43,7 +47,7 @@ function AccountWorkspace({ onLogout, session }) {
         ? current
         : nextAccounts[0]?.accountId || null);
     } catch {
-      setListError('계정 목록을 불러오지 못했습니다. 서비스 매니저 권한을 확인해 주세요.');
+      setListError(localizedMessage('errors:account.listPermission'));
     } finally {
       setLoading(false);
     }
@@ -83,15 +87,15 @@ function AccountWorkspace({ onLogout, session }) {
       if (selectedId) {
         const updated = await updateAccount(selectedId, form, session.accessToken);
         setAccounts((current) => current.map((account) => account.accountId === selectedId ? updated : account));
-        setMessage('계정 정보를 수정했습니다.');
+        setMessage(localizedMessage('admin:account.updated'));
       } else {
         const created = await createAccount(form, session.accessToken);
         setAccounts((current) => [...current, created]);
         setSelectedId(created.accountId);
-        setMessage('계정을 생성했습니다.');
+        setMessage(localizedMessage('admin:account.created'));
       }
     } catch (requestError) {
-      setActionError(requestError.message || '계정 저장에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:account.save')));
     } finally {
       setSaving(false);
     }
@@ -109,10 +113,10 @@ function AccountWorkspace({ onLogout, session }) {
       const remaining = accounts.filter((account) => account.accountId !== selectedId);
       setAccounts(remaining);
       setSelectedId(remaining[0]?.accountId || null);
-      setMessage('계정을 삭제했습니다.');
+      setMessage(localizedMessage('admin:account.deleted'));
       setConfirmingDelete(false);
     } catch (requestError) {
-      setActionError(requestError.message || '계정 삭제에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:account.delete')));
     } finally {
       setSaving(false);
     }
@@ -121,39 +125,40 @@ function AccountWorkspace({ onLogout, session }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">계정 운영</p><h2>계정 관리</h2><p>서비스 매니저: {session.account.name}</p></div>
-        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadAccounts} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
+        <div><p className="eyebrow">{t('admin:account.desk')}</p><h2>{t('admin:account.title')}</h2><p>{t('admin:account.operator', { value1: session.account.name })}</p></div>
+        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadAccounts} type="button">{t('common:refresh')}</button><button className="secondary-button" onClick={onLogout} type="button">{t('common:signOut')}</button></div>
       </div>
-      {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
-      {message && <p aria-live="polite" className="admin-success-message">{message}</p>}
-      {loading ? <StatePanel title="계정 목록을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
-      {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadAccounts} type="button">다시 시도</button>} title="계정 목록을 불러오지 못했습니다." tone="error">서비스 매니저 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
+      {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{resolveMessage(actionError)}</p>}
+      {message && <p aria-live="polite" className="admin-success-message">{resolveMessage(message)}</p>}
+      {loading ? <StatePanel title={t('admin:account.loading')}>{t('common:wait')}</StatePanel> : null}
+      {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadAccounts} type="button">{t('common:retry')}</button>} title={t('errors:account.list')} tone="error">{t('errors:servicePermissionRetry')}</StatePanel> : null}
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
             <form className="account-search" onSubmit={handleFilterSubmit}>
-              <label>검색<input aria-label="계정 검색" onChange={(event) => setFilterForm((current) => ({ ...current, keyword: event.target.value }))} placeholder="로그인 ID 또는 이름" value={filterForm.keyword} /></label>
-              <label>역할 필터<select aria-label="역할 필터" onChange={(event) => setFilterForm((current) => ({ ...current, role: event.target.value }))} value={filterForm.role}><option value="">전체 역할</option>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-              <label>상태 필터<select aria-label="상태 필터" onChange={(event) => setFilterForm((current) => ({ ...current, status: event.target.value }))} value={filterForm.status}><option value="">전체 상태</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-              <div className="account-search-actions"><button className="command-button" type="submit">필터 적용</button><button className="secondary-button" onClick={handleFilterReset} type="button">초기화</button></div>
+              <label>{t('common:search')}<input aria-label={t('admin:account.search')} onChange={(event) => setFilterForm((current) => ({ ...current, keyword: event.target.value }))} placeholder={t('admin:account.searchPlaceholder')} value={filterForm.keyword} /></label>
+              <label>{t('common:roleFilter')}<select aria-label={t('common:roleFilter')} onChange={(event) => setFilterForm((current) => ({ ...current, role: event.target.value }))} value={filterForm.role}><option value="">{t('common:allRoles')}</option>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{resolveMessage(label)}</option>)}</select></label>
+              <label>{t('common:statusFilter')}<select aria-label={t('common:statusFilter')} onChange={(event) => setFilterForm((current) => ({ ...current, status: event.target.value }))} value={filterForm.status}><option value="">{t('common:allStatuses')}</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{resolveMessage(label)}</option>)}</select></label>
+              <div className="account-search-actions"><button className="command-button" type="submit">{t('common:applyFilters')}</button><button className="secondary-button" onClick={handleFilterReset} type="button">{t('common:reset')}</button></div>
             </form>
-            <div className="operation-panel-heading"><div><p className="eyebrow">관계자 계정</p><h3>계정 목록</h3></div><span>{accounts.length}건</span></div>
-            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 계정</button>
-            <div className="admin-entity-list">{accounts.map((account) => <button className={`admin-entity-option${selectedId === account.accountId ? ' selected' : ''}`} key={account.accountId} onClick={() => setSelectedId(account.accountId)} type="button"><strong>{account.loginId}</strong><span>{account.name} · {ROLE_LABELS[account.role] || account.role} · {STATUS_LABELS[account.status] || account.status}</span></button>)}</div>
-            {!accounts.length ? <p className="operation-empty">등록된 계정이 없습니다.</p> : null}
+            <div className="operation-panel-heading"><div><p className="eyebrow">{t('admin:account.staff')}</p><h3>{t('admin:account.list')}</h3></div><span>{t('common:recordCount', { value1: accounts.length })}</span></div>
+            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">{t('admin:account.add')}</button>
+            <div className="admin-entity-list">{accounts.map((account) => <button className={`admin-entity-option${selectedId === account.accountId ? ' selected' : ''}`} key={account.accountId} onClick={() => setSelectedId(account.accountId)} type="button"><strong>{account.loginId}</strong><span>{account.name} · {resolveMessage(ROLE_LABELS[account.role] || account.role)} · {resolveMessage(STATUS_LABELS[account.status] || account.status)}</span></button>)}</div>
+            {!accounts.length ? <p className="operation-empty">{t('admin:account.empty')}</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `계정 ${selectedId}` : '새 계정'}</p><h3>{selectedId ? '계정 정보 수정' : '계정 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
-            <form onSubmit={handleSubmit}><div className="admin-form-grid"><label>로그인 ID<input autoComplete="username" onChange={(event) => updateField('loginId', event.target.value)} required value={form.loginId} /></label><label>이름<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>비밀번호<input autoComplete="new-password" onChange={(event) => updateField('passwordHash', event.target.value)} required type="password" value={form.passwordHash} /></label><label>역할<select onChange={(event) => updateField('role', event.target.value)} value={form.role}>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div><div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '계정 저장' : '계정 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">계정 삭제</button> : null}</div></form>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? t('admin:account.identifier', { value1: selectedId }) : t('admin:account.new')}</p><h3>{selectedId ? t('admin:account.edit') : t('admin:account.create')}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <form onSubmit={handleSubmit}><div className="admin-form-grid"><label>{t('common:loginId')}<input autoComplete="username" onChange={(event) => updateField('loginId', event.target.value)} required value={form.loginId} /></label><label>{t('common:name')}<input onChange={(event) => updateField('name', event.target.value)} required value={form.name} /></label><label>{t('common:password')}<input autoComplete="new-password" onChange={(event) => updateField('passwordHash', event.target.value)} required type="password" value={form.passwordHash} /></label><label>{t('common:role')}<select onChange={(event) => updateField('role', event.target.value)} value={form.role}>{Object.entries(ROLE_LABELS).map(([value, label]) => <option key={value} value={value}>{resolveMessage(label)}</option>)}</select></label><label>{t('common:status')}<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{resolveMessage(label)}</option>)}</select></label></div><div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? t('admin:account.save') : t('admin:account.create')}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">{t('admin:account.delete')}</button> : null}</div></form>
           </section>
         </div>
       ) : null}
-      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 계정을 삭제합니다. 이 작업은 되돌릴 수 없습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="계정 삭제 확인" /> : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description={t('admin:account.deleteWarning')} onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title={t('admin:account.deleteConfirm')} /> : null}
     </main>
   );
 }
 
 export function AdminAccountPage() {
+  useTranslation();
   const { session, signOut } = useStaffAuth();
   if (!session || session.account.role !== 'SERVICE_MANAGER') return null;
   return <AccountWorkspace onLogout={signOut} session={session} />;

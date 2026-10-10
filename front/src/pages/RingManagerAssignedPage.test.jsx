@@ -3,6 +3,7 @@ import { moveToNextBout, startBout, startRound, updateBoutStatus } from '../api/
 import { getAssignedBouts, getAssignedRings } from '../api/staffAssignments';
 import { useBoutEventStream } from '../hooks/useBoutEventStream';
 import { RingManagerAssignedPage } from './RingManagerAssignedPage';
+import { setLanguagePreference, translate as t } from '../i18n';
 
 vi.mock('../api/auth', () => ({ login: vi.fn(), logout: vi.fn() }));
 vi.mock('../api/ringManager', () => ({ moveToNextBout: vi.fn(), startBout: vi.fn(), startRound: vi.fn(), updateBoutStatus: vi.fn() }));
@@ -26,6 +27,20 @@ beforeEach(() => {
 });
 
 describe('RingManagerAssignedPage', () => {
+  it('translates a stored pending action and success notice without repeating the action', async () => {
+    getAssignedBouts.mockResolvedValue([{ ...bout, currentRound: 0, status: 'READY' }]);
+    render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    fireEvent.click(await screen.findByRole('button', { name: '경기 시작' }));
+    await act(() => setLanguagePreference('en', { persist: false }));
+    expect(screen.getByRole('dialog', { name: 'Confirm ring operation' })).toHaveTextContent('Bout 12 · Ready → In progress');
+    expect(startBout).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(await screen.findByText('Bout started.')).toBeInTheDocument();
+    await act(() => setLanguagePreference('ja', { persist: false }));
+    expect(screen.getByText(t('operations:bout.started'))).toBeInTheDocument();
+    expect(startBout).toHaveBeenCalledTimes(1);
+  });
+
   it('loads assigned rings and does not expose arbitrary ring or status inputs', async () => {
     render(<RingManagerAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
 

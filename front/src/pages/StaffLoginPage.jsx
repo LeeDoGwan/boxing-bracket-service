@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage } from '../i18n';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login } from '../api/auth';
@@ -16,6 +18,7 @@ function safeReturnPath(value) {
 }
 
 export function StaffLoginPage() {
+  useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { session, signIn } = useStaffAuth();
@@ -42,8 +45,8 @@ export function StaffLoginPage() {
       navigate(safeReturnPath(searchParams.get('returnTo')) || DEFAULT_ROUTES[nextSession.account.role] || '/', { replace: true });
     } catch (requestError) {
       setError(requestError.message === 'STAFF_ROLE_REQUIRED'
-        ? '운영 권한이 있는 계정으로 로그인해 주세요.'
-        : '아이디 또는 비밀번호를 확인해 주세요.');
+        ? localizedMessage('errors:auth.staffRequired')
+        : localizedMessage('errors:auth.credentials'));
     } finally {
       setSubmitting(false);
     }
@@ -52,15 +55,15 @@ export function StaffLoginPage() {
   return (
     <main className="page-shell auth-shell staff-login-shell">
       <section className="auth-panel staff-login-panel">
-        <p className="eyebrow">관계자 전용</p>
-        <h2>스태프 로그인</h2>
+        <p className="eyebrow">{t('common:staffOnly')}</p>
+        <h2>{t('common:staffLogin')}</h2>
         <form onSubmit={handleSubmit}>
-          <label htmlFor="staff-login-id">아이디<input autoComplete="username" id="staff-login-id" onChange={(event) => setLoginId(event.target.value)} required value={loginId} /></label>
-          <label htmlFor="staff-login-password">비밀번호<input autoComplete="current-password" id="staff-login-password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
-          {error && <p aria-live="polite" className="form-error" role="alert">{error}</p>}
-          <button className="command-button" disabled={submitting} type="submit">{submitting ? '로그인 중...' : '로그인'}</button>
+          <label htmlFor="staff-login-id">{t('common:userId')}<input autoComplete="username" id="staff-login-id" onChange={(event) => setLoginId(event.target.value)} required value={loginId} /></label>
+          <label htmlFor="staff-login-password">{t('common:password')}<input autoComplete="current-password" id="staff-login-password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
+          {error && <p aria-live="polite" className="form-error" role="alert">{resolveMessage(error)}</p>}
+          <button className="command-button" disabled={submitting} type="submit">{submitting ? t('common:signingIn') : t('common:signIn')}</button>
         </form>
-        <p className="staff-login-note">지원 역할: {Object.values(STAFF_ROLE_LABELS).join(' · ')}</p>
+        <p className="staff-login-note">{t('common:supportedRoles', { value1: Object.values(STAFF_ROLE_LABELS).map(resolveMessage).join(' · ') })}</p>
       </section>
     </main>
   );

@@ -1,29 +1,33 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t, resolveMessage } from '../i18n';
 import { NavLink } from 'react-router-dom';
+import { LanguageSelector } from './LanguageSelector';
 import { STAFF_ROLE_LABELS, useStaffAuth } from '../auth/StaffAuthContext';
 
 export function AppHeader({ tournamentId }) {
+  useTranslation();
   const { session, signOut } = useStaffAuth();
   const publicLinks = [
-    ['/', '현황'],
-    ['/bracket', '대진표'],
+    ['/', t('common:nav.home')],
+    ['/bracket', t('common:nav.bracket')],
   ];
   const staffLinks = {
-    JUDGE: [['/judge', '심판 작업실']],
-    SUPERVISOR: [['/supervisor', '감독관 작업실']],
-    RING_MANAGER: [['/ring-manager', '링 운영']],
+    JUDGE: [['/judge', t('operations:judge.title')]],
+    SUPERVISOR: [['/supervisor', t('operations:supervisor.title')]],
+    RING_MANAGER: [['/ring-manager', t('operations:ring.title')]],
     GAME_MANAGER: [
-      ['/operations', '운영 현황'], ['/audit-logs', '감사 로그'],
-      ['/admin/tournaments', '대회 관리'], ['/admin/rings', '링 관리'],
-      ['/admin/athletes', '선수 관리'], ['/admin/notices', '공지 관리'],
-      ['/admin/schedules', '일정 관리'], ['/admin/bouts', '대진 관리'],
-      ['/admin/assignments', '배정 관리'],
+      ['/operations', t('common:nav.operations')], ['/audit-logs', t('common:nav.audit')],
+      ['/admin/tournaments', t('admin:tournament.title')], ['/admin/rings', t('admin:ring.title')],
+      ['/admin/athletes', t('admin:athlete.title')], ['/admin/notices', t('admin:notice.title')],
+      ['/admin/schedules', t('admin:schedule.title')], ['/admin/bouts', t('admin:bout.title')],
+      ['/admin/assignments', t('admin:assignment.title')],
     ],
     SERVICE_MANAGER: [
-      ['/operations', '운영 현황'], ['/audit-logs', '감사 로그'],
-      ['/admin/tournaments', '대회 관리'], ['/admin/rings', '링 관리'],
-      ['/admin/athletes', '선수 관리'], ['/admin/notices', '공지 관리'],
-      ['/admin/schedules', '일정 관리'], ['/admin/bouts', '대진 관리'],
-      ['/admin/accounts', '계정 관리'], ['/admin/assignments', '배정 관리'],
+      ['/operations', t('common:nav.operations')], ['/audit-logs', t('common:nav.audit')],
+      ['/admin/tournaments', t('admin:tournament.title')], ['/admin/rings', t('admin:ring.title')],
+      ['/admin/athletes', t('admin:athlete.title')], ['/admin/notices', t('admin:notice.title')],
+      ['/admin/schedules', t('admin:schedule.title')], ['/admin/bouts', t('admin:bout.title')],
+      ['/admin/accounts', t('admin:account.title')], ['/admin/assignments', t('admin:assignment.title')],
     ],
   };
   const operationLinks = session ? staffLinks[session.account.role] || [] : [];
@@ -33,26 +37,27 @@ export function AppHeader({ tournamentId }) {
         <div className="brand-lockup">
           <span aria-hidden="true" className="brand-mark">BX</span>
           <div>
-            <p className="eyebrow">실시간 대회 현황</p>
-            <h1>복싱 대회 현황</h1>
-            <p className="brand-context">대회 {tournamentId}</p>
+            <p className="eyebrow">{t('common:brand.live')}</p>
+            <h1>{t('common:brand.title')}</h1>
+            <p className="brand-context">{t('common:tournamentNumber', { value1: tournamentId })}</p>
           </div>
         </div>
       </div>
-      <nav aria-label="공개 메뉴" className="main-nav">
+      <nav aria-label={t('common:nav.public')} className="main-nav">
         {publicLinks.map(([path, label]) => (
-          <NavLink end={path === '/'} key={path} to={`${path}?tournamentId=${tournamentId}`}>{label}</NavLink>
+          <NavLink end={path === '/'} key={path} to={`${path}?tournamentId=${tournamentId}`}>{resolveMessage(label)}</NavLink>
         ))}
       </nav>
+      <LanguageSelector />
       {session && <details className="operations-menu">
-        <summary>운영 메뉴</summary>
-        <nav aria-label="운영 메뉴" className="operations-menu-panel">
-          {operationLinks.map(([path, label]) => <NavLink key={path} to={`${path}?tournamentId=${tournamentId}`}>{label}</NavLink>)}
+        <summary>{t('common:nav.staff')}</summary>
+        <nav aria-label={t('common:nav.staff')} className="operations-menu-panel">
+          {operationLinks.map(([path, label]) => <NavLink key={path} to={`${path}?tournamentId=${tournamentId}`}>{resolveMessage(label)}</NavLink>)}
         </nav>
       </details>}
       {session && <div className="staff-session">
-        <span><b>{session.account.name}</b><small>{STAFF_ROLE_LABELS[session.account.role]} · 대회 {tournamentId}</small></span>
-        <button aria-label="로그아웃" className="header-logout" onClick={signOut} type="button">로그아웃</button>
+        <span><b>{session.account.name}</b><small>{t('common:roleTournament', { value1: STAFF_ROLE_LABELS[session.account.role], value2: tournamentId })}</small></span>
+        <button aria-label={t('common:signOut')} className="header-logout" onClick={signOut} type="button">{t('common:signOut')}</button>
       </div>}
     </header>
   );

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t, resolveMessage } from '../i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getBouts, searchBouts } from '../api/audience';
 import { StatePanel } from '../components/StatePanel';
@@ -6,6 +8,7 @@ import { useEventRefresh } from '../hooks/useEventRefresh';
 import { athleteLabel, statusLabel, winnerText } from '../utils';
 
 export function BracketPage({ tournamentId }) {
+  useTranslation();
   const [bouts, setBouts] = useState([]);
   const [keyword, setKeyword] = useState('');
   const [state, setState] = useState({ dataTournamentId: null, loading: true, error: null });
@@ -66,54 +69,52 @@ export function BracketPage({ tournamentId }) {
     <main className="page-shell bracket-page">
       <section className="page-heading bracket-heading">
         <div>
-          <p className="eyebrow">공식 대진</p>
-          <h2>전체 대진표</h2>
+          <p className="eyebrow">{t('audience:bracket.official')}</p>
+          <h2>{t('audience:bracket.title')}</h2>
         </div>
         <form className="bracket-search" onSubmit={handleSearch}>
-          <label htmlFor="bout-keyword">선수, 소속, 경기 타입 또는 경기번호</label>
+          <label htmlFor="bout-keyword">{t('audience:bracket.searchLabel')}</label>
           <div>
             <input
               id="bout-keyword"
               onChange={(event) => setKeyword(event.target.value)}
-              placeholder="대진표 검색"
+              placeholder={t('audience:bracket.search')}
               value={keyword}
             />
-            <button type="submit">검색</button>
+            <button type="submit">{t('common:search')}</button>
           </div>
         </form>
         <div className="bracket-heading-actions">
           <p aria-live="polite" className={`stream-state stream-${streamState}`}>
-            {streamState === 'connected' ? '실시간 반영 중' : streamState === 'reconnecting' ? '연결 재시도 중' : '현황 조회 모드'}
+            {streamState === 'connected' ? t('common:liveUpdates') : streamState === 'reconnecting' ? t('common:retryingConnection') : t('common:snapshotMode')}
           </p>
-          <button className="secondary-button" onClick={() => loadBouts(appliedKeywordRef.current)} type="button">새로고침</button>
+          <button className="secondary-button" onClick={() => loadBouts(appliedKeywordRef.current)} type="button">{t('common:refresh')}</button>
         </div>
       </section>
 
-      {state.loading && !hasCurrentData && <StatePanel title="대진표를 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel>}
+      {state.loading && !hasCurrentData && <StatePanel title={t('audience:bracket.loading')}>{t('common:wait')}</StatePanel>}
       {state.error && !hasCurrentData && (
         <StatePanel
-          action={<button className="command-button" onClick={() => loadBouts(keyword)} type="button">다시 시도</button>}
-          title="대진표를 불러오지 못했습니다."
+          action={<button className="command-button" onClick={() => loadBouts(keyword)} type="button">{t('common:retry')}</button>}
+          title={t('errors:bracket.load')}
           tone="error"
-        >
-          잠시 후 다시 시도해 주세요.
-        </StatePanel>
+        >{t('common:tryAgainLater')}</StatePanel>
       )}
       {state.error && hasCurrentData && (
         <div className="stale-banner" role="alert">
-          <span>최신 대진표를 갱신하지 못했습니다. 마지막으로 불러온 목록을 표시하고 있습니다.</span>
-          <button className="secondary-button" onClick={() => loadBouts(appliedKeywordRef.current)} type="button">다시 시도</button>
+          <span>{t('errors:bracket.stale')}</span>
+          <button className="secondary-button" onClick={() => loadBouts(appliedKeywordRef.current)} type="button">{t('common:retry')}</button>
         </div>
       )}
       {hasCurrentData && !bouts.length && (
-        <StatePanel title="검색 결과가 없습니다.">다른 검색어를 입력하거나 대회 ID를 확인해 주세요.</StatePanel>
+        <StatePanel title={t('common:noSearchResults')}>{t('audience:bracket.emptyHint')}</StatePanel>
       )}
       {hasCurrentData && bouts.length > 0 && (
-        <section aria-label="공식 경기 목록" className="bracket-table-wrap">
-          <p className="result-count">{bouts.length}개 경기</p>
+        <section aria-label={t('audience:bracket.officialBouts')} className="bracket-table-wrap">
+          <p className="result-count">{t('common:boutCount', { value1: bouts.length })}</p>
           <div className="bracket-table">
             <div className="bracket-row bracket-row-header" role="row">
-              <span>경기</span><span>홍 선수</span><span>청 선수</span><span>상태</span><span>결과</span>
+              <span>{t('common:bout')}</span><span>{t('audience:redAthlete')}</span><span>{t('audience:blueAthlete')}</span><span>{t('common:status')}</span><span>{t('common:result')}</span>
             </div>
             {bouts.map((bout) => (
               <button
@@ -124,11 +125,11 @@ export function BracketPage({ tournamentId }) {
                 onClick={() => focusBout(bout.boutId)}
                 type="button"
               >
-                <span><strong>{bout.boutNumber}</strong><small>{bout.matchType || '일반 경기'}</small></span>
-                <span><b className="red-label">홍</b>{athleteLabel(bout.redAthlete)}</span>
-                <span><b className="blue-label">청</b>{athleteLabel(bout.blueAthlete)}</span>
-                <span><em className={`status-pill status-${bout.status?.toLowerCase()}`}>{statusLabel(bout.status)}</em></span>
-                <span>{winnerText(bout)}</span>
+                <span><strong>{bout.boutNumber}</strong><small>{bout.matchType || t('common:standardBout')}</small></span>
+                <span><b className="red-label">{t('common:redCorner')}</b>{resolveMessage(athleteLabel(bout.redAthlete))}</span>
+                <span><b className="blue-label">{t('common:blueCorner')}</b>{resolveMessage(athleteLabel(bout.blueAthlete))}</span>
+                <span><em className={`status-pill status-${bout.status?.toLowerCase()}`}>{resolveMessage(statusLabel(bout.status))}</em></span>
+                <span>{resolveMessage(winnerText(bout))}</span>
               </button>
             ))}
           </div>

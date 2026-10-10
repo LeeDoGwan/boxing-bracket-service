@@ -1,60 +1,64 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t, resolveMessage } from '../i18n';
 import { athleteLabel, statusLabel } from '../utils';
 
-function BoutSummary({ bout, sideLabel }) {
+function BoutSummary({ bout, sideLabel, emptyKey }) {
+  useTranslation();
   if (!bout) {
-    return <p className="empty-copy">{sideLabel} 경기가 없습니다.</p>;
+    return <p className="empty-copy">{t(emptyKey)}</p>;
   }
   return (
     <div className="bout-summary">
       <div className="bout-summary-heading">
         <p className="summary-label">{sideLabel}</p>
-        <p className="bout-number">경기 {bout.boutNumber}</p>
+        <p className="bout-number">{t('common:boutNumber', { value1: bout.boutNumber })}</p>
       </div>
-      <p className="match-type">{bout.matchType || '일반 경기'}</p>
+      <p className="match-type">{bout.matchType || t('common:standardBout')}</p>
       <div className="fighter-pair red-fighter">
-        <span className="red-label">홍</span>
+        <span className="red-label">{t('common:redCorner')}</span>
         <span><b>{bout.redAthleteName}</b><small>{bout.redAthleteAffiliation}</small></span>
       </div>
       <div className="fighter-pair blue-fighter">
-        <span className="blue-label">청</span>
+        <span className="blue-label">{t('common:blueCorner')}</span>
         <span><b>{bout.blueAthleteName}</b><small>{bout.blueAthleteAffiliation}</small></span>
       </div>
-      <p className="round-copy">{statusLabel(bout.boutStatus)} · {bout.currentRound ? `${bout.currentRound}라운드` : '라운드 대기'}</p>
+      <p className="round-copy">{resolveMessage(statusLabel(bout.boutStatus))} · {bout.currentRound ? t('common:roundOrdinal', { value1: bout.currentRound }) : t('audience:ring.awaitingRound')}</p>
     </div>
   );
 }
 
 export function RingCard({ laterBouts = [], ring, onSelectBout }) {
+  useTranslation();
   return (
     <article className={`ring-card ring-card-${ring.ringStatus?.toLowerCase() || 'unknown'}`}>
       <div className="ring-card-header">
         <div>
-          <p className="eyebrow">링</p>
+          <p className="eyebrow">{t('common:ring')}</p>
           <h3>{ring.ringName}</h3>
         </div>
         <span className={`ring-status status-pill status-${ring.ringStatus?.toLowerCase()}`}>
           <span aria-hidden="true" className="ring-status-dot" />
-          {statusLabel(ring.ringStatus)}
+          {resolveMessage(statusLabel(ring.ringStatus))}
         </span>
       </div>
       <button
-        aria-label={ring.currentBout ? `경기 ${ring.currentBout.boutNumber} 상세 보기` : '현재 경기가 없습니다'}
+        aria-label={ring.currentBout ? t('audience:bout.showDetail', { value1: ring.currentBout.boutNumber }) : t('audience:ring.noCurrent')}
         className="current-bout-button"
         disabled={!ring.currentBout}
         onClick={() => onSelectBout(ring.currentBout?.boutId)}
         type="button"
       >
-        <BoutSummary bout={ring.currentBout} sideLabel="현재 경기" />
+        <BoutSummary bout={ring.currentBout} sideLabel={t('common:currentBout')} emptyKey="audience:ring.noCurrent" />
       </button>
-      <BoutSummary bout={ring.nextBout} sideLabel="다음 경기" />
+      <BoutSummary bout={ring.nextBout} sideLabel={t('common:nextBout')} emptyKey="audience:ring.noNext" />
       {laterBouts.length > 0 && (
         <div className="later-bouts">
-          <p className="summary-label">이후 경기</p>
+          <p className="summary-label">{t('audience:ring.later')}</p>
           {laterBouts.map((bout) => (
             <button className="later-bout-button" key={bout.boutId} onClick={() => onSelectBout(bout.boutId)} type="button">
-              <span>경기 {bout.boutNumber}</span>
-              <strong>{athleteLabel(bout.redAthlete)} vs {athleteLabel(bout.blueAthlete)}</strong>
-              <small>{statusLabel(bout.status)}</small>
+              <span>{t('common:boutNumber', { value1: bout.boutNumber })}</span>
+              <strong>{resolveMessage(athleteLabel(bout.redAthlete))} vs {resolveMessage(athleteLabel(bout.blueAthlete))}</strong>
+              <small>{resolveMessage(statusLabel(bout.status))}</small>
             </button>
           ))}
         </div>

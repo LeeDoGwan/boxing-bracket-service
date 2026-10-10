@@ -1,3 +1,6 @@
+import { apiErrorMessage } from '../i18n/errors';
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { createSchedule, deleteSchedule, getSchedules, updateSchedule } from '../api/adminSchedules';
 import { useStaffAuth } from '../auth/StaffAuthContext';
@@ -5,16 +8,16 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
 const TYPE_OPTIONS = [
-  ['BOUT', '경기'],
-  ['BREAK', '휴식'],
-  ['LUNCH', '점심'],
-  ['PERFORMANCE', '공연'],
-  ['EVENT', '행사'],
+  ['BOUT', localizedMessage('common:bout')],
+  ['BREAK', localizedMessage('common:break')],
+  ['LUNCH', localizedMessage('common:lunch')],
+  ['PERFORMANCE', localizedMessage('common:performance')],
+  ['EVENT', localizedMessage('common:event')],
 ];
 const STATUS_OPTIONS = [
-  ['SCHEDULED', '예정'],
-  ['IN_PROGRESS', '진행 중'],
-  ['COMPLETED', '종료'],
+  ['SCHEDULED', localizedMessage('common:scheduled')],
+  ['IN_PROGRESS', localizedMessage('common:inProgress')],
+  ['COMPLETED', localizedMessage('common:finished')],
 ];
 
 function blankForm() {
@@ -34,6 +37,7 @@ function formFromSchedule(schedule) {
 }
 
 function ScheduleWorkspace({ onLogout, session, tournamentId }) {
+  useTranslation();
   const [schedules, setSchedules] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(blankForm);
@@ -55,7 +59,7 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
         ? current
         : nextSchedules[0]?.scheduleId || null);
     } catch {
-      setListError('일정 목록을 불러오지 못했습니다. 대회 ID와 권한을 확인해 주세요.');
+      setListError(localizedMessage('errors:schedule.listPermission'));
     } finally {
       setLoading(false);
     }
@@ -99,15 +103,15 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
       if (selectedId) {
         const updated = await updateSchedule(selectedId, payload, session.accessToken);
         setSchedules((current) => current.map((schedule) => schedule.scheduleId === selectedId ? updated : schedule));
-        setMessage('일정을 수정했습니다.');
+        setMessage(localizedMessage('admin:schedule.updated'));
       } else {
         const created = await createSchedule(payload, session.accessToken);
         setSchedules((current) => [...current, created].sort((left, right) => left.startTime.localeCompare(right.startTime)));
         setSelectedId(created.scheduleId);
-        setMessage('일정을 생성했습니다.');
+        setMessage(localizedMessage('admin:schedule.created'));
       }
     } catch (requestError) {
-      setActionError(requestError.message || '일정 저장에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:schedule.save')));
     } finally {
       setSaving(false);
     }
@@ -125,10 +129,10 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
       const remaining = schedules.filter((schedule) => schedule.scheduleId !== selectedId);
       setSchedules(remaining);
       setSelectedId(remaining[0]?.scheduleId || null);
-      setMessage('일정을 삭제했습니다.');
+      setMessage(localizedMessage('admin:schedule.deleted'));
       setConfirmingDelete(false);
     } catch (requestError) {
-      setActionError(requestError.message || '일정 삭제에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:schedule.delete')));
     } finally {
       setSaving(false);
     }
@@ -137,44 +141,45 @@ function ScheduleWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">대회 일정</p><h2>일정 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
-        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadSchedules} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
+        <div><p className="eyebrow">{t('admin:schedule.desk')}</p><h2>{t('admin:schedule.title')}</h2><p>{t('common:operatorTournament', { value1: session.account.name, value2: tournamentId })}</p></div>
+        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadSchedules} type="button">{t('common:refresh')}</button><button className="secondary-button" onClick={onLogout} type="button">{t('common:signOut')}</button></div>
       </div>
-      {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
-      {message && <p aria-live="polite" className="admin-success-message">{message}</p>}
-      {loading ? <StatePanel title="일정 목록을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
-      {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadSchedules} type="button">다시 시도</button>} title="일정 목록을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
+      {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{resolveMessage(actionError)}</p>}
+      {message && <p aria-live="polite" className="admin-success-message">{resolveMessage(message)}</p>}
+      {loading ? <StatePanel title={t('admin:schedule.loading')}>{t('common:wait')}</StatePanel> : null}
+      {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadSchedules} type="button">{t('common:retry')}</button>} title={t('errors:schedule.list')} tone="error">{t('errors:tournamentPermissionRetry')}</StatePanel> : null}
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">진행 일정</p><h3>일정 목록</h3></div><span>{schedules.length}건</span></div>
-            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 일정</button>
-            <div className="admin-entity-list">{schedules.map((schedule) => <button className={`admin-entity-option${selectedId === schedule.scheduleId ? ' selected' : ''}`} key={schedule.scheduleId} onClick={() => setSelectedId(schedule.scheduleId)} type="button"><strong>{schedule.title}</strong><span>{schedule.type} · {schedule.startTime.replace('T', ' ')} · {schedule.status}</span></button>)}</div>
-            {!schedules.length ? <p className="operation-empty">등록된 일정이 없습니다.</p> : null}
+            <div className="operation-panel-heading"><div><p className="eyebrow">{t('common:schedule')}</p><h3>{t('admin:schedule.list')}</h3></div><span>{t('common:recordCount', { value1: schedules.length })}</span></div>
+            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">{t('admin:schedule.add')}</button>
+            <div className="admin-entity-list">{schedules.map((schedule) => <button className={`admin-entity-option${selectedId === schedule.scheduleId ? ' selected' : ''}`} key={schedule.scheduleId} onClick={() => setSelectedId(schedule.scheduleId)} type="button"><strong>{schedule.title}</strong><span>{schedule.type} · {resolveMessage(schedule.startTime.replace('T', ' '))} · {schedule.status}</span></button>)}</div>
+            {!schedules.length ? <p className="operation-empty">{t('admin:schedule.empty')}</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `일정 ${selectedId}` : '새 일정'}</p><h3>{selectedId ? '일정 정보 수정' : '일정 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? t('admin:schedule.identifier', { value1: selectedId }) : t('admin:schedule.new')}</p><h3>{selectedId ? t('admin:schedule.edit') : t('admin:schedule.create')}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-grid">
-                <label>일정 유형<select onChange={(event) => updateField('type', event.target.value)} value={form.type}>{TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                <label>상태<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{STATUS_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                <label className="admin-wide-field">제목<input onChange={(event) => updateField('title', event.target.value)} required value={form.title} /></label>
-                <label>시작 시간<input onChange={(event) => updateField('startTime', event.target.value)} required type="datetime-local" value={form.startTime} /></label>
-                <label>종료 시간<input onChange={(event) => updateField('endTime', event.target.value)} type="datetime-local" value={form.endTime} /></label>
-                <label>링 ID<input min="1" onChange={(event) => updateField('ringId', event.target.value)} type="number" value={form.ringId} /></label>
-                <label>연결 경기 ID<input min="1" onChange={(event) => updateField('relatedBoutId', event.target.value)} type="number" value={form.relatedBoutId} /></label>
+                <label>{t('common:scheduleType')}<select onChange={(event) => updateField('type', event.target.value)} value={form.type}>{TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{resolveMessage(label)}</option>)}</select></label>
+                <label>{t('common:status')}<select onChange={(event) => updateField('status', event.target.value)} value={form.status}>{STATUS_OPTIONS.map(([value, label]) => <option key={value} value={value}>{resolveMessage(label)}</option>)}</select></label>
+                <label className="admin-wide-field">{t('common:title')}<input onChange={(event) => updateField('title', event.target.value)} required value={form.title} /></label>
+                <label>{t('common:startTime')}<input onChange={(event) => updateField('startTime', event.target.value)} required type="datetime-local" value={form.startTime} /></label>
+                <label>{t('common:endTime')}<input onChange={(event) => updateField('endTime', event.target.value)} type="datetime-local" value={form.endTime} /></label>
+                <label>{t('common:ringId')}<input min="1" onChange={(event) => updateField('ringId', event.target.value)} type="number" value={form.ringId} /></label>
+                <label>{t('common:linkedBoutId')}<input min="1" onChange={(event) => updateField('relatedBoutId', event.target.value)} type="number" value={form.relatedBoutId} /></label>
               </div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '일정 저장' : '일정 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">일정 삭제</button> : null}</div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? t('admin:schedule.save') : t('admin:schedule.create')}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">{t('admin:schedule.delete')}</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
-      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 일정을 삭제합니다. 이 작업은 되돌릴 수 없습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="일정 삭제 확인" /> : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description={t('admin:schedule.deleteWarning')} onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title={t('admin:schedule.deleteConfirm')} /> : null}
     </main>
   );
 }
 
 export function AdminSchedulePage({ tournamentId }) {
+  useTranslation();
   const { session, signOut } = useStaffAuth();
   if (!session || !['GAME_MANAGER', 'SERVICE_MANAGER'].includes(session.account.role)) return null;
   return <ScheduleWorkspace onLogout={signOut} session={session} tournamentId={tournamentId} />;

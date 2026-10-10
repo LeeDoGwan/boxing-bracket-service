@@ -1,12 +1,15 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t } from '../i18n';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useStaffAuth } from '../auth/StaffAuthContext';
 import { StatePanel } from './StatePanel';
 
 export function StaffRoute({ allowedRoles, children }) {
+  useTranslation();
   const { isChecking, session } = useStaffAuth();
   const location = useLocation();
   if (isChecking) {
-    return <main className="page-shell"><StatePanel title="Checking staff session">Please wait.</StatePanel></main>;
+    return <main className="page-shell"><StatePanel title={t('common:auth.checking')}>{t('common:waitSession')}</StatePanel></main>;
   }
   if (!session) {
     const returnTo = `${location.pathname}${location.search}`;
@@ -15,9 +18,7 @@ export function StaffRoute({ allowedRoles, children }) {
   if (allowedRoles && !allowedRoles.includes(session.account.role)) {
     return (
       <main className="page-shell">
-        <StatePanel action={<Link className="command-button" to="/">현황으로 돌아가기</Link>} title="접근 권한이 없습니다." tone="error">
-          현재 계정의 역할로는 이 화면을 사용할 수 없습니다.
-        </StatePanel>
+        <StatePanel action={<Link className="command-button" to="/">{t('common:backToOverview')}</Link>} title={t('errors:auth.denied')} tone="error">{t('errors:auth.roleDenied')}</StatePanel>
       </main>
     );
   }

@@ -1,93 +1,101 @@
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage, formatVenueDateTime } from '../i18n';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getOperationStatus } from '../api/operations';
 import { useStaffAuth } from '../auth/StaffAuthContext';
 import { StatePanel } from '../components/StatePanel';
 
 const STATUS_LABELS = {
-  CANCELED: '취소',
-  FINISHED: '종료',
-  IN_PROGRESS: '진행 중',
-  READY: '준비',
-  SCHEDULED: '예정',
-  SCORING: '채점 중',
+  CANCELED: localizedMessage('common:status.canceled'),
+  FINISHED: localizedMessage('common:finished'),
+  IN_PROGRESS: localizedMessage('common:inProgress'),
+  READY: localizedMessage('common:ready'),
+  SCHEDULED: localizedMessage('common:scheduled'),
+  SCORING: localizedMessage('common:scoring'),
 };
 const RING_STATUS_LABELS = {
-  CLOSED: '운영 종료',
-  IN_PROGRESS: '진행 중',
-  READY: '준비',
+  CLOSED: localizedMessage('common:ringClosed'),
+  IN_PROGRESS: localizedMessage('common:inProgress'),
+  READY: localizedMessage('common:ready'),
 };
 const STATUS_ORDER = ['IN_PROGRESS', 'SCORING', 'READY', 'SCHEDULED', 'FINISHED', 'CANCELED'];
 
 function statusLabel(status) {
-  return STATUS_LABELS[status] || status || '상태 미정';
+  return STATUS_LABELS[status] || status || localizedMessage('common:statusUnknown');
 }
 
 function ringStatusLabel(status) {
-  return RING_STATUS_LABELS[status] || status || '상태 미정';
+  return RING_STATUS_LABELS[status] || status || localizedMessage('common:statusUnknown');
 }
 
 function formatJudgeIds(ids) {
-  return ids.length ? ids.map((id) => `#${id}`).join(', ') : '없음';
+  return ids.length ? ids.map((id) => `#${id}`).join(', ') : localizedMessage('common:none');
 }
 
 function formatUpdatedAt(value) {
-  return value ? new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(value) : '아직 갱신되지 않음';
+  return value ? formatVenueDateTime(value, { year: undefined, month: undefined, day: undefined }) : localizedMessage('operations:notUpdated');
 }
 
 function Metric({ label, value, tone = '' }) {
-  return <article className={`operation-stat${tone ? ` operation-stat-${tone}` : ''}`}><span>{label}</span><strong>{value}</strong></article>;
+  useTranslation();
+  return <article className={`operation-stat${tone ? ` operation-stat-${tone}` : ''}`}><span>{resolveMessage(label)}</span><strong>{value}</strong></article>;
 }
 
-function BoutSummary({ bout, emptyLabel = '없음' }) {
+function BoutSummary({ bout, emptyLabel = t('common:none') }) {
+  useTranslation();
   if (!bout) {
     return <p className="operation-empty">{emptyLabel}</p>;
   }
   return (
     <div className="operation-bout-summary">
-      <strong>경기 {bout.boutNumber}</strong>
-      <span>{statusLabel(bout.status)} · {bout.currentRound || 0}/{bout.totalRounds || '?'} 라운드</span>
-      <small>{bout.matchType || '일반 경기'} · 결과 {bout.resultConfirmed ? '확정' : '미확정'}</small>
+      <strong>{t('common:boutNumber', { value1: bout.boutNumber })}</strong>
+      <span>{t('operations:boutProgress', { value1: statusLabel(bout.status), value2: bout.currentRound || 0, value3: bout.totalRounds || '?' })}</span>
+      <small>{t('operations:resultStatus', { value1: bout.matchType || t('common:standardBout'), value2: bout.resultConfirmed ? t('operations:result.confirmed') : t('operations:result.pending') })}</small>
     </div>
   );
 }
 
 function RingStatusCard({ ring }) {
+  useTranslation();
   return (
     <article className="operation-ring-card">
       <div className="operation-ring-heading">
-        <div><p className="eyebrow">링 {ring.ringId}</p><h3>{ring.ringName}</h3></div>
-        <span className="status-pill">{ringStatusLabel(ring.ringStatus)}</span>
+        <div><p className="eyebrow">{t('common:ringNumber', { value1: ring.ringId })}</p><h3>{ring.ringName}</h3></div>
+        <span className="status-pill">{resolveMessage(ringStatusLabel(ring.ringStatus))}</span>
       </div>
-      <div className="operation-bout-block"><span>현재 경기</span><BoutSummary bout={ring.currentBout} emptyLabel="진행 중인 경기 없음" /></div>
-      <div className="operation-bout-block"><span>다음 경기</span><BoutSummary bout={ring.nextBout} emptyLabel="다음 경기 없음" /></div>
+      <div className="operation-bout-block"><span>{t('common:currentBout')}</span><BoutSummary bout={ring.currentBout} emptyLabel={t('operations:noCurrentBout')} /></div>
+      <div className="operation-bout-block"><span>{t('common:nextBout')}</span><BoutSummary bout={ring.nextBout} emptyLabel={t('operations:noNextBout')} /></div>
     </article>
   );
 }
 
 function JudgeProgress({ progress }) {
+  useTranslation();
   const submitted = progress.submittedJudgeIds || [];
   const unsubmitted = progress.unsubmittedJudgeIds || [];
   const total = submitted.length + unsubmitted.length;
   const percentage = total ? Math.round((submitted.length / total) * 100) : 0;
   return (
     <article className="operation-progress-row">
-      <div className="operation-progress-heading"><strong>경기 {progress.boutNumber}</strong><span>{progress.roundNo}라운드 · {submitted.length}/{total || 0}명 제출</span></div>
-      <div aria-label={`경기 ${progress.boutNumber} 심판 제출 진행률`} aria-valuemax="100" aria-valuemin="0" aria-valuenow={percentage} className="operation-progress-track" role="progressbar"><span style={{ width: `${percentage}%` }} /></div>
-      <div className="operation-progress-detail"><span>제출: {formatJudgeIds(submitted)}</span><span>대기: {formatJudgeIds(unsubmitted)}</span></div>
+      <div className="operation-progress-heading"><strong>{t('common:boutNumber', { value1: progress.boutNumber })}</strong><span>{t('operations:roundSubmissions', { value1: progress.roundNo, value2: submitted.length, value3: total || 0 })}</span></div>
+      <div aria-label={t('operations:judgeProgressLabel', { value1: progress.boutNumber })} aria-valuemax="100" aria-valuemin="0" aria-valuenow={percentage} className="operation-progress-track" role="progressbar"><span style={{ width: `${percentage}%` }} /></div>
+      <div className="operation-progress-detail"><span>{t('operations:submittedJudges', { value1: formatJudgeIds(submitted) })}</span><span>{t('operations:waitingJudges', { value1: formatJudgeIds(unsubmitted) })}</span></div>
     </article>
   );
 }
 
 function BoutAlertList({ bouts, title, emptyLabel }) {
+  useTranslation();
   return (
     <section className="operation-panel operation-alert-panel">
-      <div className="operation-panel-heading"><div><p className="eyebrow">확인 필요</p><h3>{title}</h3></div><span>{bouts.length}건</span></div>
-      {bouts.length ? <ul className="operation-alert-list">{bouts.map((bout) => <li key={bout.boutId}><strong>경기 {bout.boutNumber}</strong><span>{statusLabel(bout.status)} · 링 {bout.ringId || '-'}</span></li>)}</ul> : <p className="operation-empty">{emptyLabel}</p>}
+      <div className="operation-panel-heading"><div><p className="eyebrow">{t('operations:attention')}</p><h3>{resolveMessage(title)}</h3></div><span>{t('common:recordCount', { value1: bouts.length })}</span></div>
+      {bouts.length ? <ul className="operation-alert-list">{bouts.map((bout) => <li key={bout.boutId}><strong>{t('common:boutNumber', { value1: bout.boutNumber })}</strong><span>{t('operations:boutRing', { value1: statusLabel(bout.status), value2: bout.ringId || '-' })}</span></li>)}</ul> : <p className="operation-empty">{emptyLabel}</p>}
     </section>
   );
 }
 
 function OperationsWorkspace({ onLogout, session, tournamentId }) {
+  useTranslation();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -100,7 +108,7 @@ function OperationsWorkspace({ onLogout, session, tournamentId }) {
       setStatus(await getOperationStatus(tournamentId, session.accessToken));
       setLastUpdatedAt(new Date());
     } catch {
-      setError('운영 현황을 불러오지 못했습니다. 대회 ID와 권한을 확인해 주세요.');
+      setError(localizedMessage('errors:operations.loadPermission'));
     } finally {
       setLoading(false);
     }
@@ -121,34 +129,34 @@ function OperationsWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell operations-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">대회 운영</p><h2>대회 운영 현황</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
-        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadStatus} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
+        <div><p className="eyebrow">{t('operations:desk')}</p><h2>{t('operations:title')}</h2><p>{t('common:operatorTournament', { value1: session.account.name, value2: tournamentId })}</p></div>
+        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadStatus} type="button">{t('common:refresh')}</button><button className="secondary-button" onClick={onLogout} type="button">{t('common:signOut')}</button></div>
       </div>
 
-      {loading && !status ? <StatePanel title="운영 현황을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
-      {error && !loading && !status ? <StatePanel action={<button className="command-button" onClick={loadStatus} type="button">다시 시도</button>} title="운영 현황을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
-      {error && status ? <div className="stale-banner" role="alert"><span>최신 운영 현황을 갱신하지 못했습니다. 마지막 확정 데이터가 표시되고 있습니다.</span><button className="secondary-button" onClick={loadStatus} type="button">다시 시도</button></div> : null}
+      {loading && !status ? <StatePanel title={t('operations:loading')}>{t('common:wait')}</StatePanel> : null}
+      {error && !loading && !status ? <StatePanel action={<button className="command-button" onClick={loadStatus} type="button">{t('common:retry')}</button>} title={t('errors:operations.load')} tone="error">{t('errors:tournamentPermissionRetry')}</StatePanel> : null}
+      {error && status ? <div className="stale-banner" role="alert"><span>{t('errors:operations.stale')}</span><button className="secondary-button" onClick={loadStatus} type="button">{t('common:retry')}</button></div> : null}
       {status ? (
         <>
           <section className="operation-panel operation-summary-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">대회 {status.tournamentId}</p><h3>경기 진행 요약</h3></div><span className="operation-refresh-state" aria-live="polite">자동 갱신 · {formatUpdatedAt(lastUpdatedAt)}{loading ? ' · 갱신 중' : ''}</span></div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{t('common:tournamentNumber', { value1: status.tournamentId })}</p><h3>{t('operations:summary')}</h3></div><span className="operation-refresh-state" aria-live="polite">{t('operations:autoRefresh', { value1: formatUpdatedAt(lastUpdatedAt), value2: loading ? t('operations:refreshingSuffix') : '' })}</span></div>
             <div className="operation-stat-grid">{statusMetrics.map((metric) => <Metric key={metric.statusKey} label={metric.label} tone={metric.statusKey === 'IN_PROGRESS' ? 'active' : ''} value={metric.count} />)}</div>
           </section>
 
           <section className="operation-panel operation-rings-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">경기장</p><h3>링별 진행 상태</h3></div><span>{status.rings?.length || 0}개 링</span></div>
-            {status.rings?.length ? <div className="operation-ring-grid">{status.rings.map((ring) => <RingStatusCard key={ring.ringId} ring={ring} />)}</div> : <p className="operation-empty">등록된 링이 없습니다.</p>}
+            <div className="operation-panel-heading"><div><p className="eyebrow">{t('admin:ring.venue')}</p><h3>{t('operations:ringProgress')}</h3></div><span>{t('common:ringCount', { value1: status.rings?.length || 0 })}</span></div>
+            {status.rings?.length ? <div className="operation-ring-grid">{status.rings.map((ring) => <RingStatusCard key={ring.ringId} ring={ring} />)}</div> : <p className="operation-empty">{t('admin:ring.empty')}</p>}
           </section>
 
           <div className="operations-two-column">
             <section className="operation-panel operation-progress-panel">
-              <div className="operation-panel-heading"><div><p className="eyebrow">라운드별 제출</p><h3>심판 제출 현황</h3></div><span>{incompleteProgress.length}건 대기</span></div>
-              {incompleteProgress.length ? <div className="operation-progress-list">{incompleteProgress.map((progress) => <JudgeProgress key={`${progress.boutId}-${progress.roundNo}`} progress={progress} />)}</div> : <p className="operation-empty">미완료 심판 제출이 없습니다.</p>}
+              <div className="operation-panel-heading"><div><p className="eyebrow">{t('operations:roundSubmissionHeading')}</p><h3>{t('operations:judgeSubmissions')}</h3></div><span>{t('operations:waitingCount', { value1: incompleteProgress.length })}</span></div>
+              {incompleteProgress.length ? <div className="operation-progress-list">{incompleteProgress.map((progress) => <JudgeProgress key={`${progress.boutId}-${progress.roundNo}`} progress={progress} />)}</div> : <p className="operation-empty">{t('operations:noMissingSubmissions')}</p>}
             </section>
-            <BoutAlertList bouts={status.pendingResultBouts || []} emptyLabel="미확정 결과가 없습니다." title="결과 확정 대기" />
+            <BoutAlertList bouts={status.pendingResultBouts || []} emptyLabel={t('operations:noPendingResults')} title={t('operations:pendingResults')} />
           </div>
 
-          <BoutAlertList bouts={status.stalledBouts || []} emptyLabel="15분 이상 지연된 경기가 없습니다." title="지연 경기" />
+          <BoutAlertList bouts={status.stalledBouts || []} emptyLabel={t('operations:noDelayedBouts')} title={t('operations:delayedBouts')} />
         </>
       ) : null}
     </main>
@@ -156,6 +164,7 @@ function OperationsWorkspace({ onLogout, session, tournamentId }) {
 }
 
 export function OperationsPage({ tournamentId }) {
+  useTranslation();
   const { session, signOut } = useStaffAuth();
   if (!session || !['GAME_MANAGER', 'SERVICE_MANAGER'].includes(session.account.role)) return null;
   return <OperationsWorkspace onLogout={signOut} session={session} tournamentId={tournamentId} />;

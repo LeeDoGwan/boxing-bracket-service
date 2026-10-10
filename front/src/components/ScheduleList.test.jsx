@@ -12,7 +12,7 @@ describe('ScheduleList', () => {
     }]} />);
 
     expect(screen.getByRole('list', { name: '대회 일정' })).toBeInTheDocument();
-    expect(screen.getByText('2026-08-01 09:00')).toBeInTheDocument();
+    expect(screen.getByText('2026. 08. 01. 오전 09:00')).toBeInTheDocument();
     expect(screen.getByText('행사')).toBeInTheDocument();
     expect(screen.getByText('개회식')).toBeInTheDocument();
     expect(screen.getByText('예정')).toBeInTheDocument();

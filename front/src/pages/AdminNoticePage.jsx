@@ -1,3 +1,6 @@
+import { apiErrorMessage } from '../i18n/errors';
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { createNotice, deleteNotice, getNotices, updateNotice } from '../api/adminNotices';
 import { useStaffAuth } from '../auth/StaffAuthContext';
@@ -13,6 +16,7 @@ function formFromNotice(notice) {
 }
 
 function NoticeWorkspace({ onLogout, session, tournamentId }) {
+  useTranslation();
   const [notices, setNotices] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(blankForm);
@@ -34,7 +38,7 @@ function NoticeWorkspace({ onLogout, session, tournamentId }) {
         ? current
         : nextNotices[0]?.noticeId || null);
     } catch {
-      setListError('공지 목록을 불러오지 못했습니다. 대회 ID와 권한을 확인해 주세요.');
+      setListError(localizedMessage('errors:notice.listPermission'));
     } finally {
       setLoading(false);
     }
@@ -65,15 +69,15 @@ function NoticeWorkspace({ onLogout, session, tournamentId }) {
       if (selectedId) {
         const updated = await updateNotice(selectedId, payload, session.accessToken);
         setNotices((current) => current.map((notice) => notice.noticeId === selectedId ? updated : notice));
-        setMessage('공지를 수정했습니다.');
+        setMessage(localizedMessage('admin:notice.updated'));
       } else {
         const created = await createNotice(payload, session.accessToken);
         setNotices((current) => [...current, created].sort((left, right) => (left.displayOrder - right.displayOrder) || (left.noticeId - right.noticeId)));
         setSelectedId(created.noticeId);
-        setMessage('공지를 생성했습니다.');
+        setMessage(localizedMessage('admin:notice.created'));
       }
     } catch (requestError) {
-      setActionError(requestError.message || '공지 저장에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:notice.save')));
     } finally {
       setSaving(false);
     }
@@ -91,10 +95,10 @@ function NoticeWorkspace({ onLogout, session, tournamentId }) {
       const remaining = notices.filter((notice) => notice.noticeId !== selectedId);
       setNotices(remaining);
       setSelectedId(remaining[0]?.noticeId || null);
-      setMessage('공지를 삭제했습니다.');
+      setMessage(localizedMessage('admin:notice.deleted'));
       setConfirmingDelete(false);
     } catch (requestError) {
-      setActionError(requestError.message || '공지 삭제에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:notice.delete')));
     } finally {
       setSaving(false);
     }
@@ -103,36 +107,37 @@ function NoticeWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">대회 안내</p><h2>공지 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
-        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadNotices} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
+        <div><p className="eyebrow">{t('admin:notice.desk')}</p><h2>{t('admin:notice.title')}</h2><p>{t('common:operatorTournament', { value1: session.account.name, value2: tournamentId })}</p></div>
+        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadNotices} type="button">{t('common:refresh')}</button><button className="secondary-button" onClick={onLogout} type="button">{t('common:signOut')}</button></div>
       </div>
-      {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
-      {message && <p aria-live="polite" className="admin-success-message">{message}</p>}
-      {loading ? <StatePanel title="공지 목록을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
-      {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadNotices} type="button">다시 시도</button>} title="공지 목록을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
+      {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{resolveMessage(actionError)}</p>}
+      {message && <p aria-live="polite" className="admin-success-message">{resolveMessage(message)}</p>}
+      {loading ? <StatePanel title={t('admin:notice.loading')}>{t('common:wait')}</StatePanel> : null}
+      {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadNotices} type="button">{t('common:retry')}</button>} title={t('errors:notice.list')} tone="error">{t('errors:tournamentPermissionRetry')}</StatePanel> : null}
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">공지</p><h3>공지 목록</h3></div><span>{notices.length}건</span></div>
-            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 공지</button>
-            <div className="admin-entity-list">{notices.map((notice) => <button className={`admin-entity-option${selectedId === notice.noticeId ? ' selected' : ''}`} key={notice.noticeId} onClick={() => setSelectedId(notice.noticeId)} type="button"><strong>{notice.title}</strong><span>{notice.active ? '게시 중' : '비활성'} · 순서 {notice.displayOrder}</span></button>)}</div>
-            {!notices.length ? <p className="operation-empty">등록된 공지가 없습니다.</p> : null}
+            <div className="operation-panel-heading"><div><p className="eyebrow">{t('common:notice')}</p><h3>{t('admin:notice.list')}</h3></div><span>{t('common:recordCount', { value1: notices.length })}</span></div>
+            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">{t('admin:notice.add')}</button>
+            <div className="admin-entity-list">{notices.map((notice) => <button className={`admin-entity-option${selectedId === notice.noticeId ? ' selected' : ''}`} key={notice.noticeId} onClick={() => setSelectedId(notice.noticeId)} type="button"><strong>{notice.title}</strong><span>{t('admin:notice.statusOrder', { value1: notice.active ? t('common:published') : t('common:inactive'), value2: notice.displayOrder })}</span></button>)}</div>
+            {!notices.length ? <p className="operation-empty">{t('admin:notice.empty')}</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `공지 ${selectedId}` : '새 공지'}</p><h3>{selectedId ? '공지 정보 수정' : '공지 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? t('admin:notice.identifier', { value1: selectedId }) : t('admin:notice.new')}</p><h3>{selectedId ? t('admin:notice.edit') : t('admin:notice.create')}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
-              <div className="admin-form-grid"><label>제목<input onChange={(event) => updateField('title', event.target.value)} required value={form.title} /></label><label>표시 순서<input min="0" onChange={(event) => updateField('displayOrder', event.target.value)} type="number" value={form.displayOrder} /></label><label className="admin-wide-field">내용<textarea onChange={(event) => updateField('content', event.target.value)} required rows="8" value={form.content} /></label><label className="admin-toggle-field"><input checked={form.active} onChange={(event) => updateField('active', event.target.checked)} type="checkbox" /> 공개 중</label></div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '공지 저장' : '공지 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">공지 삭제</button> : null}</div>
+              <div className="admin-form-grid"><label>{t('common:title')}<input onChange={(event) => updateField('title', event.target.value)} required value={form.title} /></label><label>{t('common:displayOrder')}<input min="0" onChange={(event) => updateField('displayOrder', event.target.value)} type="number" value={form.displayOrder} /></label><label className="admin-wide-field">{t('common:content')}<textarea onChange={(event) => updateField('content', event.target.value)} required rows="8" value={form.content} /></label><label className="admin-toggle-field"><input checked={form.active} onChange={(event) => updateField('active', event.target.checked)} type="checkbox" />{t('common:visible')}</label></div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? t('admin:notice.save') : t('admin:notice.create')}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">{t('admin:notice.delete')}</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
-      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 공지를 삭제합니다. 이 작업은 되돌릴 수 없습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="공지 삭제 확인" /> : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description={t('admin:notice.deleteWarning')} onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title={t('admin:notice.deleteConfirm')} /> : null}
     </main>
   );
 }
 
 export function AdminNoticePage({ tournamentId }) {
+  useTranslation();
   const { session, signOut } = useStaffAuth();
   if (!session || !['GAME_MANAGER', 'SERVICE_MANAGER'].includes(session.account.role)) return null;
   return <NoticeWorkspace onLogout={signOut} session={session} tournamentId={tournamentId} />;

@@ -1,3 +1,4 @@
+import { localizedMessage } from '../i18n';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { getCurrentAccount, logout } from '../api/auth';
 
@@ -11,11 +12,11 @@ const LEGACY_SESSION_KEYS = {
 };
 export const STAFF_ROLES = Object.keys(LEGACY_SESSION_KEYS);
 export const STAFF_ROLE_LABELS = {
-  JUDGE: '심판',
-  SUPERVISOR: '감독관',
-  RING_MANAGER: '링 매니저',
-  GAME_MANAGER: '게임 매니저',
-  SERVICE_MANAGER: '서비스 매니저',
+  JUDGE: localizedMessage('common:role.judge'),
+  SUPERVISOR: localizedMessage('common:role.supervisor'),
+  RING_MANAGER: localizedMessage('common:role.ringManager'),
+  GAME_MANAGER: localizedMessage('common:role.gameManager'),
+  SERVICE_MANAGER: localizedMessage('common:role.serviceManager'),
 };
 
 function parseSession(value) {

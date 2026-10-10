@@ -4,6 +4,7 @@ import { confirmResult, correctResult, createPenalty, getPenalties, getSuperviso
 import { getAssignedBouts, getAssignedRings } from '../api/staffAssignments';
 import { useBoutEventStream } from '../hooks/useBoutEventStream';
 import { SupervisorAssignedPage } from './SupervisorAssignedPage';
+import { setLanguagePreference, translate as t } from '../i18n';
 
 vi.mock('../api/audience', () => ({ getBoutDetail: vi.fn() }));
 vi.mock('../api/supervisor', () => ({ confirmResult: vi.fn(), correctResult: vi.fn(), createPenalty: vi.fn(), getPenalties: vi.fn(), getSupervisorScores: vi.fn() }));
@@ -27,6 +28,27 @@ beforeEach(() => {
 });
 
 describe('SupervisorAssignedPage', () => {
+  it('preserves correction reasons, confirmation and backend enums across language changes', async () => {
+    getBoutDetail.mockResolvedValue({ ...bout, result: { decisionType: 'POINTS', winnerSide: 'RED' }, resultConfirmed: true, status: 'FINISHED' });
+    render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
+    await screen.findByLabelText('수정 사유');
+    const reason = '증거 재검토 / evidence / 証拠';
+    fireEvent.change(screen.getByLabelText('수정 사유'), { target: { value: reason } });
+    fireEvent.change(screen.getByLabelText('결과 방식'), { target: { value: 'RSC' } });
+    fireEvent.click(screen.getByRole('button', { name: '수정 내용 검토' }));
+    for (const language of ['en', 'ja']) {
+      await act(() => setLanguagePreference(language, { persist: false }));
+      expect(screen.getByLabelText(t('operations:result.correctionReason'))).toHaveValue(reason);
+      expect(screen.getByLabelText(t('operations:result.decision'))).toHaveValue('RSC');
+      expect(screen.getByRole('dialog', { name: t('operations:result.confirmCorrection') })).toHaveTextContent(reason);
+    }
+    expect(getBoutDetail).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: t('operations:result.submitCorrection') }));
+    await waitFor(() => expect(correctResult).toHaveBeenCalledWith(12, {
+      decisionType: 'RSC', reason, winnerSide: 'RED',
+    }, 'supervisor-token'));
+  });
+
   it('loads the assigned ring and bout APIs before reviewing a bout', async () => {
     render(<SupervisorAssignedPage onLogout={vi.fn()} session={session} tournamentId={1} />);
 

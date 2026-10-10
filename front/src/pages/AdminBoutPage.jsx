@@ -1,3 +1,6 @@
+import { apiErrorMessage } from '../i18n/errors';
+import { useTranslation } from 'react-i18next';
+import { translate as t, localizedMessage, resolveMessage } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { createBout, deleteBout, getBouts, importBouts, updateBout } from '../api/adminBouts';
 import { getAthletes } from '../api/adminAthletes';
@@ -6,7 +9,7 @@ import { useStaffAuth } from '../auth/StaffAuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { StatePanel } from '../components/StatePanel';
 
-const STATUS_LABELS = { CANCELED: '취소', FINISHED: '종료', IN_PROGRESS: '진행 중', READY: '준비', SCHEDULED: '예정', SCORING: '채점 중' };
+const STATUS_LABELS = { CANCELED: localizedMessage('common:status.canceled'), FINISHED: localizedMessage('common:finished'), IN_PROGRESS: localizedMessage('common:inProgress'), READY: localizedMessage('common:ready'), SCHEDULED: localizedMessage('common:scheduled'), SCORING: localizedMessage('common:scoring') };
 const CSV_HEADERS = 'tournamentId,ringId,matchType,redAthleteId,blueAthleteId,totalRounds,scheduledOrder,eventBout';
 
 function blankForm(tournamentId) {
@@ -18,7 +21,7 @@ function formFromBout(bout) {
 }
 
 function statusLabel(status) {
-  return STATUS_LABELS[status] || status || '상태 미정';
+  return STATUS_LABELS[status] || status || localizedMessage('common:statusUnknown');
 }
 
 function toNumber(value) {
@@ -34,6 +37,7 @@ function createImportKey() {
 }
 
 function BoutWorkspace({ onLogout, session, tournamentId }) {
+  useTranslation();
   const [bouts, setBouts] = useState([]);
   const [rings, setRings] = useState([]);
   const [athletes, setAthletes] = useState([]);
@@ -60,7 +64,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
         ? current
         : nextBouts[0]?.boutId || null);
     } catch {
-      setListError('경기 목록을 불러오지 못했습니다. 대회 ID와 권한을 확인해 주세요.');
+      setListError(localizedMessage('errors:bout.listPermission'));
     } finally {
       setLoading(false);
     }
@@ -80,7 +84,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       setRings(nextRings || []);
       setAthletes(nextAthletes || []);
     } catch {
-      setReferenceError('링 또는 선수 목록을 불러오지 못했습니다. ID를 직접 확인해 주세요.');
+      setReferenceError(localizedMessage('errors:bout.references'));
     }
   }, [session.accessToken, tournamentId]);
 
@@ -117,15 +121,15 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       if (selectedId) {
         const updated = await updateBout(selectedId, payload, session.accessToken);
         setBouts((current) => current.map((bout) => bout.boutId === selectedId ? updated : bout));
-        setMessage('경기 정보를 수정했습니다.');
+        setMessage(localizedMessage('admin:bout.updated'));
       } else {
         const created = await createBout(payload, session.accessToken);
         setBouts((current) => [...current, created].sort((left, right) => (left.scheduledOrder || 0) - (right.scheduledOrder || 0)));
         setSelectedId(created.boutId);
-        setMessage('경기를 생성했습니다.');
+        setMessage(localizedMessage('admin:bout.created'));
       }
     } catch (requestError) {
-      setActionError(requestError.message || '경기 저장에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:bout.save')));
     } finally {
       setSaving(false);
     }
@@ -143,10 +147,10 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       const remaining = bouts.filter((bout) => bout.boutId !== selectedId);
       setBouts(remaining);
       setSelectedId(remaining[0]?.boutId || null);
-      setMessage('경기를 삭제했습니다.');
+      setMessage(localizedMessage('admin:bout.deleted'));
       setConfirmingDelete(false);
     } catch (requestError) {
-      setActionError(requestError.message || '경기 삭제에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:bout.delete')));
     } finally {
       setSaving(false);
     }
@@ -156,7 +160,7 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
     event.preventDefault();
     const formElement = event.currentTarget;
     if (!file) {
-      setActionError('CSV 또는 Excel 파일을 선택해 주세요.');
+      setActionError(localizedMessage('errors:bout.fileRequired'));
       return;
     }
     setSaving(true);
@@ -168,9 +172,9 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
       setFile(null);
       setImportKey('');
       formElement.reset();
-      setMessage(`${result.importedCount}건의 경기를 가져왔습니다.`);
+      setMessage(localizedMessage('admin:bout.imported', { value1: result.importedCount }));
     } catch (requestError) {
-      setActionError(requestError.message || '파일 가져오기에 실패했습니다.');
+      setActionError(apiErrorMessage(requestError, localizedMessage('errors:bout.import')));
     } finally {
       setSaving(false);
     }
@@ -189,38 +193,39 @@ function BoutWorkspace({ onLogout, session, tournamentId }) {
   return (
     <main className="page-shell admin-shell">
       <div className="judge-heading">
-        <div><p className="eyebrow">경기 운영</p><h2>대진 관리</h2><p>로그인 계정: {session.account.name} · 대회 ID {tournamentId}</p></div>
-        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadBouts} type="button">새로고침</button><button className="secondary-button" onClick={onLogout} type="button">로그아웃</button></div>
+        <div><p className="eyebrow">{t('admin:bout.desk')}</p><h2>{t('admin:bout.title')}</h2><p>{t('common:operatorTournament', { value1: session.account.name, value2: tournamentId })}</p></div>
+        <div className="operations-heading-actions"><button className="command-button" disabled={loading} onClick={loadBouts} type="button">{t('common:refresh')}</button><button className="secondary-button" onClick={onLogout} type="button">{t('common:signOut')}</button></div>
       </div>
-      {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{actionError}</p>}
-      {referenceError && <p aria-live="polite" className="form-error admin-reference-message" role="alert">{referenceError}</p>}
-      {message && <p aria-live="polite" className="admin-success-message">{message}</p>}
-      <form className="bout-import-panel" onSubmit={handleImport}><label>대진 파일<input aria-label="대진 파일" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const nextFile = event.target.files?.[0] || null; setFile(nextFile); setImportKey(nextFile ? createImportKey() : ''); }} type="file" /></label><div className="bout-import-actions"><button className="command-button" disabled={saving} type="submit">파일 가져오기</button><button className="secondary-button" onClick={downloadTemplate} type="button">CSV 양식 다운로드</button></div><small>경기 번호는 서버에서 자동 생성됩니다. · CSV, XLS, XLSX · 동일 파일 재시도는 중복 생성되지 않습니다.</small></form>
-      {loading ? <StatePanel title="경기 목록을 불러오는 중입니다.">잠시만 기다려 주세요.</StatePanel> : null}
-      {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadBouts} type="button">다시 시도</button>} title="경기 목록을 불러오지 못했습니다." tone="error">대회 ID와 운영자 권한을 확인한 뒤 다시 시도해 주세요.</StatePanel> : null}
+      {actionError && <p aria-live="polite" className="form-error admin-action-message" role="alert">{resolveMessage(actionError)}</p>}
+      {referenceError && <p aria-live="polite" className="form-error admin-reference-message" role="alert">{resolveMessage(referenceError)}</p>}
+      {message && <p aria-live="polite" className="admin-success-message">{resolveMessage(message)}</p>}
+      <form className="bout-import-panel" onSubmit={handleImport}><label>{t('admin:bout.file')}<input aria-label={t('admin:bout.file')} accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const nextFile = event.target.files?.[0] || null; setFile(nextFile); setImportKey(nextFile ? createImportKey() : ''); }} type="file" /></label><div className="bout-import-actions"><button className="command-button" disabled={saving} type="submit">{t('admin:bout.import')}</button><button className="secondary-button" onClick={downloadTemplate} type="button">{t('admin:bout.downloadTemplate')}</button></div><small>{t('admin:bout.importHint')}</small></form>
+      {loading ? <StatePanel title={t('admin:bout.loading')}>{t('common:wait')}</StatePanel> : null}
+      {listError && !loading ? <StatePanel action={<button className="command-button" onClick={loadBouts} type="button">{t('common:retry')}</button>} title={t('errors:bout.list')} tone="error">{t('errors:tournamentPermissionRetry')}</StatePanel> : null}
       {!loading && !listError ? (
         <div className="admin-setup-layout">
           <aside className="admin-list-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">대진</p><h3>경기 목록</h3></div><span>{bouts.length}건</span></div>
-            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">+ 새 경기</button>
-            <div className="admin-entity-list">{bouts.map((bout) => <button className={`admin-entity-option${selectedId === bout.boutId ? ' selected' : ''}`} key={bout.boutId} onClick={() => setSelectedId(bout.boutId)} type="button"><strong>경기 {bout.boutNumber} · {bout.matchType || '일반'}</strong><span>링 {bout.ringId} · {statusLabel(bout.status)} · {bout.redAthleteId} vs {bout.blueAthleteId}</span></button>)}</div>
-            {!bouts.length ? <p className="operation-empty">등록된 경기가 없습니다.</p> : null}
+            <div className="operation-panel-heading"><div><p className="eyebrow">{t('admin:bout.bracket')}</p><h3>{t('admin:bout.list')}</h3></div><span>{t('common:recordCount', { value1: bouts.length })}</span></div>
+            <button className={`admin-new-option${selectedId === null ? ' selected' : ''}`} onClick={() => setSelectedId(null)} type="button">{t('admin:bout.add')}</button>
+            <div className="admin-entity-list">{bouts.map((bout) => <button className={`admin-entity-option${selectedId === bout.boutId ? ' selected' : ''}`} key={bout.boutId} onClick={() => setSelectedId(bout.boutId)} type="button"><strong>{t('admin:bout.numberType', { value1: bout.boutNumber, value2: bout.matchType || t('common:standard') })}</strong><span>{t('admin:bout.summary', { value1: bout.ringId, value2: statusLabel(bout.status), value3: bout.redAthleteId, value4: bout.blueAthleteId })}</span></button>)}</div>
+            {!bouts.length ? <p className="operation-empty">{t('admin:bout.empty')}</p> : null}
           </aside>
           <section className="admin-form-panel">
-            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? `경기 ${selectedId}` : '새 경기'}</p><h3>{selectedId ? '경기 정보 수정' : '경기 생성'}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
+            <div className="operation-panel-heading"><div><p className="eyebrow">{selectedId ? t('common:boutNumber', { value1: selectedId }) : t('admin:bout.new')}</p><h3>{selectedId ? t('admin:bout.edit') : t('admin:bout.create')}</h3></div>{selectedId ? <span>#{selectedId}</span> : null}</div>
             <form onSubmit={handleSubmit}>
-              <div className="admin-form-grid"><label>링<select aria-label="링" onChange={(event) => updateField('ringId', event.target.value)} required value={form.ringId}><option value="">링을 선택하세요</option>{form.ringId && !rings.some((ring) => String(ring.ringId) === form.ringId) ? <option value={form.ringId}>링 #{form.ringId}</option> : null}{rings.map((ring) => <option key={ring.ringId} value={ring.ringId}>{ring.name} · #{ring.ringId}</option>)}</select></label><label>빨강 선수<select aria-label="빨강 선수" onChange={(event) => updateField('redAthleteId', event.target.value)} required value={form.redAthleteId}><option value="">선수를 선택하세요</option>{form.redAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.redAthleteId) ? <option value={form.redAthleteId}>선수 #{form.redAthleteId}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>파랑 선수<select aria-label="파랑 선수" onChange={(event) => updateField('blueAthleteId', event.target.value)} required value={form.blueAthleteId}><option value="">선수를 선택하세요</option>{form.blueAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.blueAthleteId) ? <option value={form.blueAthleteId}>선수 #{form.blueAthleteId}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>경기 유형<input onChange={(event) => updateField('matchType', event.target.value)} value={form.matchType} /></label><label>라운드 수<input min="1" onChange={(event) => updateField('totalRounds', event.target.value)} required type="number" value={form.totalRounds} /></label><label>진행 순서<input min="1" onChange={(event) => updateField('scheduledOrder', event.target.value)} required type="number" value={form.scheduledOrder} /></label><label className="admin-toggle-field"><input checked={form.eventBout} onChange={(event) => updateField('eventBout', event.target.checked)} type="checkbox" /> 이벤트 경기</label></div>
-              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? '경기 저장' : '경기 생성'}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">경기 삭제</button> : null}</div>
+              <div className="admin-form-grid"><label>{t('common:ring')}<select aria-label={t('common:ring')} onChange={(event) => updateField('ringId', event.target.value)} required value={form.ringId}><option value="">{t('common:selectRing')}</option>{form.ringId && !rings.some((ring) => String(ring.ringId) === form.ringId) ? <option value={form.ringId}>{t('common:ringIdValue', { value1: form.ringId })}</option> : null}{rings.map((ring) => <option key={ring.ringId} value={ring.ringId}>{ring.name} · #{ring.ringId}</option>)}</select></label><label>{t('common:redAthlete')}<select aria-label={t('common:redAthlete')} onChange={(event) => updateField('redAthleteId', event.target.value)} required value={form.redAthleteId}><option value="">{t('common:selectAthlete')}</option>{form.redAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.redAthleteId) ? <option value={form.redAthleteId}>{t('common:athleteIdValue', { value1: form.redAthleteId })}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>{t('common:blueAthlete')}<select aria-label={t('common:blueAthlete')} onChange={(event) => updateField('blueAthleteId', event.target.value)} required value={form.blueAthleteId}><option value="">{t('common:selectAthlete')}</option>{form.blueAthleteId && !athletes.some((athlete) => String(athlete.athleteId) === form.blueAthleteId) ? <option value={form.blueAthleteId}>{t('common:athleteIdValue', { value1: form.blueAthleteId })}</option> : null}{athletes.map((athlete) => <option key={athlete.athleteId} value={athlete.athleteId}>{athlete.name} · #{athlete.athleteId}</option>)}</select></label><label>{t('common:matchType')}<input onChange={(event) => updateField('matchType', event.target.value)} value={form.matchType} /></label><label>{t('common:totalRounds')}<input min="1" onChange={(event) => updateField('totalRounds', event.target.value)} required type="number" value={form.totalRounds} /></label><label>{t('common:scheduledOrder')}<input min="1" onChange={(event) => updateField('scheduledOrder', event.target.value)} required type="number" value={form.scheduledOrder} /></label><label className="admin-toggle-field"><input checked={form.eventBout} onChange={(event) => updateField('eventBout', event.target.checked)} type="checkbox" />{t('common:eventBout')}</label></div>
+              <div className="admin-form-actions"><button className="command-button" disabled={saving} type="submit">{selectedId ? t('admin:bout.save') : t('admin:bout.create')}</button>{selectedId ? <button className="danger-button" disabled={saving} onClick={() => setConfirmingDelete(true)} type="button">{t('admin:bout.delete')}</button> : null}</div>
             </form>
           </section>
         </div>
       ) : null}
-      {confirmingDelete ? <ConfirmDialog busy={saving} description="선택한 경기를 삭제합니다. 확정 결과와 연결된 경기는 서버에서 거절될 수 있습니다." onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title="경기 삭제 확인" /> : null}
+      {confirmingDelete ? <ConfirmDialog busy={saving} description={t('admin:bout.deleteWarning')} onCancel={() => setConfirmingDelete(false)} onConfirm={handleDelete} title={t('admin:bout.deleteConfirm')} /> : null}
     </main>
   );
 }
 
 export function AdminBoutPage({ tournamentId }) {
+  useTranslation();
   const { session, signOut } = useStaffAuth();
   if (!session || !['GAME_MANAGER', 'SERVICE_MANAGER'].includes(session.account.role)) return null;
   return <BoutWorkspace onLogout={signOut} session={session} tournamentId={tournamentId} />;

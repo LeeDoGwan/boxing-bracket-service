@@ -36,11 +36,13 @@ Implemented core areas:
 - Tournament operation status summary for game and service managers
 - Idempotent bout, round, score, and result requests with transaction-safe SSE delivery
 - Immutable administrator audit logs for operational, admin, and authentication mutations
+- Korean, English, and Japanese UI with browser-language detection and a persistent language selector
 
 ## Documentation
 
 - [Product requirements](docs/requirements.md)
 - [System design](docs/design.md)
+- [Multilingual UI design and maintenance](docs/i18n-design.md)
 - [Frontend wide-frame architecture](docs/frontend-wide-frame.md)
 - [Single-server deployment runbook](docs/deployment-runbook.md)
 - [Sprint 1 scope](docs/sprint-1.md)

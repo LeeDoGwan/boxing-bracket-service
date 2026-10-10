@@ -1,6 +1,6 @@
 # Testing
 
-Last updated: 2026-10-06
+Last updated: 2026-10-10
 
 ## Latest Verification
 
@@ -62,11 +62,14 @@ map is maintained in the
 [frontend wide-frame architecture guide](frontend-wide-frame.md).
 
 - Working directory: `front`
-- Verified at: 2026-10-06
-- `npm test`: 94 passed across 25 test files
+- Verified at: 2026-10-10
+- `npm test`: 123 passed across 28 test files
+- Multilingual coverage checks matching ko/en/ja keys and placeholders, language detection/overrides/storage failures, cross-tab and device-language changes, document language/title, deferred notification translation, venue-time formatting, and input/confirmation preservation for Judge, Supervisor, and Ring Manager workflows. `npm run check:i18n` runs the resource checks independently; they are included in normal CI tests.
 - Added regression coverage for Korean decision/connection labels and the Game Manager assignment-account lookup restriction; penalty history assertions verify opponent addition rather than subtraction.
 - `npm run lint`: passed with `dist` and `node_modules` excluded
 - `npm run build`: passed with Vite production output
+- Browser smoke check: public error state and login language switching; English desktop (1280x900), Japanese tablet (768x1024), Korean/English mobile (390x844). Login input survives language switching, and the mobile page has no horizontal overflow. No live backend/account workflow was exercised. See [i18n design](i18n-design.md).
+- `npm audit --json` (2026-10-10): 15 dependency entries flagged, comprising 6 moderate, 7 high, and 2 critical. The reported packages do not include i18next or react-i18next; they include the existing router and build/test toolchain. Audit did not pass. Dependency remediation needs a separately tested upgrade; do not expose the Vite/Vitest development servers publicly or treat a successful build as a security clearance.
 - Automated frontend coverage includes the public home and bracket routes, API failure and empty states, public submitted round-score rendering, startup account revalidation, authenticated 401 session cleanup, the configured one-tournament context, bracket search, the shared `/staff/login` route, protected-route return paths, invalid-credential handling, and role-aware navigation. Authenticated score submission, result confirmation, ring commands, operator SSE-driven refetch, operations refresh/retry/auto-refresh, audit filtering/pagination, tournament CRUD, ring CRUD, athlete search/CRUD, notice CRUD, schedule CRUD, bout CRUD, CSV/Excel import/template download, and account search/filter/CRUD are covered by frontend page and session tests; the test profile does not seed role accounts or tournament, ring, bout, schedule, or audit data. Manual browser verification remains a release smoke-test task and is tracked in [Deployment runbook](deployment-runbook.md).
 
 ## Verification Inventory
